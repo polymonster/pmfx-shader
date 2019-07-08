@@ -30,7 +30,7 @@ commandline arguments:
 
 ### Simple
 
-A single file does all the shader parsing and code generation. Simple syntax changes are handled through macros and defines found in platform, so it is simple to add new features or change things to behave how you like.
+A single file does all the shader parsing and code generation. Simple syntax changes are handled through macros and defines found in [platform](https://github.com/polymonster/pmfx-shader/tree/master/platform), so it is simple to add new features or change things to behave how you like.
 
 ### HLSL Syntax
 
