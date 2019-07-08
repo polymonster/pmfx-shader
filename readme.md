@@ -11,6 +11,21 @@ This is a small part of the larger pmfx system found in pmtech, it has been move
 - hlsl sm 3.0, sm 4.0, sm 5.0.
 - metal.
 
+## Usage
+
+```shell
+commandline arguments:
+    -i <list of files or directories separated by spaces>
+    -o <output dir for shaders>
+    -t <output dir for temp files>
+    -h <output dir header file with shader structs>
+    -root_dir <directory> sets working directory here
+    -shader_platform <hlsl, glsl, gles, spirv, metal>
+    -shader_version <default shader version>
+        glsl: 330, 420, 450
+        hlsl: 3_0, 4_0, 5_0
+```
+
 ## Features
 
 ### Simple
