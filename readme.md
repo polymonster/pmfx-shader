@@ -91,7 +91,7 @@ shader_resources
 
 ### Techniques
 
-Single .pmfx file can contain multiple shader functions so you can share functionality, you can define a block of json in the shader to configure techniques, simply specify vs, ps or cs to select which function in the source to use for that shader stage.
+Single .pmfx file can contain multiple shader functions so you can share functionality, you can define a block of json in the shader to configure techniques, simply specify vs, ps or cs to select which function in the source to use for that shader stage. If no pmfx: json block is found you can still supply vs_main and ps_main which will be output as a technique named "default".
 
 ```json
 pmfx:
@@ -100,12 +100,13 @@ pmfx:
     {
         "vs": "vs_main",
         "ps": "ps_single_light"
-    }
+    },
     
     "compute_job"
     {
         "cs": "cs_some_job"
     }
+}
 ```
 
 You can also use json to specify technique constants with range and ui type.. so you can later hook them into a gui:
