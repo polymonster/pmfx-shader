@@ -110,6 +110,8 @@ You can also use json to specify technique constants with range and ui type.. so
 }
 ```
 
+![pmfx constants](https://github.com/polymonster/polymonster.github.io/raw/master/assets/wiki/pmfx-material.png)
+
 Access to technique constants is done with m_prefix.
 
 ```hlsl
