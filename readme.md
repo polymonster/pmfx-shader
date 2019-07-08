@@ -2,7 +2,7 @@
 
 Cross platform shader compillation, with outputted reflection info, c++ header with shader structs, techniques and compile time permutation evaluation. 
 
-This is a small part of the larger pmfx system found in pmtech, it has been moved into a separate repository to be used with other projects, if you are interested to see how pmfx shaders are integegrated please take a look here.
+This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/wiki/Pmfx) system found in [pmtech](https://github.com/polymonster/pmtech), it has been moved into a separate repository to be used with other projects, if you are interested to see how pmfx shaders are integrated please take a look [here](https://github.com/polymonster/pmtech).
 
 ## Targets
 
