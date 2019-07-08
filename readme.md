@@ -143,5 +143,47 @@ For each permutation a shader is generated with the technique plus the permutati
 
 ### C++ Header
 
+After compilation a header is output for each .pmfx file containing c struct declarations for the cbuffers, technique constant buffers and vertex inputs. It also containts defines for the shader permutation id / flags.
+
+```c++
+namespace debug
+{
+    struct per_pass_view
+    {
+        float4x4 view_projection_matrix;
+        float4x4 view_matrix;
+    };
+    struct per_pass_view_2d
+    {
+        float4x4 projection_matrix;
+        float4 user_data;
+    };
+}
+```
+
 ### JSON Reflection Info
+
+Each .pmfx file comes along with a json file containing reflection info. This info contains the locations textures / buffers are bound to, the size of structs, vertex layout description and more. 
+
+```json
+"texture_sampler_bindings": [
+    {
+        "name": "gbuffer_albedo",
+        "data_type": "float4",
+        "fragments": 1,
+        "type": "texture_2d",
+        "unit": 0
+    },
+   
+"vs_inputs": [
+    {
+        "name": "position",
+        "semantic_index": 0,
+        "semantic_id": 1,
+        "size": 16,
+        "element_size": 4,
+        "num_elements": 4,
+        "offset": 0
+    },
+```
 
