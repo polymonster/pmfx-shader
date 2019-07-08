@@ -13,7 +13,7 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 
 ## Usage
 
-```shell
+```
 commandline arguments:
     -i <list of files or directories separated by spaces>
     -o <output dir for shaders>
