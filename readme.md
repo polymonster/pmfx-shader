@@ -15,7 +15,7 @@ Cross platform shader compillation, with outputted reflection info, c++ header w
 
 Use hlsl syntax everwhere for shaders, with some small differences:
 
-#### Use structs for inputs and outputs.
+#### Always use structs for inputs and outputs.
 
 ```hlsl
 struct vs_input
@@ -49,7 +49,36 @@ shader_resources
 };
 ```
 
+### Includes
+
+```c
+#include "libs/lighting.pmfx"
+#include "libs/skinning.pmfx"
+#include "libs/globals.pmfx"
+#include "libs/sdf.pmfx"
+#include "libs/area_lights.pmfx"
+```
+
 ### Techniques
+
+Single .pmfx file can contain multiple shader functions so you can share functionality, you can define a block of json in the shader to configure techniques, simply specify vs, ps or cs to select which function in the source to use for that shader stage.
+
+```json
+pmfx:
+{    
+    "single_light_directional":
+    {
+        "vs": "vs_main",
+        "ps": "ps_single_light"
+    }
+    
+    "compute_job"
+    {
+        "cs": "cs_some_job"
+    }
+```
+
+
 
 ### Permutations
 
