@@ -17,3 +17,7 @@ Cross platform shader compillation, with outputted reflection info, c++ header w
 
 ### Permutations
 
+### C++ Header
+
+### JSON Reflection Info
+
