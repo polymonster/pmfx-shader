@@ -156,6 +156,20 @@ Permutations provide an uber shader style compile time branch evaluation to gene
 },
 ```
 
+To insert a compile time evaluated branch in code, use a colon after if / else
+
+```c++
+if:(SKINNED)
+{
+    float4 sp = skin_pos(input.position, input.blend_weights, input.blend_indices);
+    output.position = mul( sp, vp_matrix );
+}
+else:
+{
+    output.position = mul( input.position, wvp );
+}
+```
+
 For each permutation a shader is generated with the technique plus the permutation id. The id is generated from the values passed in the permutation object.
 
 ### C++ Header
