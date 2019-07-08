@@ -204,7 +204,7 @@ Each .pmfx file comes along with a json file containing reflection info. This in
         "fragments": 1,
         "type": "texture_2d",
         "unit": 0
-    },
+    }]
    
 "vs_inputs": [
     {
@@ -215,6 +215,6 @@ Each .pmfx file comes along with a json file containing reflection info. This in
         "element_size": 4,
         "num_elements": 4,
         "offset": 0
-    },
+    }]
 ```
 
