@@ -13,7 +13,6 @@ class build_info:
     shader_sub_platform = ""                                            # gles
     shader_version = ""                                                 # 4_0, 5_0 (hlsl), 330, 420 (glsl)
     inputs = []                                                         # array of input files or directories
-    os_platform = ""                                                    # win32, osx, linux, ios, android
     root_dir = ""                                                       # cwd dir to run from
     build_config = ""                                                   # json contents of build_config.json
     pmfx_dir = ""                                                       # location of pmfx
@@ -70,17 +69,17 @@ class single_shader_info:
 # parse command line args passed in
 def parse_args():
     global _info
+    if len(sys.argv) == 1:
+        display_help()
     for i in range(1, len(sys.argv)):
+        if "-help" in sys.argv[i]:
+            display_help()
         if "-root_dir" in sys.argv[i]:
             os.chdir(sys.argv[i + 1])
         if "-shader_platform" in sys.argv[i]:
             _info.shader_platform = sys.argv[i + 1]
-        if "-platform" in sys.argv[i]:
-            _info.os_platform = sys.argv[i + 1]
         if "-shader_version" in sys.argv[i]:
             _info.shader_version = sys.argv[i + 1]
-        if "-config" in sys.argv[i]:
-            _info.config_file = sys.argv[i + 1]
         if sys.argv[i] == "-i":
             j = i + 1
             while j < len(sys.argv) and sys.argv[j][0] != '-':
@@ -95,6 +94,20 @@ def parse_args():
             _info.temp_dir = sys.argv[i + 1]
             pass
 
+
+# display help for args
+def display_help():
+    print("commandline arguments:")
+    print("    -i <list of files or directories separated by spaces>")
+    print("    -o <output dir for shaders>")
+    print("    -t <output dir for temp files>")
+    print("    -h <output dir header file with shader structs>")
+    print("    -root_dir <directory> sets working directory here")
+    print("    -shader_platform <hlsl, glsl, gles, spirv, metal>")
+    print("    -shader_version <default shader version>")
+    print("        glsl: 330, 420, 450")
+    print("        hlsl: 3_0, 4_0, 5_0")
+    exit(0)
 
 
 # duplicated from pmtech/tools/scripts/util
@@ -2126,25 +2139,26 @@ def parse_pmfx(file, root):
         c_code += "}\n"
         fmt = ""
         lines = c_code.split("\n")
-        indents = 0
-        for l in lines:
-            if l == "":
-                continue
-            if l.find("}") != -1:
-                indents -= 1
-            for i in range(0, indents):
-                fmt += "    "
-            fmt += l.strip() + "\n"
-            if l.find("{") != -1:
-                indents += 1
-        h_filename = file.replace(".pmfx", ".h")
-        h_filename = os.path.basename(h_filename)
-        if not os.path.exists(_info.struct_dir):
-            os.mkdir(_info.struct_dir)
-        h_filename = os.path.join(_info.struct_dir, h_filename)
-        h_file = open(h_filename, "w+")
-        h_file.write(fmt)
-        h_file.close()
+        if len(lines) > 3:
+            indents = 0
+            for l in lines:
+                if l == "":
+                    continue
+                if l.find("}") != -1:
+                    indents -= 1
+                for i in range(0, indents):
+                    fmt += "    "
+                fmt += l.strip() + "\n"
+                if l.find("{") != -1:
+                    indents += 1
+            h_filename = file.replace(".pmfx", ".h")
+            h_filename = os.path.basename(h_filename)
+            if not os.path.exists(_info.struct_dir):
+                os.mkdir(_info.struct_dir)
+            h_filename = os.path.join(_info.struct_dir, h_filename)
+            h_file = open(h_filename, "w+")
+            h_file.write(fmt)
+            h_file.close()
 
 
 # entry
@@ -2155,15 +2169,16 @@ if __name__ == "__main__":
 
     global _info
     _info = build_info()
-    _info.os_platform = get_platform_name()
     _info.error_code = 0
 
     parse_args()
 
     # pm build config
     # config = open("build_config.json")
+    # _info.build_config = json.loads(config.read())
 
-    if _info.os_platform == "ios" or _info.os_platform == "android":
+    if _info.shader_platform == "gles":
+        _info.shader_platform = "glsl"
         _info.shader_sub_platform = "gles"
 
     # get dirs for build output
@@ -2172,8 +2187,6 @@ if __name__ == "__main__":
     _info.pmfx_dir = os.path.dirname(_info.this_file)
     _info.macros_file = os.path.join(_info.pmfx_dir, "platform", "_shader_macros.h")
     _info.tools_dir = _info.pmfx_dir
-
-    # _info.build_config = json.loads(config.read())
 
     # global shader macros for glsl, hlsl and metal portability
     mf = open(_info.macros_file)
