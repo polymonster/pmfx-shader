@@ -1182,6 +1182,13 @@ def generate_texture_decl(texture_list):
     return texture_decl
 
 
+# insert glsl location if we need it
+def insert_layout_location(loc):
+    if _info.shader_sub_platform == "spirv":
+       return "layout(location = " + str(loc) + ") "
+    return ""
+
+
 # compile glsl
 def compile_glsl(_info, pmfx_name, _tp, _shader):
     # parse inputs and outputs into semantics
@@ -1239,17 +1246,22 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         if _shader.shader_type == "vs":
             shader_source += "layout(location = " + str(index_counter) + ") in " + input + "_vs_input;\n"
         elif _shader.shader_type == "ps":
+            shader_source += insert_layout_location(index_counter)
             shader_source += "in " + input + "_vs_output;\n"
         index_counter += 1
     for instance_input in instance_inputs:
+        shader_source += insert_layout_location(index_counter)
         shader_source += "layout(location = " + str(index_counter) + ") in " + instance_input + "_instance_input;\n"
         index_counter += 1
 
     # outputs structs
+    index_counter = 0
     if _shader.shader_type == "vs":
         for output in outputs:
             if output.split()[1] != "position":
+                shader_source += insert_layout_location(index_counter)
                 shader_source += "out " + output + "_" + _shader.shader_type + "_output;\n"
+            index_counter += 1
     elif _shader.shader_type == "ps":
         for p in range(0, len(outputs)):
             if "SV_Depth" in output_semantics[p]:
@@ -1258,6 +1270,8 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
                 output_index = output_semantics[p].replace("SV_Target", "")
                 if output_index != "":
                     shader_source += "layout(location = " + output_index + ") "
+                else:
+                    shader_source += insert_layout_location(0)
                 shader_source += "out " + outputs[p] + "_ps_output;\n"
 
     # global structs for access to inputs or outputs from any function
@@ -1340,6 +1354,10 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
 
     exe = os.path.join(_info.tools_dir, "bin", "glsl", get_platform_name(), "validator")
 
+    if _info.shader_sub_platform == "spirv":
+        exe += " -V "
+        exe += " -o " + output_file_and_path
+
     p = subprocess.Popen(exe + " " + temp_file_and_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     error_code = p.wait()
     output, err = p.communicate()
@@ -1354,10 +1372,11 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     if error_code != 0:
         _info.error_code = error_code
 
-    # copy shader to data
-    shader_file = open(output_file_and_path, "w")
-    shader_file.write(shader_source)
-    shader_file.close()
+    if _info.shader_sub_platform != "spirv":
+        # copy glsl shader to data
+        shader_file = open(output_file_and_path, "w")
+        shader_file.write(shader_source)
+        shader_file.close()
 
     return error_code
 
@@ -2176,6 +2195,11 @@ if __name__ == "__main__":
     # pm build config
     # config = open("build_config.json")
     # _info.build_config = json.loads(config.read())
+
+    if _info.shader_platform == "spirv":
+        _info.shader_platform = "glsl"
+        _info.shader_version = "450"
+        _info.shader_sub_platform = "spirv"
 
     if _info.shader_platform == "gles":
         _info.shader_platform = "glsl"
