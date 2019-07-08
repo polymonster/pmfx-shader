@@ -1,4 +1,5 @@
 # pmfx-shader
+[build](https://travis-ci.org/polymonster/pmfx-shader.svg?branch=master)
 
 Cross platform shader compillation, with outputted reflection info, c++ header with shader structs, fx-like techniques and compile time branch evaluation with "permutations". 
 
