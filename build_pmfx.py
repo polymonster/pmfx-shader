@@ -1577,8 +1577,9 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
     outputs, output_semantics = parse_io_struct(_shader.output_decl)
     instance_inputs, instance_input_semantics = parse_io_struct(_shader.instance_input_decl)
 
-    shader_source = get_macros_for_platform("metal", _info.macros_source)
+    shader_source =  "#include <metal_stdlib>\n"
     shader_source += "using namespace metal;\n"
+    shader_source += get_macros_for_platform("metal", _info.macros_source)
 
     # struct decls
     shader_source += _tp.struct_decls
@@ -1821,27 +1822,24 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
     temp_file_and_path = os.path.join(temp_path, _tp.name + extension[_shader.shader_type])
     output_file_and_path = os.path.join(output_path, _tp.name + output_extension[_shader.shader_type])
 
-    temp_shader_source = open(output_file_and_path, "w")
-    temp_shader_source.write(shader_source)
-    temp_shader_source.close()
-
-    # 0 is error code
-    return 0
-
-    # todo precompile
-    if pmfx_name != "forward_render":
+    compiled = False
+    if not compiled:
+        temp_shader_source = open(output_file_and_path, "w")
+        temp_shader_source.write(shader_source)
+        temp_shader_source.close()
         return 0
+    else:
+        temp_shader_source = open(temp_file_and_path, "w")
+        temp_shader_source.write(shader_source)
+        temp_shader_source.close()
 
-    temp_shader_source = open(temp_file_and_path, "w")
-    temp_shader_source.write(shader_source)
-    temp_shader_source.close()
+        # compile .air
+        cmdline = "xcrun -sdk macosx metal -c "
+        cmdline += temp_file_and_path + " "
+        cmdline += "-o " + output_file_and_path
 
-    # compile .air
-    cmdline = "xcrun -sdk macosx metal -c "
-    cmdline += temp_file_and_path + " "
-    cmdline += "-o " + output_file_and_path
-
-    subprocess.call(cmdline, shell=True)
+        rv = subprocess.call(cmdline, shell=True)
+        return rv
 
 
 # generate a shader info file with an array of technique permutation descriptions and dependency timestamps
