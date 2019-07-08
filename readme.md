@@ -1,6 +1,6 @@
 # pmfx-shader
 
-Cross platform shader compillation, with outputted reflection info, c++ header with shader structs, techniques and compile time permutation evaluation. 
+Cross platform shader compillation, with outputted reflection info, c++ header with shader structs, fx-like techniques and compile time branch evaluation with "permutations". 
 
 This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/wiki/Pmfx) system found in [pmtech](https://github.com/polymonster/pmtech), it has been moved into a separate repository to be used with other projects, if you are interested to see how pmfx shaders are integrated please take a look [here](https://github.com/polymonster/pmtech).
 
@@ -14,6 +14,8 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 ## Usage
 
 ```
+python3 build_pmfx.py -help
+
 commandline arguments:
     -i <list of files or directories separated by spaces>
     -o <output dir for shaders>
@@ -24,6 +26,12 @@ commandline arguments:
     -shader_version <default shader version>
         glsl: 330, 420, 450
         hlsl: 3_0, 4_0, 5_0
+```
+
+## Compiling Examples
+
+```
+python3 build_pmfx.py -shader_platform spirv -i examples -o output/bin -h output/structs -t output/temp
 ```
 
 ## Features
