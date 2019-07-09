@@ -1,7 +1,7 @@
 # pmfx-shader
 [![Build Status](https://travis-ci.org/polymonster/pmfx-shader.svg?branch=master)](https://travis-ci.org/polymonster/pmfx-shader) [![Build status](https://ci.appveyor.com/api/projects/status/wohe0i5v0hvnjnfb?svg=true)](https://ci.appveyor.com/project/polymonster/pmfx-shader)
 
-Cross platform shader compillation, with outputted reflection info, c++ header with shader structs, fx-like techniques and compile time branch evaluation with "permutations". 
+Cross platform shader compilation, with output reflection info, c++ header with shader structs, fx-like techniques and compile time branch evaluation via (uber-shader) "permutations". 
 
 This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/wiki/Pmfx) system found in [pmtech](https://github.com/polymonster/pmtech), it has been moved into a separate repository to be used with other projects, if you are interested to see how pmfx shaders are integrated please take a look [here](https://github.com/polymonster/pmtech).
 
