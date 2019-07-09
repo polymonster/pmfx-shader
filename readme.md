@@ -79,6 +79,13 @@ shader_resources
 };
 ```
 
+#### Texture sampling 
+```c
+float4 col = sample_texture( diffuse_texture, texcoord.xy );
+float4 cube = sample_texture( cubemap_texture, normal.xyz );
+float4 msaa_sample = sample_texture_2dms( msaa_texture, x, y, fragment );
+```
+
 ### Includes
 
 ```c
@@ -102,7 +109,7 @@ pmfx:
         "ps": "ps_single_light"
     },
     
-    "compute_job"
+    "compute_job":
     {
         "cs": "cs_some_job"
     }
