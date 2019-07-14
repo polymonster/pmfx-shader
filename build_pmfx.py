@@ -69,6 +69,10 @@ class single_shader_info:
 # parse command line args passed in
 def parse_args():
     global _info
+    # set defaults
+    _info.compiled = True
+    _info.cbuffer_offset = 4
+    _info.stage_in = 1
     if len(sys.argv) == 1:
         display_help()
     for i in range(1, len(sys.argv)):
@@ -93,20 +97,34 @@ def parse_args():
         if sys.argv[i] == "-t":
             _info.temp_dir = sys.argv[i + 1]
             pass
+        if sys.argv[i] == "-source":
+            _info.compiled = False
+        if sys.argv[i] == "-cbuffer_offset":
+            _info.cbuffer_offset = sys.argv[i + 1]
+        if sys.argv[i] == "-stage_in":
+            _info.stage_in = sys.argv[i + 1]
+
 
 
 # display help for args
 def display_help():
     print("commandline arguments:")
-    print("    -i <list of files or directories separated by spaces>")
+    print("    -shader_platform <hlsl, glsl, gles, spirv, metal>")
+    print("    -shader_version (optional) <shader version unless overriden in technique>")
+    print("        hlsl: 3_0, 4_0 (default), 5_0")
+    print("        glsl: 330 (default), 420, 450")
+    print("        spirv: 420 (default), 450")
+    print("        metal: (n/a)")
+    print("    -i <list of input files or directories separated by spaces>")
     print("    -o <output dir for shaders>")
     print("    -t <output dir for temp files>")
     print("    -h <output dir header file with shader structs>")
     print("    -root_dir <directory> sets working directory here")
-    print("    -shader_platform <hlsl, glsl, gles, spirv, metal>")
-    print("    -shader_version <default shader version>")
-    print("        glsl: 330, 420, 450")
-    print("        hlsl: 3_0, 4_0, 5_0")
+    print("    -source (optional) (generates platform source into -o no compilation)")
+    print("    -stage_in <0, 1> (optional) [metal only] (default 1) ")
+    print("        uses stage_in for metal vertex buffers, 0 uses raw buffers")
+    print("    -cbuffer_offset (optional) [metal only] (default 4) ")
+    print("        specifies an offset applied to cbuffer locations")
     exit(0)
 
 
@@ -1615,7 +1633,7 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
         shader_source += "\n"
 
     # packed inputs
-    vs_stage_in = True
+    vs_stage_in = _info.stage_in
     attrib_index = 0
     if _shader.shader_type == "vs":
         if vs_stage_in:
@@ -1741,9 +1759,10 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
         if texture not in invalid:
             shader_source += "\n, " + texture.strip("\n")
 
-    # pass in cbuffers.. cbuffers start at 8 reserving space for 8 vertex buffers..
+    cbuffer_offset = _info.cbuffer_offset
+    # pass in cbuffers.. cbuffers start at cbuffer_offset reserving space for (cbuffer_offset-1) vertex buffers..
     for cbuf in metal_cbuffers:
-        regi = int(cbuf[1]) + 8
+        regi = int(cbuf[1]) + cbuffer_offset
         shader_source += "\n, " + "constant " "c_" + cbuf[0] + " &" + cbuf[0] + " [[buffer(" + str(regi) + ")]]"
 
     shader_source += ")\n{\n"
@@ -1830,7 +1849,7 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
     temp_file_and_path = os.path.join(temp_path, _tp.name + extension[_shader.shader_type])
     output_file_and_path = os.path.join(output_path, _tp.name + output_extension[_shader.shader_type])
 
-    compiled = False
+    compiled = _info.compiled
     if not compiled:
         temp_shader_source = open(output_file_and_path, "w")
         temp_shader_source.write(shader_source)
@@ -1841,12 +1860,21 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
         temp_shader_source.write(shader_source)
         temp_shader_source.close()
 
+        intermediate_file_and_path = temp_file_and_path.replace(".frag", "_frag.air")
+        intermediate_file_and_path = intermediate_file_and_path.replace(".vert", "_vert.air")
+
         # compile .air
         cmdline = "xcrun -sdk macosx metal -c "
         cmdline += temp_file_and_path + " "
-        cmdline += "-o " + output_file_and_path
-
+        cmdline += "-o " + intermediate_file_and_path
         rv = subprocess.call(cmdline, shell=True)
+
+        if rv == 0:
+            cmdline = "xcrun -sdk macosx metallib "
+            cmdline += intermediate_file_and_path + " "
+            cmdline += "-o " + output_file_and_path
+            rv = subprocess.call(cmdline, shell=True)
+
         return rv
 
 
@@ -2189,7 +2217,7 @@ def parse_pmfx(file, root):
 # entry
 if __name__ == "__main__":
     print("--------------------------------------------------------------------------------")
-    print("pmfx shader compilation (v3)----------------------------------------------------")
+    print("pmfx shader (v3) ---------------------------------------------------------------")
     print("--------------------------------------------------------------------------------")
 
     global _info
@@ -2197,10 +2225,6 @@ if __name__ == "__main__":
     _info.error_code = 0
 
     parse_args()
-
-    # pm build config
-    # config = open("build_config.json")
-    # _info.build_config = json.loads(config.read())
 
     if _info.shader_platform == "spirv":
         _info.shader_platform = "glsl"
