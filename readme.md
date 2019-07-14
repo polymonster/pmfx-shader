@@ -9,7 +9,7 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 
 - glsl 330, 420, 450.
 - SPIR-V.
-- hlsl sm 3.0, sm 4.0, sm 5.0.
+- hlsl 3_0, 4_0, 5_0.
 - metal.
 
 ## Usage
