@@ -120,6 +120,13 @@ def get_platform_name():
     return plat
 
 
+# get extension for windows
+def get_platform_exe():
+    if get_platform_name() == "win64":
+        return ".exe"
+    return ""
+
+
 def sanitize_file_path(path):
     path = path.replace("/", os.sep)
     path = path.replace("\\", os.sep)
@@ -1352,13 +1359,14 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
 
     output_file_and_path = os.path.join(output_path, _tp.name + extension[_shader.shader_type])
 
-    exe = os.path.join(_info.tools_dir, "bin", "glsl", get_platform_name(), "validator")
+    exe = os.path.join(_info.tools_dir, "bin", "glsl", get_platform_name(), "validator" + get_platform_exe())
 
     if _info.shader_sub_platform == "spirv":
         exe += " -V "
         exe += " -o " + output_file_and_path
 
     p = subprocess.Popen(exe + " " + temp_file_and_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
     error_code = p.wait()
     output, err = p.communicate()
     output = output.decode('utf-8')
