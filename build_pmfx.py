@@ -112,7 +112,7 @@ def display_help():
 
 # duplicated from pmtech/tools/scripts/util
 def get_platform_name():
-    plat = "win32"
+    plat = "win64"
     if os.name == "posix":
         plat = "osx"
         if platform.system() == "Linux":
