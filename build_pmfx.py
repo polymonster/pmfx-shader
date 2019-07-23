@@ -103,6 +103,8 @@ def parse_args():
             _info.cbuffer_offset = sys.argv[i + 1]
         if sys.argv[i] == "-stage_in":
             _info.stage_in = sys.argv[i + 1]
+        if sys.argv[i] == "-v_flip":
+            _info.v_flip = True;
 
 
 
@@ -125,6 +127,7 @@ def display_help():
     print("        uses stage_in for metal vertex buffers, 0 uses raw buffers")
     print("    -cbuffer_offset (optional) [metal only] (default 4) ")
     print("        specifies an offset applied to cbuffer locations")
+    print("    -v_flip (optional) (inserts glsl uniform to control geometry flipping)") 
     exit(0)
 
 
@@ -1185,12 +1188,14 @@ def generate_input_assignment(io_elements, decl, local_var, suffix):
 
 
 # assign vs or ps outputs from the global struct to the output locations
-def generate_output_assignment(io_elements, local_var, suffix):
+def generate_output_assignment(_info, io_elements, local_var, suffix):
     assign_source = "\n//assign glsl global outputs from structs\n"
     for element in io_elements:
         var_name = element.split()[1]
         if var_name == "position":
            assign_source += "gl_Position = " + local_var + "." + var_name + ";\n"
+           if _info.v_flip:
+                assign_source += "gl_Position.y *= vFlip;\n"
         else:
             assign_source += var_name + suffix + " = " + local_var + "." + var_name + ";\n"
     return assign_source
@@ -1299,6 +1304,9 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
                     shader_source += insert_layout_location(0)
                 shader_source += "out " + outputs[p] + "_ps_output;\n"
 
+    if _info.v_flip:
+        shader_source += "uniform float vFlip;\n";
+        
     # global structs for access to inputs or outputs from any function
     shader_source += generate_global_io_struct(inputs, "struct " + _shader.input_struct_name)
     if _shader.instance_input_struct_name:
@@ -1332,7 +1340,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         if len(instance_inputs) > 0:
             pre_assign += generate_input_assignment(instance_inputs,
                                                     _shader.instance_input_struct_name, "instance_input", "_instance_input")
-    post_assign = generate_output_assignment(outputs, "_output", output_name[_shader.shader_type])
+    post_assign = generate_output_assignment(_info, outputs, "_output", output_name[_shader.shader_type])
 
     shader_source += "void main()\n{\n"
     shader_source += "\n" + pre_assign + "\n"
