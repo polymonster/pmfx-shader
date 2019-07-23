@@ -73,6 +73,7 @@ def parse_args():
     _info.compiled = True
     _info.cbuffer_offset = 4
     _info.stage_in = 1
+    _info.v_flip = False
     if len(sys.argv) == 1:
         display_help()
     for i in range(1, len(sys.argv)):
