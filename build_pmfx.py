@@ -21,7 +21,8 @@ class build_info:
     struct_dir = ""                                                     # dir to output the shader structs
     temp_dir = ""                                                       # dir to put temp shaders
     this_file = ""                                                      # the file u are reading
-    macros_file = ""                                                    # _shader_macros.h
+    macros_file = ""                                                    # pmfx.h
+    platform_macros_file = ""                                           # glsl.h, hlsl.h, metal.h
     macros_source = ""                                                  # source code inside _shader_macros.h
     error_code = 0                                                      # non-zero if any shaders failed to build
 
@@ -284,21 +285,6 @@ def replace_io_tokens(text):
     return replaced_text
 
 
-# returns macros source with only requested platform
-def get_macros_for_platform(platform, macros_source):
-    platform = platform.upper()
-    platform_macros = ""
-    start_str = "#ifdef " + platform
-    start = macros_source.find(start_str) + len(start_str)
-    end = macros_source.find("#endif //" + platform)
-    if start == -1:
-        return ""
-    platform_macros += macros_source[start:end]
-    all_platforms = macros_source.find("//GENERIC MACROS")
-    platform_macros += macros_source[all_platforms:]
-    return platform_macros
-
-
 # get info filename for dependency checking
 def get_resource_info_filename(filename, build_dir):
     global _info
@@ -317,6 +303,7 @@ def check_dependencies(filename, included_files):
     file_list.append(sanitize_file_path(os.path.join(_info.root_dir, filename)))
     file_list.append(sanitize_file_path(_info.this_file))
     file_list.append(sanitize_file_path(_info.macros_file))
+    file_list.append(sanitize_file_path(_info.platform_macros_file))
     info_filename, base_filename, dir_path = get_resource_info_filename(filename, _info.output_dir)
     for f in included_files:
         file_list.append(sanitize_file_path(os.path.join(_info.root_dir, f)))
@@ -333,7 +320,6 @@ def check_dependencies(filename, included_files):
                     print(os.path.basename(sanitized_name) + " is out of date")
                     return False
             else:
-                print(file_list)
                 print(sanitized_name + " is not in list")
                 return False
         info_file.close()
@@ -1068,7 +1054,7 @@ def format_source(source, indent_size):
 
 # compile hlsl shader model 4
 def compile_hlsl(_info, pmfx_name, _tp, _shader):
-    shader_source = get_macros_for_platform("hlsl", _info.macros_source)
+    shader_source = _info.macros_source
     shader_source += _tp.struct_decls
     for cb in _shader.cbuffers:
         shader_source += cb
@@ -1262,14 +1248,13 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         shader_source += "#version 300 es\n"
         shader_source += "#define GLSL\n"
         shader_source += "#define GLES\n"
-        shader_source += "precision highp float;\n"
     else:
         shader_source += "#version " + _info.shader_version + " core\n"
         shader_source += "#define GLSL\n"
         if binding_points:
             shader_source += "#define BINDING_POINTS\n"
     shader_source += "//" + pmfx_name + " " + _tp.name + " " + _shader.shader_type + " " + str(_tp.id) + "\n"
-    shader_source += get_macros_for_platform("glsl", _info.macros_source)
+    shader_source += _info.macros_source
 
     # input structs
     index_counter = 0
@@ -1614,7 +1599,7 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
 
     shader_source =  "#include <metal_stdlib>\n"
     shader_source += "using namespace metal;\n"
-    shader_source += get_macros_for_platform("metal", _info.macros_source)
+    shader_source += _info.macros_source
 
     # struct decls
     shader_source += _tp.struct_decls
@@ -1899,6 +1884,7 @@ def generate_shader_info(filename, included_files, techniques):
     # special files which affect the validity of compiled shaders
     shader_info["files"].append(create_dependency(_info.this_file))
     shader_info["files"].append(create_dependency(_info.macros_file))
+    shader_info["files"].append(create_dependency(_info.platform_macros_file))
 
     included_files.insert(0, os.path.join(dir_path, base_filename))
     for ifile in included_files:
@@ -2248,12 +2234,16 @@ if __name__ == "__main__":
     _info.root_dir = os.getcwd()
     _info.this_file = os.path.realpath(__file__)
     _info.pmfx_dir = os.path.dirname(_info.this_file)
-    _info.macros_file = os.path.join(_info.pmfx_dir, "platform", "_shader_macros.h")
+    _info.macros_file = os.path.join(_info.pmfx_dir, "platform", "pmfx.h")
+    _info.platform_macros_file = os.path.join(_info.pmfx_dir, "platform", _info.shader_platform + ".h")
     _info.tools_dir = _info.pmfx_dir
 
     # global shader macros for glsl, hlsl and metal portability
-    mf = open(_info.macros_file)
+    mf = open(_info.platform_macros_file)
     _info.macros_source = mf.read()
+    mf.close()
+    mf = open(_info.macros_file)
+    _info.macros_source += mf.read()
     mf.close()
 
     source_list = _info.inputs
@@ -2262,7 +2252,11 @@ if __name__ == "__main__":
             for root, dirs, files in os.walk(source):
                 for file in files:
                     if file.endswith(".pmfx"):
-                        parse_pmfx(file, root)
+                        try:
+                            parse_pmfx(file, root)
+                        except Exception as e:
+                            print("ERROR: while processing", os.path.join(root, file))
+                            raise e
         else:
             parse_pmfx(source, "")
 
