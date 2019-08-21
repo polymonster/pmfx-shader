@@ -17,16 +17,27 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 ```
 python3 build_pmfx.py -help
 
+--------------------------------------------------------------------------------
+pmfx shader (v3) ---------------------------------------------------------------
+--------------------------------------------------------------------------------
 commandline arguments:
-    -i <list of files or directories separated by spaces>
+    -shader_platform <hlsl, glsl, gles, spirv, metal>
+    -shader_version (optional) <shader version unless overriden in technique>
+        hlsl: 3_0, 4_0 (default), 5_0
+        glsl: 330 (default), 420, 450
+        spirv: 420 (default), 450
+        metal: (n/a)
+    -i <list of input files or directories separated by spaces>
     -o <output dir for shaders>
     -t <output dir for temp files>
     -h <output dir header file with shader structs>
     -root_dir <directory> sets working directory here
-    -shader_platform <hlsl, glsl, gles, spirv, metal>
-    -shader_version <default shader version>
-        glsl: 330, 420, 450
-        hlsl: 3_0, 4_0, 5_0
+    -source (optional) (generates platform source into -o no compilation)
+    -stage_in <0, 1> (optional) [metal only] (default 1) 
+        uses stage_in for metal vertex buffers, 0 uses raw buffers
+    -cbuffer_offset (optional) [metal only] (default 4) 
+        specifies an offset applied to cbuffer locations
+    -v_flip (optional) (inserts glsl uniform to control geometry flipping)
 ```
 
 ## Compiling Examples
