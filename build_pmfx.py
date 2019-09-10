@@ -1264,13 +1264,15 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     shader_source += _info.macros_source
 
     # input structs
+    skip_0 = _info.shader_sub_platform == "spirv"
     index_counter = 0
     for input in inputs:
         if _shader.shader_type == "vs":
             shader_source += "layout(location = " + str(index_counter) + ") in " + input + "_vs_input;\n"
         elif _shader.shader_type == "ps":
-            shader_source += insert_layout_location(index_counter)
-            shader_source += "in " + input + "_vs_output;\n"
+            if index_counter != 0 or not skip_0:
+                shader_source += insert_layout_location(index_counter)
+                shader_source += "in " + input + "_vs_output;\n"
         index_counter += 1
     for instance_input in instance_inputs:
         shader_source += insert_layout_location(index_counter)
