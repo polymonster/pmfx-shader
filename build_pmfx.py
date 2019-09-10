@@ -11,7 +11,8 @@ import platform
 class build_info:
     shader_platform = ""                                                # hlsl, glsl, metal
     shader_sub_platform = ""                                            # gles
-    shader_version = ""                                                 # 4_0, 5_0 (hlsl), 330, 420 (glsl)
+    shader_version = ""                                                 # 4_0, 5_0 (hlsl), 330, 420 (glsl), macosx, iphoneos (metal)
+    debug = False                                                       # generate shader with debug info
     inputs = []                                                         # array of input files or directories
     root_dir = ""                                                       # cwd dir to run from
     build_config = ""                                                   # json contents of build_config.json
@@ -75,6 +76,7 @@ def parse_args():
     _info.cbuffer_offset = 4
     _info.stage_in = 1
     _info.v_flip = False
+    _info.debug = False
     if len(sys.argv) == 1:
         display_help()
     for i in range(1, len(sys.argv)):
@@ -106,7 +108,9 @@ def parse_args():
         if sys.argv[i] == "-stage_in":
             _info.stage_in = sys.argv[i + 1]
         if sys.argv[i] == "-v_flip":
-            _info.v_flip = True;
+            _info.v_flip = True
+        if sys.argv[i] == "-d":
+            _info.debug = False
 
 
 
@@ -118,11 +122,12 @@ def display_help():
     print("        hlsl: 3_0, 4_0 (default), 5_0")
     print("        glsl: 330 (default), 420, 450")
     print("        spirv: 420 (default), 450")
-    print("        metal: (n/a)")
+    print("        metal: macosx (default), iphoneos")
     print("    -i <list of input files or directories separated by spaces>")
     print("    -o <output dir for shaders>")
     print("    -t <output dir for temp files>")
     print("    -h <output dir header file with shader structs>")
+    print("    -d (optional) generate debuggable shader")
     print("    -root_dir <directory> sets working directory here")
     print("    -source (optional) (generates platform source into -o no compilation)")
     print("    -stage_in <0, 1> (optional) [metal only] (default 1) ")
@@ -1103,6 +1108,8 @@ def compile_hlsl(_info, pmfx_name, _tp, _shader):
     cmdline = exe + " "
     cmdline += "/T " + shader_model[_shader.shader_type] + " "
     cmdline += "/E " + _shader.main_func_name + " "
+    if _info.debug:
+        cmdline += "/Fc /Od /Zi" + " "
     cmdline += "/Fo " + output_file_and_path + " " + temp_file_and_path + " "
 
     # process = subprocess.Popen([exe + ".exe", cmdline], shell=True, stdout=subprocess.PIPE)
@@ -1852,6 +1859,11 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
         temp_shader_source.close()
         return 0
     else:
+
+        metal_platform = "macosx"
+        if _info.shader_version != "":
+            metal_platform = _info.shader_version
+
         temp_shader_source = open(temp_file_and_path, "w")
         temp_shader_source.write(shader_source)
         temp_shader_source.close()
@@ -1860,13 +1872,13 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
         intermediate_file_and_path = intermediate_file_and_path.replace(".vert", "_vert.air")
 
         # compile .air
-        cmdline = "xcrun -sdk macosx metal -c "
+        cmdline = "xcrun -sdk " + metal_platform + " metal -c "
         cmdline += temp_file_and_path + " "
         cmdline += "-o " + intermediate_file_and_path
         rv = subprocess.call(cmdline, shell=True)
 
         if rv == 0:
-            cmdline = "xcrun -sdk macosx metallib "
+            cmdline = "xcrun -sdk " + metal_platform + " metallib "
             cmdline += intermediate_file_and_path + " "
             cmdline += "-o " + output_file_and_path
             rv = subprocess.call(cmdline, shell=True)

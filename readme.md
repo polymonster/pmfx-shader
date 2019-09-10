@@ -26,11 +26,12 @@ commandline arguments:
         hlsl: 3_0, 4_0 (default), 5_0
         glsl: 330 (default), 420, 450
         spirv: 420 (default), 450
-        metal: (n/a)
+        metal: macosx (default), iphoneos
     -i <list of input files or directories separated by spaces>
     -o <output dir for shaders>
     -t <output dir for temp files>
     -h <output dir header file with shader structs>
+    -d (optional) generate debuggable shader
     -root_dir <directory> sets working directory here
     -source (optional) (generates platform source into -o no compilation)
     -stage_in <0, 1> (optional) [metal only] (default 1) 
