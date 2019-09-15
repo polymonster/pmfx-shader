@@ -1187,9 +1187,11 @@ def generate_output_assignment(_info, io_elements, local_var, suffix):
     for element in io_elements:
         var_name = element.split()[1]
         if var_name == "position":
-           assign_source += "gl_Position = " + local_var + "." + var_name + ";\n"
-           if _info.v_flip:
+            assign_source += "gl_Position = " + local_var + "." + var_name + ";\n"
+            if _info.v_flip:
                 assign_source += "gl_Position.y *= vFlip;\n"
+            if _info.shader_sub_platform == "spirv":
+                assign_source += "gl_Position.y *= -1.0;\n"
         else:
             assign_source += var_name + suffix + " = " + local_var + "." + var_name + ";\n"
     return assign_source
@@ -1300,7 +1302,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
                 shader_source += "out " + outputs[p] + "_ps_output;\n"
 
     if _info.v_flip:
-        shader_source += "uniform float vFlip;\n";
+        shader_source += "uniform float vFlip;\n"
         
     # global structs for access to inputs or outputs from any function
     shader_source += generate_global_io_struct(inputs, "struct " + _shader.input_struct_name)
