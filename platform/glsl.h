@@ -20,6 +20,13 @@ precision highp sampler2DArray;
 #define sample_texture_2dms( sampler_name, x, y, fragment ) texelFetch( sampler_name, ivec2( x, y ), fragment )
 #define texture_2dms( type, samples, sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DMS sampler_name
 #endif
+// compute
+#ifndef GLES
+#define texture2d_r( image_name, layout_index ) layout (binding = layout_index, rgba8) uniform readonly image2D image_name
+#define texture2d_w( image_name, layout_index ) layout (binding = layout_index, rgba8) uniform image2D image_name
+#define read_texture( image_name, coord ) imageLoad(image_name, coord)
+#define write_texture( image_name, value, coord ) imageStore(image_name, coord, value)
+#endif
 // sampler
 #define sample_texture( sampler_name, V ) texture( sampler_name, V )
 #define sample_texture_level( sampler_name, V, l ) textureLod( sampler_name, V, l )
