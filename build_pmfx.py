@@ -158,6 +158,7 @@ def get_platform_exe():
 def sanitize_file_path(path):
     path = path.replace("/", os.sep)
     path = path.replace("\\", os.sep)
+    path = path.replace("@", ":")
     return path
 
 
@@ -1324,12 +1325,14 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
 
     input_name = {
         "vs": "_vs_input",
-        "ps": "_vs_output"
+        "ps": "_vs_output",
+        "cs": "_cs_input"
     }
 
     output_name = {
         "vs": "_vs_output",
-        "ps": "_ps_output"
+        "ps": "_ps_output",
+        "cs": "_cs_output"
     }
 
     pre_assign = generate_input_assignment(inputs, _shader.input_struct_name, "_input", input_name[_shader.shader_type])
@@ -1358,12 +1361,14 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
 
     extension = {
         "vs": ".vsc",
-        "ps": ".psc"
+        "ps": ".psc",
+        "cs": ".csc"
     }
 
     temp_extension = {
         "vs": ".vert",
-        "ps": ".frag"
+        "ps": ".frag",
+        "cs": ".compute"
     }
 
     temp_path = os.path.join(_info.temp_dir, pmfx_name)
