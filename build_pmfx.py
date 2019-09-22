@@ -329,7 +329,6 @@ def check_dependencies(filename, included_files):
                     print(os.path.basename(sanitized_name) + " is out of date")
                     return False
             else:
-                print(file_list)
                 print(sanitized_name + " is not in list")
                 return False
         info_file.close()
