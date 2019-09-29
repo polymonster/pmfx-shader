@@ -26,7 +26,9 @@ commandline arguments:
         hlsl: 3_0, 4_0 (default), 5_0
         glsl: 330 (default), 420, 450
         spirv: 420 (default), 450
-        metal: macosx (default), iphoneos
+        metal: 2.0 (default)
+    -metal_sdk [metal only] <iphoneos, macosx>
+    -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)
     -i <list of input files or directories separated by spaces>
     -o <output dir for shaders>
     -t <output dir for temp files>
@@ -43,8 +45,34 @@ commandline arguments:
 
 ## Compiling Examples
 
+#### Metal for macOS
+
+```
+python3 build_pmfx.py -shader_platform metal -metal_sdk macosx -metal_min_os 10.14 -shader_version 2.2 -i examples -o output/bin -h output/structs -t output/temp
+```
+
+#### Metal for iOS
+
+```
+python3 build_pmfx.py -shader_platform metal -metal_sdk iphoneos -metal_min_os 0.9 -shader_version 2.2 -i examples -o output/bin -h output/structs -t output/temp
+```
+
+#### SPIR-V for Vulkan
+
 ```
 python3 build_pmfx.py -shader_platform spirv -i examples -o output/bin -h output/structs -t output/temp
+```
+
+#### HLSL for Direct3D11
+
+```
+python3 build_pmfx.py -shader_platform hlsl -shader_version 4_0 -i examples -o output/bin -h output/structs -t output/temp
+```
+
+#### GLSL
+
+```
+python3 build_pmfx.py -shader_platform glsl -shader_version 330 -i examples -o output/bin -h output/structs -t output/temp
 ```
 
 ## Features
