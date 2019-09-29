@@ -1,0 +1,4534 @@
+{
+    "files": [
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/build_pmfx.py",
+            "timestamp": 1569760483.5740423
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/platform/pmfx.h",
+            "timestamp": 1568307119.8841574
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/platform/glsl.h",
+            "timestamp": 1568721939.2198005
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/examples/pmfx_utility.pmfx",
+            "timestamp": 1562593871.0840645
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/examples/libs/lighting.pmfx",
+            "timestamp": 1562593871.082751
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/examples/libs/skinning.pmfx",
+            "timestamp": 1562593871.0834565
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/examples/libs/globals.pmfx",
+            "timestamp": 1562593871.0825512
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/examples/libs/maths.pmfx",
+            "timestamp": 1562593871.0829391
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/examples/libs/sdf.pmfx",
+            "timestamp": 1562593871.0831895
+        }
+    ],
+    "techniques": [
+        {
+            "vs": "vs_main",
+            "ps": "ps_constant_colour",
+            "name": "constant_colour",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_pos",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 44
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 56
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 68
+                }
+            ],
+            "vs_file": "constant_colour.vsc",
+            "ps_file": "constant_colour.psc",
+            "cs_file": "constant_colour.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main",
+            "ps": "ps_diffuse",
+            "name": "diffuse",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_pos",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 44
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 56
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 68
+                }
+            ],
+            "vs_file": "diffuse.vsc",
+            "ps_file": "diffuse.psc",
+            "cs_file": "diffuse.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main",
+            "ps": "ps_vertex_normals",
+            "name": "vertex_normals",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_pos",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 44
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 56
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 68
+                }
+            ],
+            "vs_file": "vertex_normals.vsc",
+            "ps_file": "vertex_normals.psc",
+            "cs_file": "vertex_normals.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main",
+            "ps": "ps_vertex_tangents",
+            "name": "vertex_tangents",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_pos",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 44
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 56
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 68
+                }
+            ],
+            "vs_file": "vertex_tangents.vsc",
+            "ps_file": "vertex_tangents.psc",
+            "cs_file": "vertex_tangents.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main",
+            "ps": "ps_vertex_bitangents",
+            "name": "vertex_bitangents",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_pos",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 44
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 56
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 68
+                }
+            ],
+            "vs_file": "vertex_bitangents.vsc",
+            "ps_file": "vertex_bitangents.psc",
+            "cs_file": "vertex_bitangents.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main",
+            "ps": "ps_texcoord_0",
+            "name": "texcoord_0",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_pos",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 44
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 56
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 68
+                }
+            ],
+            "vs_file": "texcoord_0.vsc",
+            "ps_file": "texcoord_0.psc",
+            "cs_file": "texcoord_0.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main",
+            "ps": "ps_texcoord_1",
+            "name": "texcoord_1",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_pos",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 44
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 56
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 68
+                }
+            ],
+            "vs_file": "texcoord_1.vsc",
+            "ps_file": "texcoord_1.psc",
+            "cs_file": "texcoord_1.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main_skinned_debug",
+            "ps": "ps_skinning_debug",
+            "defines": [
+                "SKINNED"
+            ],
+            "constants": {
+                "index_range": {
+                    "type": "float",
+                    "widget": "slider",
+                    "min": 0,
+                    "max": 1000,
+                    "default": 1.0,
+                    "offset": 0,
+                    "num_elements": 1
+                }
+            },
+            "permutations": {
+                "WEIGHTS": {
+                    "val": 2,
+                    "type": "checkbox"
+                }
+            },
+            "constants_used_bytes": 4,
+            "constants_size_bytes": 16,
+            "name": "skinning_debug",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "material_data",
+                    "location": 7
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                },
+                {
+                    "name": "blend_indices",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 80
+                },
+                {
+                    "name": "blend_weights",
+                    "semantic_index": 5,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 96
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "debug1",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "debug2",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                }
+            ],
+            "vs_file": "skinning_debug.vsc",
+            "ps_file": "skinning_debug.psc",
+            "cs_file": "skinning_debug.csc",
+            "permutation_id": 0,
+            "permutation_option_mask": 2
+        },
+        {
+            "vs": "vs_main_skinned_debug",
+            "ps": "ps_skinning_debug",
+            "defines": [
+                "SKINNED"
+            ],
+            "constants": {
+                "index_range": {
+                    "type": "float",
+                    "widget": "slider",
+                    "min": 0,
+                    "max": 1000,
+                    "default": 1.0,
+                    "offset": 0,
+                    "num_elements": 1
+                }
+            },
+            "permutations": {
+                "WEIGHTS": {
+                    "val": 2,
+                    "type": "checkbox"
+                }
+            },
+            "constants_used_bytes": 4,
+            "constants_size_bytes": 16,
+            "name": "skinning_debug",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "material_data",
+                    "location": 7
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                },
+                {
+                    "name": "blend_indices",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 80
+                },
+                {
+                    "name": "blend_weights",
+                    "semantic_index": 5,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 96
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "debug1",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "debug2",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                }
+            ],
+            "vs_file": "skinning_debug__2__.vsc",
+            "ps_file": "skinning_debug__2__.psc",
+            "cs_file": "skinning_debug__2__.csc",
+            "permutation_id": 2,
+            "permutation_option_mask": 2
+        },
+        {
+            "vs": "vs_main",
+            "ps": "ps_cubemapped",
+            "name": "cubemap",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_pos",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 44
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 56
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 68
+                }
+            ],
+            "vs_file": "cubemap.vsc",
+            "ps_file": "cubemap.psc",
+            "cs_file": "cubemap.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main",
+            "ps": "ps_cubemapped",
+            "name": "skybox",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_pos",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 44
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 56
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 68
+                }
+            ],
+            "vs_file": "skybox.vsc",
+            "ps_file": "skybox.psc",
+            "cs_file": "skybox.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main",
+            "ps": "ps_glass",
+            "name": "glass",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_pos",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 44
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 56
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 68
+                }
+            ],
+            "vs_file": "glass.vsc",
+            "ps_file": "glass.psc",
+            "cs_file": "glass.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main_volume_texture",
+            "ps": "ps_volume_texture",
+            "name": "volume_texture",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_pos",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 44
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 56
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 68
+                }
+            ],
+            "vs_file": "volume_texture.vsc",
+            "ps_file": "volume_texture.psc",
+            "cs_file": "volume_texture.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main_volume_texture",
+            "ps": "ps_volume_sdf",
+            "name": "volume_sdf",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_pos",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 44
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 56
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 68
+                }
+            ],
+            "vs_file": "volume_sdf.vsc",
+            "ps_file": "volume_sdf.psc",
+            "cs_file": "volume_sdf.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main_volume_texture",
+            "ps": "ps_shadow_sdf",
+            "name": "shadow_sdf",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_pos",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 44
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 56
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 68
+                }
+            ],
+            "vs_file": "shadow_sdf.vsc",
+            "ps_file": "shadow_sdf.psc",
+            "cs_file": "shadow_sdf.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_picking",
+            "ps": "ps_picking",
+            "permutations": {
+                "SKINNED": {
+                    "val": 2147483648,
+                    "type": "checkbox"
+                },
+                "INSTANCED": {
+                    "val": 1073741824,
+                    "type": "checkbox"
+                }
+            },
+            "name": "picking",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "index",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "picking.vsc",
+            "ps_file": "picking.psc",
+            "cs_file": "picking.csc",
+            "permutation_id": 0,
+            "permutation_option_mask": 3221225472
+        },
+        {
+            "vs": "vs_picking",
+            "ps": "ps_picking",
+            "permutations": {
+                "SKINNED": {
+                    "val": 2147483648,
+                    "type": "checkbox"
+                },
+                "INSTANCED": {
+                    "val": 1073741824,
+                    "type": "checkbox"
+                }
+            },
+            "name": "picking",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                },
+                {
+                    "name": "blend_indices",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 80
+                },
+                {
+                    "name": "blend_weights",
+                    "semantic_index": 5,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 96
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "index",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "picking__2147483648__.vsc",
+            "ps_file": "picking__2147483648__.psc",
+            "cs_file": "picking__2147483648__.csc",
+            "permutation_id": 2147483648,
+            "permutation_option_mask": 3221225472
+        },
+        {
+            "vs": "vs_picking",
+            "ps": "ps_picking",
+            "permutations": {
+                "SKINNED": {
+                    "val": 2147483648,
+                    "type": "checkbox"
+                },
+                "INSTANCED": {
+                    "val": 1073741824,
+                    "type": "checkbox"
+                }
+            },
+            "name": "picking",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [
+                {
+                    "name": "world_matrix_0",
+                    "semantic_index": 6,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_matrix_1",
+                    "semantic_index": 7,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "world_matrix_2",
+                    "semantic_index": 8,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "world_matrix_3",
+                    "semantic_index": 9,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "user_data",
+                    "semantic_index": 10,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                },
+                {
+                    "name": "user_data2",
+                    "semantic_index": 11,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 80
+                }
+            ],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "index",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "picking__1073741824__.vsc",
+            "ps_file": "picking__1073741824__.psc",
+            "cs_file": "picking__1073741824__.csc",
+            "permutation_id": 1073741824,
+            "permutation_option_mask": 3221225472
+        },
+        {
+            "vs": "vs_picking",
+            "ps": "ps_picking",
+            "permutations": {
+                "SKINNED": {
+                    "val": 2147483648,
+                    "type": "checkbox"
+                },
+                "INSTANCED": {
+                    "val": 1073741824,
+                    "type": "checkbox"
+                }
+            },
+            "name": "picking",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                },
+                {
+                    "name": "blend_indices",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 80
+                },
+                {
+                    "name": "blend_weights",
+                    "semantic_index": 5,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 96
+                }
+            ],
+            "instance_inputs": [
+                {
+                    "name": "world_matrix_0",
+                    "semantic_index": 6,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_matrix_1",
+                    "semantic_index": 7,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "world_matrix_2",
+                    "semantic_index": 8,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "world_matrix_3",
+                    "semantic_index": 9,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "user_data",
+                    "semantic_index": 10,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                },
+                {
+                    "name": "user_data2",
+                    "semantic_index": 11,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 80
+                }
+            ],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "index",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "picking__3221225472__.vsc",
+            "ps_file": "picking__3221225472__.psc",
+            "cs_file": "picking__3221225472__.csc",
+            "permutation_id": 3221225472,
+            "permutation_option_mask": 3221225472
+        },
+        {
+            "vs": "vs_main",
+            "ps": "ps_diffuse",
+            "name": "volume_raster_albedo",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_pos",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 44
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 56
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 68
+                }
+            ],
+            "vs_file": "volume_raster_albedo.vsc",
+            "ps_file": "volume_raster_albedo.psc",
+            "cs_file": "volume_raster_albedo.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main",
+            "ps": "ps_area_light_texture",
+            "name": "area_light_texture",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_pos",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 44
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 56
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 68
+                }
+            ],
+            "vs_file": "area_light_texture.vsc",
+            "ps_file": "area_light_texture.psc",
+            "cs_file": "area_light_texture.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main",
+            "ps": "ps_area_light_colour",
+            "name": "area_light_colour",
+            "texture_sampler_bindings": [
+                {
+                    "name": "diffuse_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "normal_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "specular_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "cubemap_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 3
+                },
+                {
+                    "name": "volume_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 4
+                },
+                {
+                    "name": "sdf_volume",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 14
+                },
+                {
+                    "name": "area_light_textures",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 11
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "skinning_info",
+                    "location": 2
+                },
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 48
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 64
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "world_pos",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "normal",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 32
+                },
+                {
+                    "name": "tangent",
+                    "semantic_index": 2,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 44
+                },
+                {
+                    "name": "bitangent",
+                    "semantic_index": 3,
+                    "semantic_id": 2,
+                    "size": 12,
+                    "element_size": 4,
+                    "num_elements": 3,
+                    "offset": 56
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 4,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 68
+                }
+            ],
+            "vs_file": "area_light_colour.vsc",
+            "ps_file": "area_light_colour.psc",
+            "cs_file": "area_light_colour.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        }
+    ]
+}

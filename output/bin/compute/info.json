@@ -1,0 +1,21 @@
+{
+    "files": [
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/build_pmfx.py",
+            "timestamp": 1569760551.9147303
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/platform/pmfx.h",
+            "timestamp": 1568307119.8841574
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/platform/glsl.h",
+            "timestamp": 1568721939.2198005
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/examples/compute.pmfx",
+            "timestamp": 1562593871.0805233
+        }
+    ],
+    "techniques": []
+}

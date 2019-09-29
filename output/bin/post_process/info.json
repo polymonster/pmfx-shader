@@ -1,0 +1,2372 @@
+{
+    "files": [
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/build_pmfx.py",
+            "timestamp": 1569760551.9147303
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/platform/pmfx.h",
+            "timestamp": 1568307119.8841574
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/platform/glsl.h",
+            "timestamp": 1568721939.2198005
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/examples/post_process.pmfx",
+            "timestamp": 1562593871.0846329
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/examples/libs/globals.pmfx",
+            "timestamp": 1562593871.0825512
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/examples/libs/maths.pmfx",
+            "timestamp": 1562593871.0829391
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/examples/libs/lighting.pmfx",
+            "timestamp": 1562593871.082751
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/examples/ray_march.pmfx",
+            "timestamp": 1562593871.0849805
+        }
+    ],
+    "techniques": [
+        {
+            "vs": "vs_ndc_quad",
+            "ps": "ps_blit",
+            "name": "blit",
+            "texture_sampler_bindings": [
+                {
+                    "name": "src_texture_0",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "src_texture_1",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "src_texture_2",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "src_texture_3",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 3
+                },
+                {
+                    "name": "src_texture_4",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 4
+                },
+                {
+                    "name": "src_texture_5",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 5
+                },
+                {
+                    "name": "src_texture_6",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 6
+                },
+                {
+                    "name": "src_texture_7",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 7
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "src_info",
+                    "location": 10
+                },
+                {
+                    "name": "filter_kernel",
+                    "location": 2
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "blit.vsc",
+            "ps_file": "blit.psc",
+            "cs_file": "blit.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_ndc_quad",
+            "ps": "ps_blit_rgb",
+            "name": "blit_rgb",
+            "texture_sampler_bindings": [
+                {
+                    "name": "src_texture_0",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "src_texture_1",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "src_texture_2",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "src_texture_3",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 3
+                },
+                {
+                    "name": "src_texture_4",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 4
+                },
+                {
+                    "name": "src_texture_5",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 5
+                },
+                {
+                    "name": "src_texture_6",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 6
+                },
+                {
+                    "name": "src_texture_7",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 7
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "src_info",
+                    "location": 10
+                },
+                {
+                    "name": "filter_kernel",
+                    "location": 2
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "blit_rgb.vsc",
+            "ps_file": "blit_rgb.psc",
+            "cs_file": "blit_rgb.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_ndc_quad",
+            "ps": "ps_blit_depth",
+            "name": "blit_depth",
+            "texture_sampler_bindings": [
+                {
+                    "name": "src_texture_0",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "src_texture_1",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "src_texture_2",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "src_texture_3",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 3
+                },
+                {
+                    "name": "src_texture_4",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 4
+                },
+                {
+                    "name": "src_texture_5",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 5
+                },
+                {
+                    "name": "src_texture_6",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 6
+                },
+                {
+                    "name": "src_texture_7",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 7
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "src_info",
+                    "location": 10
+                },
+                {
+                    "name": "filter_kernel",
+                    "location": 2
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "blit_depth.vsc",
+            "ps_file": "blit_depth.psc",
+            "cs_file": "blit_depth.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_ndc_quad",
+            "ps": "ps_blit_colour_depth",
+            "name": "blit_colour_depth",
+            "texture_sampler_bindings": [
+                {
+                    "name": "src_texture_0",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "src_texture_1",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "src_texture_2",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "src_texture_3",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 3
+                },
+                {
+                    "name": "src_texture_4",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 4
+                },
+                {
+                    "name": "src_texture_5",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 5
+                },
+                {
+                    "name": "src_texture_6",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 6
+                },
+                {
+                    "name": "src_texture_7",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 7
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "src_info",
+                    "location": 10
+                },
+                {
+                    "name": "filter_kernel",
+                    "location": 2
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "blit_colour_depth.vsc",
+            "ps_file": "blit_colour_depth.psc",
+            "cs_file": "blit_colour_depth.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_ndc_quad",
+            "ps": "ps_debug",
+            "name": "debug",
+            "texture_sampler_bindings": [
+                {
+                    "name": "src_texture_0",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "src_texture_1",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "src_texture_2",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "src_texture_3",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 3
+                },
+                {
+                    "name": "src_texture_4",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 4
+                },
+                {
+                    "name": "src_texture_5",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 5
+                },
+                {
+                    "name": "src_texture_6",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 6
+                },
+                {
+                    "name": "src_texture_7",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 7
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "src_info",
+                    "location": 10
+                },
+                {
+                    "name": "filter_kernel",
+                    "location": 2
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "debug.vsc",
+            "ps_file": "debug.psc",
+            "cs_file": "debug.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_ndc_quad",
+            "ps": "ps_colour_lut",
+            "texture_samplers": {
+                "lookup_texture": {
+                    "type": "texture_2d",
+                    "unit": 8,
+                    "shader": "ps",
+                    "sampler": "clamp_linear",
+                    "default": "data/textures/luts/identity.dds"
+                }
+            },
+            "name": "colour_lut",
+            "texture_sampler_bindings": [
+                {
+                    "name": "src_texture_0",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "src_texture_1",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "src_texture_2",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "src_texture_3",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 3
+                },
+                {
+                    "name": "src_texture_4",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 4
+                },
+                {
+                    "name": "src_texture_5",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 5
+                },
+                {
+                    "name": "src_texture_6",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 6
+                },
+                {
+                    "name": "src_texture_7",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 7
+                },
+                {
+                    "name": "lookup_texture",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 8
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "src_info",
+                    "location": 10
+                },
+                {
+                    "name": "filter_kernel",
+                    "location": 2
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "colour_lut.vsc",
+            "ps_file": "colour_lut.psc",
+            "cs_file": "colour_lut.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_ndc_quad",
+            "ps": "ps_high_pass",
+            "constants": {
+                "threshold": {
+                    "type": "float",
+                    "widget": "slider",
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.5,
+                    "offset": 0,
+                    "num_elements": 1
+                },
+                "smoothness": {
+                    "type": "float",
+                    "widget": "slider",
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.5,
+                    "offset": 1,
+                    "num_elements": 1
+                }
+            },
+            "constants_used_bytes": 8,
+            "constants_size_bytes": 16,
+            "name": "high_pass",
+            "texture_sampler_bindings": [
+                {
+                    "name": "src_texture_0",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "src_texture_1",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "src_texture_2",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "src_texture_3",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 3
+                },
+                {
+                    "name": "src_texture_4",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 4
+                },
+                {
+                    "name": "src_texture_5",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 5
+                },
+                {
+                    "name": "src_texture_6",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 6
+                },
+                {
+                    "name": "src_texture_7",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 7
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "src_info",
+                    "location": 10
+                },
+                {
+                    "name": "filter_kernel",
+                    "location": 2
+                },
+                {
+                    "name": "material_data",
+                    "location": 7
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "high_pass.vsc",
+            "ps_file": "high_pass.psc",
+            "cs_file": "high_pass.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_ndc_quad",
+            "ps": "ps_filter",
+            "name": "filter",
+            "texture_sampler_bindings": [
+                {
+                    "name": "src_texture_0",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "src_texture_1",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "src_texture_2",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "src_texture_3",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 3
+                },
+                {
+                    "name": "src_texture_4",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 4
+                },
+                {
+                    "name": "src_texture_5",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 5
+                },
+                {
+                    "name": "src_texture_6",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 6
+                },
+                {
+                    "name": "src_texture_7",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 7
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "src_info",
+                    "location": 10
+                },
+                {
+                    "name": "filter_kernel",
+                    "location": 2
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "filter.vsc",
+            "ps_file": "filter.psc",
+            "cs_file": "filter.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_ndc_quad",
+            "ps": "ps_downsample_2x2",
+            "name": "downsample_2x2",
+            "texture_sampler_bindings": [
+                {
+                    "name": "src_texture_0",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "src_texture_1",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "src_texture_2",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "src_texture_3",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 3
+                },
+                {
+                    "name": "src_texture_4",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 4
+                },
+                {
+                    "name": "src_texture_5",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 5
+                },
+                {
+                    "name": "src_texture_6",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 6
+                },
+                {
+                    "name": "src_texture_7",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 7
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "src_info",
+                    "location": 10
+                },
+                {
+                    "name": "filter_kernel",
+                    "location": 2
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "downsample_2x2.vsc",
+            "ps_file": "downsample_2x2.psc",
+            "cs_file": "downsample_2x2.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_ndc_quad",
+            "ps": "ps_downsample_average",
+            "name": "downsample_average",
+            "texture_sampler_bindings": [
+                {
+                    "name": "src_texture_0",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "src_texture_1",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "src_texture_2",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "src_texture_3",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 3
+                },
+                {
+                    "name": "src_texture_4",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 4
+                },
+                {
+                    "name": "src_texture_5",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 5
+                },
+                {
+                    "name": "src_texture_6",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 6
+                },
+                {
+                    "name": "src_texture_7",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 7
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "src_info",
+                    "location": 10
+                },
+                {
+                    "name": "filter_kernel",
+                    "location": 2
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "downsample_average.vsc",
+            "ps_file": "downsample_average.psc",
+            "cs_file": "downsample_average.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_ndc_quad",
+            "ps": "ps_bloom_upsample",
+            "constants": {
+                "intensity": {
+                    "type": "float",
+                    "widget": "slider",
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.5,
+                    "offset": 0,
+                    "num_elements": 1
+                }
+            },
+            "constants_used_bytes": 4,
+            "constants_size_bytes": 16,
+            "name": "bloom_upsample",
+            "texture_sampler_bindings": [
+                {
+                    "name": "src_texture_0",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "src_texture_1",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "src_texture_2",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "src_texture_3",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 3
+                },
+                {
+                    "name": "src_texture_4",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 4
+                },
+                {
+                    "name": "src_texture_5",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 5
+                },
+                {
+                    "name": "src_texture_6",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 6
+                },
+                {
+                    "name": "src_texture_7",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 7
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "src_info",
+                    "location": 10
+                },
+                {
+                    "name": "filter_kernel",
+                    "location": 2
+                },
+                {
+                    "name": "material_data",
+                    "location": 7
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "bloom_upsample.vsc",
+            "ps_file": "bloom_upsample.psc",
+            "cs_file": "bloom_upsample.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_ndc_quad",
+            "ps": "ps_depth_of_field",
+            "constants": {
+                "focus_centre": {
+                    "type": "float",
+                    "widget": "slider",
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.5,
+                    "offset": 0,
+                    "num_elements": 1
+                },
+                "centre_range": {
+                    "type": "float",
+                    "widget": "input",
+                    "default": 100,
+                    "offset": 1,
+                    "num_elements": 1
+                },
+                "focus_width": {
+                    "type": "float",
+                    "widget": "slider",
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.5,
+                    "offset": 2,
+                    "num_elements": 1
+                },
+                "width_range": {
+                    "type": "float",
+                    "widget": "input",
+                    "default": 20,
+                    "offset": 3,
+                    "num_elements": 1
+                }
+            },
+            "constants_used_bytes": 16,
+            "constants_size_bytes": 16,
+            "name": "depth_of_field",
+            "texture_sampler_bindings": [
+                {
+                    "name": "src_texture_0",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "src_texture_1",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "src_texture_2",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "src_texture_3",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 3
+                },
+                {
+                    "name": "src_texture_4",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 4
+                },
+                {
+                    "name": "src_texture_5",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 5
+                },
+                {
+                    "name": "src_texture_6",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 6
+                },
+                {
+                    "name": "src_texture_7",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 7
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "src_info",
+                    "location": 10
+                },
+                {
+                    "name": "filter_kernel",
+                    "location": 2
+                },
+                {
+                    "name": "material_data",
+                    "location": 7
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "depth_of_field.vsc",
+            "ps_file": "depth_of_field.psc",
+            "cs_file": "depth_of_field.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_ndc_quad",
+            "ps": "ps_menger",
+            "name": "menger_sponge",
+            "texture_sampler_bindings": [
+                {
+                    "name": "src_texture_0",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "src_texture_1",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "src_texture_2",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "src_texture_3",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 3
+                },
+                {
+                    "name": "src_texture_4",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 4
+                },
+                {
+                    "name": "src_texture_5",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 5
+                },
+                {
+                    "name": "src_texture_6",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 6
+                },
+                {
+                    "name": "src_texture_7",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 7
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "src_info",
+                    "location": 10
+                },
+                {
+                    "name": "filter_kernel",
+                    "location": 2
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "menger_sponge.vsc",
+            "ps_file": "menger_sponge.psc",
+            "cs_file": "menger_sponge.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_ndc_quad",
+            "ps": "ps_crt",
+            "name": "crt",
+            "texture_sampler_bindings": [
+                {
+                    "name": "src_texture_0",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "src_texture_1",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "src_texture_2",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "src_texture_3",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 3
+                },
+                {
+                    "name": "src_texture_4",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 4
+                },
+                {
+                    "name": "src_texture_5",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 5
+                },
+                {
+                    "name": "src_texture_6",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 6
+                },
+                {
+                    "name": "src_texture_7",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 7
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "src_info",
+                    "location": 10
+                },
+                {
+                    "name": "filter_kernel",
+                    "location": 2
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "crt.vsc",
+            "ps_file": "crt.psc",
+            "cs_file": "crt.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_ndc_quad",
+            "ps": "ps_sss_reflectance",
+            "name": "sss_reflectance",
+            "texture_sampler_bindings": [
+                {
+                    "name": "src_texture_0",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "src_texture_1",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 1
+                },
+                {
+                    "name": "src_texture_2",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 2
+                },
+                {
+                    "name": "src_texture_3",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 3
+                },
+                {
+                    "name": "src_texture_4",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 4
+                },
+                {
+                    "name": "src_texture_5",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 5
+                },
+                {
+                    "name": "src_texture_6",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 6
+                },
+                {
+                    "name": "src_texture_7",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 7
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "src_info",
+                    "location": 10
+                },
+                {
+                    "name": "filter_kernel",
+                    "location": 2
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "texcoord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "vs_file": "sss_reflectance.vsc",
+            "ps_file": "sss_reflectance.psc",
+            "cs_file": "sss_reflectance.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        }
+    ]
+}

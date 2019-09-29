@@ -1,0 +1,108 @@
+{
+    "files": [
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/build_pmfx.py",
+            "timestamp": 1569760483.5740423
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/platform/pmfx.h",
+            "timestamp": 1568307119.8841574
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/platform/glsl.h",
+            "timestamp": 1568721939.2198005
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/examples/imgui.pmfx",
+            "timestamp": 1562593871.0815494
+        }
+    ],
+    "techniques": [
+        {
+            "vs": "vs_main",
+            "ps": "ps_main",
+            "name": "default",
+            "texture_sampler_bindings": [
+                {
+                    "name": "tex",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_vs",
+                    "location": 1
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 0
+                },
+                {
+                    "name": "tex_coord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 8
+                },
+                {
+                    "name": "colour",
+                    "semantic_index": 0,
+                    "semantic_id": 6,
+                    "size": 4,
+                    "element_size": 1,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "colour",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "tex_coord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 32
+                }
+            ],
+            "vs_file": "default.vsc",
+            "ps_file": "default.psc",
+            "cs_file": "default.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        }
+    ]
+}

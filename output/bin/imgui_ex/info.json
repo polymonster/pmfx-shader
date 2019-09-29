@@ -1,0 +1,725 @@
+{
+    "files": [
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/build_pmfx.py",
+            "timestamp": 1569760551.9147303
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/platform/pmfx.h",
+            "timestamp": 1568307119.8841574
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/platform/glsl.h",
+            "timestamp": 1568721939.2198005
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/examples/imgui_ex.pmfx",
+            "timestamp": 1562593871.0817451
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/examples/ray_march.pmfx",
+            "timestamp": 1562593871.0849805
+        },
+        {
+            "name": "/Users/alex.dixon/dev/erica_mobile/fwtech/third_party/pmfx-shader/examples/libs/globals.pmfx",
+            "timestamp": 1562593871.0825512
+        }
+    ],
+    "techniques": [
+        {
+            "vs": "vs_main",
+            "ps": "ps_tex_cube",
+            "name": "tex_cube",
+            "texture_sampler_bindings": [
+                {
+                    "name": "tex",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "tex_cube",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 0
+                },
+                {
+                    "name": "tex_3d",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 0
+                },
+                {
+                    "name": "tex_array",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 0
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "per_pass_vs",
+                    "location": 1
+                },
+                {
+                    "name": "image_ex",
+                    "location": 7
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 0
+                },
+                {
+                    "name": "tex_coord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 8
+                },
+                {
+                    "name": "colour",
+                    "semantic_index": 0,
+                    "semantic_id": 6,
+                    "size": 4,
+                    "element_size": 1,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "colour",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "tex_coord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 32
+                }
+            ],
+            "vs_file": "tex_cube.vsc",
+            "ps_file": "tex_cube.psc",
+            "cs_file": "tex_cube.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main",
+            "ps": "ps_tex_volume",
+            "name": "tex_volume",
+            "texture_sampler_bindings": [
+                {
+                    "name": "tex",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "tex_cube",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 0
+                },
+                {
+                    "name": "tex_3d",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 0
+                },
+                {
+                    "name": "tex_array",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 0
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "per_pass_vs",
+                    "location": 1
+                },
+                {
+                    "name": "image_ex",
+                    "location": 7
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 0
+                },
+                {
+                    "name": "tex_coord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 8
+                },
+                {
+                    "name": "colour",
+                    "semantic_index": 0,
+                    "semantic_id": 6,
+                    "size": 4,
+                    "element_size": 1,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "colour",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "tex_coord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 32
+                }
+            ],
+            "vs_file": "tex_volume.vsc",
+            "ps_file": "tex_volume.psc",
+            "cs_file": "tex_volume.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main",
+            "ps": "ps_tex_volume_sdf",
+            "name": "tex_volume_sdf",
+            "texture_sampler_bindings": [
+                {
+                    "name": "tex",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "tex_cube",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 0
+                },
+                {
+                    "name": "tex_3d",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 0
+                },
+                {
+                    "name": "tex_array",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 0
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "per_pass_vs",
+                    "location": 1
+                },
+                {
+                    "name": "image_ex",
+                    "location": 7
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 0
+                },
+                {
+                    "name": "tex_coord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 8
+                },
+                {
+                    "name": "colour",
+                    "semantic_index": 0,
+                    "semantic_id": 6,
+                    "size": 4,
+                    "element_size": 1,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "colour",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "tex_coord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 32
+                }
+            ],
+            "vs_file": "tex_volume_sdf.vsc",
+            "ps_file": "tex_volume_sdf.psc",
+            "cs_file": "tex_volume_sdf.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main",
+            "ps": "ps_tex_2d",
+            "name": "tex_2d",
+            "texture_sampler_bindings": [
+                {
+                    "name": "tex",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "tex_cube",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 0
+                },
+                {
+                    "name": "tex_3d",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 0
+                },
+                {
+                    "name": "tex_array",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 0
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "per_pass_vs",
+                    "location": 1
+                },
+                {
+                    "name": "image_ex",
+                    "location": 7
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 0
+                },
+                {
+                    "name": "tex_coord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 8
+                },
+                {
+                    "name": "colour",
+                    "semantic_index": 0,
+                    "semantic_id": 6,
+                    "size": 4,
+                    "element_size": 1,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "colour",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "tex_coord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 32
+                }
+            ],
+            "vs_file": "tex_2d.vsc",
+            "ps_file": "tex_2d.psc",
+            "cs_file": "tex_2d.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        },
+        {
+            "vs": "vs_main",
+            "ps": "ps_tex_2d_array",
+            "name": "tex_2d_array",
+            "texture_sampler_bindings": [
+                {
+                    "name": "tex",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                },
+                {
+                    "name": "tex_cube",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_cube",
+                    "unit": 0
+                },
+                {
+                    "name": "tex_3d",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_3d",
+                    "unit": 0
+                },
+                {
+                    "name": "tex_array",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d_array",
+                    "unit": 0
+                }
+            ],
+            "structured_buffers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_view",
+                    "location": 0
+                },
+                {
+                    "name": "per_draw_call",
+                    "location": 1
+                },
+                {
+                    "name": "per_pass_lights",
+                    "location": 3
+                },
+                {
+                    "name": "per_pass_shadow",
+                    "location": 4
+                },
+                {
+                    "name": "per_pass_shadow_distance_fields",
+                    "location": 5
+                },
+                {
+                    "name": "per_pass_area_lights",
+                    "location": 6
+                },
+                {
+                    "name": "cbuffer_single_light",
+                    "location": 10
+                },
+                {
+                    "name": "per_pass_vs",
+                    "location": 1
+                },
+                {
+                    "name": "image_ex",
+                    "location": 7
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 0
+                },
+                {
+                    "name": "tex_coord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 8
+                },
+                {
+                    "name": "colour",
+                    "semantic_index": 0,
+                    "semantic_id": 6,
+                    "size": 4,
+                    "element_size": 1,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "colour",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "tex_coord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 32
+                }
+            ],
+            "vs_file": "tex_2d_array.vsc",
+            "ps_file": "tex_2d_array.psc",
+            "cs_file": "tex_2d_array.csc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        }
+    ]
+}

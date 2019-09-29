@@ -50,7 +50,7 @@ precision highp sampler2DArray;
 #define mul( A, B ) ((A) * (B))
 #define mul_tbn( A, B ) ((B) * (A))
 #define saturate( A ) (clamp( A, 0.0, 1.0 ))
-#define atan2( A, B ) (atan(B, A))
+#define atan2( A, B ) (atan(A, B))
 #define ddx dFdx
 #define ddy dFdy
 #define _pmfx_unroll

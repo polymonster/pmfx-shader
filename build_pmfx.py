@@ -11,7 +11,9 @@ import platform
 class build_info:
     shader_platform = ""                                                # hlsl, glsl, metal
     shader_sub_platform = ""                                            # gles
-    shader_version = ""                                                 # 4_0, 5_0 (hlsl), 330, 420 (glsl), macosx, iphoneos (metal)
+    shader_version = ""                                                 # 4_0, 5_0 (hlsl), 330, 420 (glsl), 1.1, 2.0 (metal)
+    metal_sdk  = ""                                                     # macosx, iphoneos
+    metal_min_os = ""                                                   # iOS (9.0 - 13.0), macOS (10.11 - 10.15)
     debug = False                                                       # generate shader with debug info
     inputs = []                                                         # array of input files or directories
     root_dir = ""                                                       # cwd dir to run from
@@ -111,6 +113,10 @@ def parse_args():
             _info.v_flip = True
         if sys.argv[i] == "-d":
             _info.debug = False
+        if sys.argv[i] == "-metal_min_os":
+            _info.metal_min_os = sys.argv[i+1]
+        if sys.argv[i] == "-metal_sdk":
+            _info.metal_sdk = sys.argv[i+1]
 
 
 
@@ -122,7 +128,9 @@ def display_help():
     print("        hlsl: 3_0, 4_0 (default), 5_0")
     print("        glsl: 330 (default), 420, 450")
     print("        spirv: 420 (default), 450")
-    print("        metal: macosx (default), iphoneos")
+    print("        metal: 2.0 (default)")
+    print("    -metal_sdk [metal only] <iphoneos, macosx>")
+    print("    -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)")
     print("    -i <list of input files or directories separated by spaces>")
     print("    -o <output dir for shaders>")
     print("    -t <output dir for temp files>")
@@ -1860,9 +1868,31 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
         return 0
     else:
 
-        metal_platform = "macosx"
+        # selection of metal sdk, version and min os version.
+        metal_sdk = "macosx"
+        if _info.metal_sdk != "":
+            metal_sdk = _info.metal_sdk
+
+        metal_min_os = ""
+        if metal_sdk == "macosx":
+            metal_min_os = "10.11"
+            if _info.metal_min_os != "":
+                metal_min_os = _info.metal_min_os
+            metal_min_os = "-mmacosx-version-min=" + metal_min_os
+        elif metal_sdk == "iphoneos":
+            metal_min_os = "9.0"
+            if _info.metal_min_os != "":
+                metal_min_os = _info.metal_min_os
+            metal_min_os = "-mios-version-min=" + metal_min_os
+
+        metal_version = "2.0"
         if _info.shader_version != "":
-            metal_platform = _info.shader_version
+            metal_version = _info.shader_version
+
+        if metal_sdk == "iphoneos":
+            metal_version = "-std=ios-metal" + metal_version
+        else:
+            metal_version = "-std=macos-metal" + metal_version
 
         temp_shader_source = open(temp_file_and_path, "w")
         temp_shader_source.write(shader_source)
@@ -1872,13 +1902,13 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
         intermediate_file_and_path = intermediate_file_and_path.replace(".vert", "_vert.air")
 
         # compile .air
-        cmdline = "xcrun -sdk " + metal_platform + " metal -c "
+        cmdline = "xcrun -sdk " + metal_sdk + " metal " + metal_min_os + " " + metal_version + " -c "
         cmdline += temp_file_and_path + " "
         cmdline += "-o " + intermediate_file_and_path
         rv = subprocess.call(cmdline, shell=True)
 
         if rv == 0:
-            cmdline = "xcrun -sdk " + metal_platform + " metallib "
+            cmdline = "xcrun -sdk " + metal_sdk + " metallib "
             cmdline += intermediate_file_and_path + " "
             cmdline += "-o " + output_file_and_path
             rv = subprocess.call(cmdline, shell=True)
