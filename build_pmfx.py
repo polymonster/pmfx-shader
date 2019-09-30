@@ -38,7 +38,7 @@ class pmfx_info:
     source = ""                                                         # source code of the entire shader +includes
 
 
-# info of pmfx technique permutation which is a combination of vs,ps or cs
+# info of pmfx technique permutation which is a combination of vs, ps or cs
 class technique_permutation_info:
     technique_name = ""                                                 # name of technique
     technique = ""                                                      # technique / permutation json
@@ -50,6 +50,7 @@ class technique_permutation_info:
     textures = []                                                       # technique / permutation textures
     shader = []                                                         # list of shaders, vs, ps or cs
     resource_decl = []                                                  # list of shader resources (textures / buffers)
+    threads = []                                                        # number of compute threads, x, y, z
 
 
 # info about a single vs, ps, or cs
@@ -166,6 +167,7 @@ def get_platform_exe():
 def sanitize_file_path(path):
     path = path.replace("/", os.sep)
     path = path.replace("\\", os.sep)
+    path = path.replace("@", ":")
     return path
 
 
@@ -1037,6 +1039,7 @@ def generate_single_shader(main_func, _tp):
     full_source = _si.functions_source + main
     _si.resource_decl = find_used_resources(full_source, _tp.resource_decl)
     _si.cbuffers = find_used_cbuffers(full_source, _tp.cbuffers)
+    _si.threads = _tp.threads
 
     return _si
 
@@ -1077,7 +1080,13 @@ def compile_hlsl(_info, pmfx_name, _tp, _shader):
     shader_source += _shader.resource_decl
     shader_source += _shader.functions_source
     if _shader.shader_type == "cs":
-        shader_source += "[numthreads(16, 16, 1)]"
+        shader_source += "[numthreads("
+        for i in range(0, 3):
+            shader_source += str(_tp.threads[i])
+            if i < 2:
+                shader_source += ", "
+        shader_source += ")]"
+
     shader_source += _shader.main_func_source
     shader_source = format_source(shader_source, 4)
 
@@ -1195,9 +1204,11 @@ def generate_output_assignment(_info, io_elements, local_var, suffix):
     for element in io_elements:
         var_name = element.split()[1]
         if var_name == "position":
-           assign_source += "gl_Position = " + local_var + "." + var_name + ";\n"
-           if _info.v_flip:
+            assign_source += "gl_Position = " + local_var + "." + var_name + ";\n"
+            if _info.v_flip:
                 assign_source += "gl_Position.y *= vFlip;\n"
+            if _info.shader_sub_platform == "spirv":
+                assign_source += "gl_Position.y *= -1.0;\n"
         else:
             assign_source += var_name + suffix + " = " + local_var + "." + var_name + ";\n"
     return assign_source
@@ -1308,15 +1319,16 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
                 shader_source += "out " + outputs[p] + "_ps_output;\n"
 
     if _info.v_flip:
-        shader_source += "uniform float vFlip;\n";
+        shader_source += "uniform float vFlip;\n"
         
-    # global structs for access to inputs or outputs from any function
-    shader_source += generate_global_io_struct(inputs, "struct " + _shader.input_struct_name)
-    if _shader.instance_input_struct_name:
-        if len(instance_inputs) > 0:
-            shader_source += generate_global_io_struct(instance_inputs, "struct " + _shader.instance_input_struct_name)
-    if len(outputs) > 0:
-        shader_source += generate_global_io_struct(outputs, "struct " + _shader.output_struct_name)
+    # global structs for access to inputs or outputs from any function in vs or ps
+    if _shader.shader_type != "cs":
+        shader_source += generate_global_io_struct(inputs, "struct " + _shader.input_struct_name)
+        if _shader.instance_input_struct_name:
+            if len(instance_inputs) > 0:
+                shader_source += generate_global_io_struct(instance_inputs, "struct " + _shader.instance_input_struct_name)
+        if len(outputs) > 0:
+            shader_source += generate_global_io_struct(outputs, "struct " + _shader.output_struct_name)
 
     shader_source += _tp.struct_decls
     shader_source += uniform_buffers
@@ -1330,26 +1342,39 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
 
     input_name = {
         "vs": "_vs_input",
-        "ps": "_vs_output"
+        "ps": "_vs_output",
+        "cs": "_cs_input"
     }
 
     output_name = {
         "vs": "_vs_output",
-        "ps": "_ps_output"
+        "ps": "_ps_output",
+        "cs": "_cs_output"
     }
 
-    pre_assign = generate_input_assignment(inputs, _shader.input_struct_name, "_input", input_name[_shader.shader_type])
-    if _shader.instance_input_struct_name:
-        if len(instance_inputs) > 0:
-            pre_assign += generate_input_assignment(instance_inputs,
-                                                    _shader.instance_input_struct_name, "instance_input", "_instance_input")
-    post_assign = generate_output_assignment(_info, outputs, "_output", output_name[_shader.shader_type])
+    if _shader.shader_type == "cs":
+        shader_source += "layout("
+        shader_source += "local_size_x = " + str(_tp.threads[0]) + ", "
+        shader_source += "local_size_y = " + str(_tp.threads[1]) + ", "
+        shader_source += "local_size_z = " + str(_tp.threads[2])
+        shader_source += ") in;\n"
+        shader_source += "void main()\n{\n"
+        shader_source += "ivec3 gid = ivec3(gl_GlobalInvocationID);\n"
+        shader_source += glsl_main
+    else:
+        # vs and ps need to assign in / out attributes to structs
+        pre_assign = generate_input_assignment(inputs, _shader.input_struct_name, "_input", input_name[_shader.shader_type])
+        if _shader.instance_input_struct_name:
+            if len(instance_inputs) > 0:
+                pre_assign += generate_input_assignment(instance_inputs,
+                                                        _shader.instance_input_struct_name, "instance_input", "_instance_input")
+        post_assign = generate_output_assignment(_info, outputs, "_output", output_name[_shader.shader_type])
 
-    shader_source += "void main()\n{\n"
-    shader_source += "\n" + pre_assign + "\n"
-    shader_source += glsl_main
-    shader_source += "\n" + post_assign + "\n"
-    shader_source += "}\n"
+        shader_source += "void main()\n{\n"
+        shader_source += "\n" + pre_assign + "\n"
+        shader_source += glsl_main
+        shader_source += "\n" + post_assign + "\n"
+        shader_source += "}\n"
 
     # condition source
     shader_source = replace_io_tokens(shader_source)
@@ -1364,12 +1389,14 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
 
     extension = {
         "vs": ".vsc",
-        "ps": ".psc"
+        "ps": ".psc",
+        "cs": ".csc"
     }
 
     temp_extension = {
         "vs": ".vert",
-        "ps": ".frag"
+        "ps": ".frag",
+        "cs": ".comp"
     }
 
     temp_path = os.path.join(_info.temp_dir, pmfx_name)
@@ -2130,24 +2157,20 @@ def parse_pmfx(file, root):
             _tp.permutation_options = permutation_options
 
             valid = True
-            shader_types = ["vs", "ps", "cs"]
-            for s in shader_types:
-                if s in _tp.technique.keys():
-                    if _info.shader_platform == "glsl":
-                        if s == "cs":
-                            print("[warning] compute shaders not implemented for platform: " + _info.shader_platform)
-                            valid = False
-
             _info.shader_version = default_shader_version
             if "supported_platforms" in _tp.technique:
                 sp = _tp.technique["supported_platforms"]
                 if _info.shader_platform not in sp:
+                    print(_tp.technique_name + " not supported on " + _info.shader_platform)
                     valid = False
                 else:
                     sv = sp[_info.shader_platform]
                     if "all" in sv:
                         pass
                     elif _info.shader_version not in sv:
+                        print(_tp.technique_name + " not supported on " +
+                              _info.shader_platform + " " + _info.shader_version +
+                              ", forcing to version " + sv[0])
                         # force shader version to specified
                         _info.shader_version = sv[0]
 
@@ -2193,6 +2216,13 @@ def parse_pmfx(file, root):
             _tp.struct_decls = ""
             for struct in struct_list:
                 _tp.struct_decls += struct + "\n"
+
+            # number of threads for cs
+            if "threads" in pmfx_json[technique]:
+                threads = pmfx_json[technique]["threads"]
+                _tp.threads = [1, 1, 1]
+                for i in range(0, len(threads)):
+                    _tp.threads[i] = threads[i]
 
             # generate single shader data
             shader_types = ["vs", "ps", "cs"]
