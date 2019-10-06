@@ -17,8 +17,8 @@
 // structured buffers
 #define structured_buffer_rw( type, name, index ) device type* name [[buffer(index)]]
 #define structured_buffer_rw_arg( type, name, index ) device type* name [[buffer(index)]]
-#define structured_buffer( type, name, index ) constant type& name [[buffer(index)]]
-#define structured_buffer_arg( type, name, index ) constant type& name [[buffer(index)]]
+#define structured_buffer( type, name, index ) constant type* name [[buffer(index)]]
+#define structured_buffer_arg( type, name, index ) constant type* name [[buffer(index)]]
 // sampler
 #define sample_texture( name, tc ) name.sample(sampler_##name, tc)
 #define sample_texture_2dms( name, x, y, fragment ) name.read(uint2(x, y), fragment)
