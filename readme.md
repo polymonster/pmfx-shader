@@ -5,12 +5,12 @@ Cross platform shader compilation, with output reflection info, c++ header with 
 
 This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/wiki/Pmfx) system found in [pmtech](https://github.com/polymonster/pmtech), it has been moved into a separate repository to be used with other projects, if you are interested to see how pmfx shaders are integrated please take a look [here](https://github.com/polymonster/pmtech).
 
-## Targets
+## Supported Targets
 
-- glsl 330, 420, 450.
-- SPIR-V.
-- hlsl 3_0, 4_0, 5_0.
-- metal.
+- HLSL Shader Model 3+
+- GLSL 330+
+- SPIR-V. (Vulkan, OpenGL)
+- Metal 1.0+ (macOS, iOS, tvOS) 
 
 ## Usage
 
