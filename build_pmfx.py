@@ -12,7 +12,7 @@ class build_info:
     shader_platform = ""                                                # hlsl, glsl, metal
     shader_sub_platform = ""                                            # gles
     shader_version = ""                                                 # 4_0, 5_0 (hlsl), 330, 420 (glsl), 1.1, 2.0 (metal)
-    metal_sdk  = ""                                                     # macosx, iphoneos
+    metal_sdk  = ""                                                     # macosx, iphoneos, appletvos
     metal_min_os = ""                                                   # iOS (9.0 - 13.0), macOS (10.11 - 10.15)
     debug = False                                                       # generate shader with debug info
     inputs = []                                                         # array of input files or directories
@@ -130,8 +130,8 @@ def display_help():
     print("        glsl: 330 (default), 420, 450")
     print("        spirv: 420 (default), 450")
     print("        metal: 2.0 (default)")
-    print("    -metal_sdk [metal only] <iphoneos, macosx>")
-    print("    -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)")
+    print("    -metal_sdk [metal only] <iphoneos, macosx, appletvos>")
+    print("    -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>")
     print("    -i <list of input files or directories separated by spaces>")
     print("    -o <output dir for shaders>")
     print("    -t <output dir for temp files>")
@@ -1895,11 +1895,17 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
         return 0
     else:
 
-        # selection of metal sdk, version and min os version.
+        # default to metal 2.0, but allow cmdline override
+        metal_version = "2.0"
+        if _info.shader_version != "":
+            metal_version = _info.shader_version
+
+        # selection of sdk, macos, ios, tvos
         metal_sdk = "macosx"
         if _info.metal_sdk != "":
             metal_sdk = _info.metal_sdk
 
+        # insert some defaults fo version min based on os
         metal_min_os = ""
         if metal_sdk == "macosx":
             metal_min_os = "10.11"
@@ -1911,12 +1917,14 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
             if _info.metal_min_os != "":
                 metal_min_os = _info.metal_min_os
             metal_min_os = "-mios-version-min=" + metal_min_os
+        elif metal_sdk == "appletvos":
+            metal_min_os = "13.0"
+            if _info.metal_min_os != "":
+                metal_min_os = _info.metal_min_os
+            metal_min_os = "-mtvos-version-min=" + metal_min_os
 
-        metal_version = "2.0"
-        if _info.shader_version != "":
-            metal_version = _info.shader_version
-
-        if metal_sdk == "iphoneos":
+        # finally set metal -std.
+        if metal_sdk == "iphoneos" or metal_sdk == "appletvos":
             metal_version = "-std=ios-metal" + metal_version
         else:
             metal_version = "-std=macos-metal" + metal_version

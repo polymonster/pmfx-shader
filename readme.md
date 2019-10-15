@@ -27,8 +27,8 @@ commandline arguments:
         glsl: 330 (default), 420, 450
         spirv: 420 (default), 450
         metal: 2.0 (default)
-    -metal_sdk [metal only] <iphoneos, macosx>
-    -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)
+    -metal_sdk [metal only] <iphoneos, macosx, appletvos>
+    -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>
     -i <list of input files or directories separated by spaces>
     -o <output dir for shaders>
     -t <output dir for temp files>
