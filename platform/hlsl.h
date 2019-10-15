@@ -11,7 +11,7 @@
 #define texture_2d_array( name, sampler_index ) Texture2DArray name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
 // structured buffer
 #define structured_buffer_rw( type, name, index ) RWStructuredBuffer<type> name : register(u##index);
-#define structured_buffer( type, name, index ) StructuredBuffer<type> name : register(u##index);
+#define structured_buffer( type, name, index ) StructuredBuffer<type> name : register(t##index);
 // sampler
 #define sample_texture_2dms( name, x, y, fragment ) name.Load( uint2(x, y), fragment )
 #define sample_texture( name, V ) name.Sample(sampler_##name, V)

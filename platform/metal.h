@@ -15,10 +15,10 @@
 #define texture_cube_arg(name) thread texturecube<float>& name, thread sampler& sampler_##name
 #define texture_2d_array_arg(name) thread texture2d_array<float>& name, thread sampler& sampler_##name
 // structured buffers
-#define structured_buffer_rw( type, name, index ) device type* name [[buffer(index)]]
-#define structured_buffer_rw_arg( type, name, index ) device type* name [[buffer(index)]]
-#define structured_buffer( type, name, index ) constant type& name [[buffer(index)]]
-#define structured_buffer_arg( type, name, index ) constant type& name [[buffer(index)]]
+#define structured_buffer_rw( type, name, index ) device type* name [[buffer(index+BUF_OFFSET)]]
+#define structured_buffer_rw_arg( type, name, index ) device type* name [[buffer(index+BUF_OFFSET)]]
+#define structured_buffer( type, name, index ) constant type* name [[buffer(index+BUF_OFFSET)]]
+#define structured_buffer_arg( type, name, index ) constant type* name [[buffer(index+BUF_OFFSET)]]
 // sampler
 #define sample_texture( name, tc ) name.sample(sampler_##name, tc)
 #define sample_texture_2dms( name, x, y, fragment ) name.read(uint2(x, y), fragment)

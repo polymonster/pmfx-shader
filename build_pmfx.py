@@ -1643,6 +1643,7 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
 
     shader_source =  "#include <metal_stdlib>\n"
     shader_source += "using namespace metal;\n"
+    shader_source += "#define BUF_OFFSET " + str(_info.cbuffer_offset) + "\n"
     shader_source += _info.macros_source
 
     # struct decls
