@@ -1206,7 +1206,7 @@ def generate_output_assignment(_info, io_elements, local_var, suffix):
         if var_name == "position":
             assign_source += "gl_Position = " + local_var + "." + var_name + ";\n"
             if _info.v_flip:
-                assign_source += "gl_Position.y *= vFlip;\n"
+                assign_source += "gl_Position.y *= v_flip;\n"
             if _info.shader_sub_platform == "spirv":
                 assign_source += "gl_Position.y *= -1.0;\n"
         else:
@@ -1319,7 +1319,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
                 shader_source += "out " + outputs[p] + "_ps_output;\n"
 
     if _info.v_flip:
-        shader_source += "uniform float vFlip;\n"
+        shader_source += "uniform float v_flip;\n"
         
     # global structs for access to inputs or outputs from any function in vs or ps
     if _shader.shader_type != "cs":
@@ -2252,10 +2252,10 @@ def parse_pmfx(file, root):
                     ss = compile_metal(_info, pmfx_name, _tp, s)
                 else:
                     print("error: invalid shader platform " + _info.shader_platform)
-
                 if ss != 0:
                     print("failed: " + pmfx_name)
                     success = False
+                sys.stdout.flush()
 
             pmfx_output_info["techniques"].append(generate_technique_permutation_info(_tp))
 
