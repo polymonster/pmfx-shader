@@ -5,7 +5,7 @@ precision highp sampler2DArray;
 #endif    
 // texture
 #ifdef BINDING_POINTS
-#define _tex_binding(sampler_index) layout(binding = sampler_index)
+#define _tex_binding(sampler_index) layout(binding = sampler_index+TEXTURE_OFFSET)
 #else
 #define _tex_binding(sampler_index)  
 #endif
@@ -22,8 +22,8 @@ precision highp sampler2DArray;
 #endif
 // compute
 #ifndef GLES
-#define texture2d_r( image_name, layout_index ) layout (binding = layout_index, rgba8) uniform readonly image2D image_name
-#define texture2d_w( image_name, layout_index ) layout (binding = layout_index, rgba8) uniform image2D image_name
+#define texture2d_r( image_name, layout_index ) layout (binding = layout_index+TEXTURE_OFFSET, rgba8) uniform readonly image2D image_name
+#define texture2d_w( image_name, layout_index ) layout (binding = layout_index+TEXTURE_OFFSET, rgba8) uniform image2D image_name
 #define read_texture( image_name, coord ) imageLoad(image_name, coord)
 #define write_texture( image_name, value, coord ) imageStore(image_name, coord, value)
 #endif

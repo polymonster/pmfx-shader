@@ -77,6 +77,7 @@ def parse_args():
     # set defaults
     _info.compiled = True
     _info.cbuffer_offset = 4
+    _info.texture_offset = 32
     _info.stage_in = 1
     _info.v_flip = False
     _info.debug = False
@@ -107,6 +108,8 @@ def parse_args():
         if sys.argv[i] == "-source":
             _info.compiled = False
         if sys.argv[i] == "-cbuffer_offset":
+            _info.cbuffer_offset = sys.argv[i + 1]
+        if sys.argv[i] == "-texture_offset":
             _info.cbuffer_offset = sys.argv[i + 1]
         if sys.argv[i] == "-stage_in":
             _info.stage_in = sys.argv[i + 1]
@@ -142,7 +145,9 @@ def display_help():
     print("    -stage_in <0, 1> (optional) [metal only] (default 1) ")
     print("        uses stage_in for metal vertex buffers, 0 uses raw buffers")
     print("    -cbuffer_offset (optional) [metal only] (default 4) ")
-    print("        specifies an offset applied to cbuffer locations")
+    print("        specifies an offset applied to cbuffer locations to avoid collisions with vertex buffers")
+    print("    -texture_offset (optional) [vulkan only] (default 32) ")
+    print("        specifies an offset applied to texture locations to avoid collisions with buffers")
     print("    -v_flip (optional) (inserts glsl uniform to control geometry flipping)") 
     exit(0)
 
@@ -1279,6 +1284,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         shader_source += "#define GLSL\n"
         if binding_points:
             shader_source += "#define BINDING_POINTS\n"
+    shader_source += "#define TEXTURE_OFFSET " + str(_info.texture_offset) + "\n"
     shader_source += "//" + pmfx_name + " " + _tp.name + " " + _shader.shader_type + " " + str(_tp.id) + "\n"
     shader_source += _info.macros_source
 
@@ -1641,7 +1647,7 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
     outputs, output_semantics = parse_io_struct(_shader.output_decl)
     instance_inputs, instance_input_semantics = parse_io_struct(_shader.instance_input_decl)
 
-    shader_source =  "#include <metal_stdlib>\n"
+    shader_source = "#include <metal_stdlib>\n"
     shader_source += "using namespace metal;\n"
     shader_source += "#define BUF_OFFSET " + str(_info.cbuffer_offset) + "\n"
     shader_source += _info.macros_source
