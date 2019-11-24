@@ -193,7 +193,9 @@ vs_output vs_main( vs_input input )
 }
 ```
 
-### Includes
+#### Includes
+
+Include files are supported even though some shader platforms or versions may not support them natively.
 
 ```c
 #include "libs/lighting.pmfx"
@@ -202,6 +204,8 @@ vs_output vs_main( vs_input input )
 #include "libs/sdf.pmfx"
 #include "libs/area_lights.pmfx"
 ```
+
+## Unique pmfx features
 
 ### Techniques
 
