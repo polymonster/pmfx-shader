@@ -167,6 +167,32 @@ struct val = structured_buffer[gid]; // read
 structured_buffer[gid] = val;        // write
 ```
 
+#### Cbuffers
+
+Cbuffers are a unique kind of resource, this is just because they are so in HLSL. you can use cbuffers as you normally do in HLSL.
+
+```hlsl
+cbuffer per_view : register(b0)
+{
+    float4x4 view_matrix;
+};
+
+cbuffer per_draw_call : register(b1)
+{
+    float4x4 world_matrix;
+};
+
+vs_output vs_main( vs_input input )
+{
+    vs_output output;
+    
+    float4 world_pos = mul(input.position, world_matrix);
+    output.position = mul(world_pos, view_matrix);
+    
+    return output;
+}
+```
+
 ### Includes
 
 ```c
