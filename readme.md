@@ -108,22 +108,65 @@ vs_output vs_main( vs_input input )
 }
 ```
 
-#### Shader resources declaration differ slightly.
+#### Supported semantics and sizes
+
+```hlsl
+POSITION     // 32bit float
+TEXCOORD     // 32bit float
+NORMAL       // 32bit float
+TANGENT      // 32bit float
+BITANGENT    // 32bit float
+COLOR        // 8bit unsigned int
+BLENDINDICES // 8bit unsigned int
+```
+
+#### Shader resources
+
+Due to fundamental differences accross shader languages, shader resource declarations and access have a syntax unique to pmfx. Define a block of shader_resources to allow global textures or buffers as supported in HLSL and GLSL.
+
 ```c
 shader_resources
 {
     texture_2d( diffuse_texture, 0 );
     texture_2dms( float4, 2, texture_msaa_2, 0 );
-    structured_buffer_rw( boids, rw_boids, 12);
-    structured_buffer( boids, read_boids, 13);
 };
 ```
 
-#### Texture sampling 
+#### Resource types
+
 ```c
+// texture types
+texture_2d( sampler_name, layout_index );
+texture_3d( sampler_name, layout_index );
+texture_cube( sampler_name, layout_index );
+texture_2d_array( sampler_name, layout_index );
+texture_2dms( type, samples, sampler_name, layout_index );
+
+// compute shader texture types
+texture2d_r( image_name, layout_index );
+texture2d_w( image_name, layout_index );
+texture2d_rw( image_name, layout_index );
+
+// compute shader buffer types
+structured_buffer( type, name, index );
+structured_buffer_rw( type, name, index );
+```
+
+#### Accessing resources
+
+```c
+// sample texture
 float4 col = sample_texture( diffuse_texture, texcoord.xy );
 float4 cube = sample_texture( cubemap_texture, normal.xyz );
 float4 msaa_sample = sample_texture_2dms( msaa_texture, x, y, fragment );
+
+// compute rw texture
+float4 rwtex = read_texture( tex_rw, gid );
+write_texture(rwtex, val, gid);
+
+// compute structured buffer
+struct val = structured_buffer[gid]; // read
+structured_buffer[gid] = val;        // write
 ```
 
 ### Includes
