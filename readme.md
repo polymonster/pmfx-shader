@@ -3,6 +3,10 @@
 
 Cross platform shader compilation, with output reflection info, c++ header with shader structs, fx-like techniques and compile time branch evaluation via (uber-shader) "permutations". 
 
+A single file does all the shader parsing and code generation. Simple syntax changes are handled through macros and defines found in [platform](https://github.com/polymonster/pmfx-shader/tree/master/platform), so it is simple to add new features or change things to behave how you like.
+
+pmfx currently supports a subset of shader functionality with features added on an as-needed basis, it has been used in a number of personal projects as well as some upcoming commercial projects so the feature set is fairly compehensive but by no-means complete.
+
 This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/wiki/Pmfx) system found in [pmtech](https://github.com/polymonster/pmtech), it has been moved into a separate repository to be used with other projects, if you are interested to see how pmfx shaders are integrated please take a look [here](https://github.com/polymonster/pmtech).
 
 ## Supported Targets
@@ -75,15 +79,9 @@ python3 build_pmfx.py -shader_platform hlsl -shader_version 4_0 -i examples -o o
 python3 build_pmfx.py -shader_platform glsl -shader_version 330 -i examples -o output/bin -h output/structs -t output/temp
 ```
 
-## Features
+## Usage
 
-### Simple
-
-A single file does all the shader parsing and code generation. Simple syntax changes are handled through macros and defines found in [platform](https://github.com/polymonster/pmfx-shader/tree/master/platform), so it is simple to add new features or change things to behave how you like.
-
-### HLSL Syntax
-
-Use hlsl syntax everwhere for shaders, with some small differences:
+Use HLSL syntax everwhere for shaders, with some small differences:
 
 #### Always use structs for inputs and outputs.
 
