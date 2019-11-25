@@ -15,6 +15,7 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 - GLSL 330+
 - SPIR-V. (Vulkan, OpenGL)
 - Metal 1.0+ (macOS, iOS, tvOS) 
+- PSSL (wip)
 
 ## Usage
 
