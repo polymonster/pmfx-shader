@@ -9,10 +9,10 @@ import platform
 
 # paths and info for current build environment
 class build_info:
-    shader_platform = ""                                                # hlsl, glsl, metal
+    shader_platform = ""                                                # hlsl, glsl, metal, spir-v, pssl
     shader_sub_platform = ""                                            # gles
     shader_version = ""                                                 # 4_0, 5_0 (hlsl), 330, 420 (glsl), 1.1, 2.0 (metal)
-    metal_sdk  = ""                                                     # macosx, iphoneos, appletvos
+    metal_sdk = ""                                                      # macosx, iphoneos, appletvos
     metal_min_os = ""                                                   # iOS (9.0 - 13.0), macOS (10.11 - 10.15)
     debug = False                                                       # generate shader with debug info
     inputs = []                                                         # array of input files or directories
@@ -188,6 +188,11 @@ def create_dependency(file):
     modified_time = os.path.getmtime(file)
     file = unstrict_json_safe_filename(file)
     return {"name": file, "timestamp": float(modified_time)}
+
+
+# wrap a string in quotes
+def in_quotes(string):
+    return "\"" + string + "\""
 
 
 # convert signed to unsigned integer in a c like manner for comparisons
@@ -1073,8 +1078,8 @@ def format_source(source, indent_size):
     return formatted
 
 
-# compile hlsl shader model 4
-def compile_hlsl(_info, pmfx_name, _tp, _shader):
+# hlsl source.. pssl is similar
+def _hlsl_source(_info, pmfx_name, _tp, _shader):
     shader_source = _info.macros_source
     shader_source += _tp.struct_decls
     for cb in _shader.cbuffers:
@@ -1094,7 +1099,63 @@ def compile_hlsl(_info, pmfx_name, _tp, _shader):
 
     shader_source += _shader.main_func_source
     shader_source = format_source(shader_source, 4)
+    return shader_source
 
+
+# compile pssl
+def compile_pssl(_info, pmfx_name, _tp, _shader):
+    orbis_sdk = os.getenv("SCE_ORBIS_SDK_DIR")
+    if not orbis_sdk:
+        print("error: you must have orbis sdk installed, "
+              "'SCE_ORBIS_SDK_DIR' environment variable is set and is added to your PATH.")
+        exit(0)
+
+    shader_source = _hlsl_source(_info, pmfx_name, _tp, _shader)
+
+    extension = {
+        "vs": ".vs",
+        "ps": ".ps",
+        "cs": ".cs"
+    }
+
+    profile = {
+        "vs": "sce_vs_vs_orbis",
+        "ps": "sce_ps_orbis",
+        "cs": "sce_cs_orbis"
+    }
+
+    temp_path = os.path.join(_info.temp_dir, pmfx_name)
+    output_path = os.path.join(_info.output_dir, pmfx_name)
+    os.makedirs(temp_path, exist_ok=True)
+    os.makedirs(output_path, exist_ok=True)
+
+    temp_file_and_path = sanitize_file_path(os.path.join(temp_path, _tp.name + extension[_shader.shader_type]))
+    output_file_and_path = os.path.join(output_path, _tp.name + extension[_shader.shader_type] + "c")
+
+    temp_shader_source = open(temp_file_and_path, "w")
+    temp_shader_source.write(shader_source)
+    temp_shader_source.close()
+
+    cmdline = "orbis-wave-psslc" + " -profile " + profile[_shader.shader_type] + " " + temp_file_and_path
+
+    print(cmdline)
+
+    p = subprocess.Popen(cmdline, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    error_code = p.wait()
+    output, err = p.communicate()
+    err_str = err.decode('utf-8')
+    err_str = err_str.strip(" ")
+    err_list = err_str.split("\n")
+    for e in err_list:
+        if e != "":
+            print(e)
+
+    return error_code
+
+
+# compile hlsl shader model 4
+def compile_hlsl(_info, pmfx_name, _tp, _shader):
+    shader_source = _hlsl_source(_info, pmfx_name, _tp, _shader)
     exe = os.path.join(_info.tools_dir, "bin", "fxc", "fxc")
 
     # default sm 4
@@ -2252,6 +2313,8 @@ def parse_pmfx(file, root):
             for s in _tp.shader:
                 if _info.shader_platform == "hlsl":
                     ss = compile_hlsl(_info, pmfx_name, _tp, s)
+                elif _info.shader_platform == "pssl":
+                    ss = compile_pssl(_info, pmfx_name, _tp, s)
                 elif _info.shader_platform == "glsl":
                     ss = compile_glsl(_info, pmfx_name, _tp, s)
                 elif _info.shader_platform == "metal":
