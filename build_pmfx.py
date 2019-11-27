@@ -1112,6 +1112,28 @@ def compile_pssl(_info, pmfx_name, _tp, _shader):
 
     shader_source = _hlsl_source(_info, pmfx_name, _tp, _shader)
 
+    # apply syntax changes
+    token_swaps = {
+        "cbuffer": "ConstantBuffer",
+        "SV_POSITION": "S_POSITION",
+        "SV_POSITION0": "S_POSITION",
+        "SV_Target": "S_TARGET_OUTPUT",
+        "SV_Target0": "S_TARGET_OUTPUT0",
+        "SV_Target1": "S_TARGET_OUTPUT1",
+        "SV_Target2": "S_TARGET_OUTPUT2",
+        "SV_Target3": "S_TARGET_OUTPUT3",
+        "SV_Target4": "S_TARGET_OUTPUT4",
+        "SV_Target5": "S_TARGET_OUTPUT5",
+        "SV_Target6": "S_TARGET_OUTPUT6",
+        "SV_Target7": "S_TARGET_OUTPUT7",
+        "SV_Depth": "S_DEPTH_OUTPUT",
+        "SV_InstanceID": "S_INSTANCE_ID",
+        "SV_VertexID": "S_VERTEX_ID"
+    }
+
+    for token in token_swaps:
+        shader_source = replace_token(token, token_swaps[token], shader_source)
+
     extension = {
         "vs": ".vs",
         "ps": ".ps",
@@ -1136,7 +1158,8 @@ def compile_pssl(_info, pmfx_name, _tp, _shader):
     temp_shader_source.write(shader_source)
     temp_shader_source.close()
 
-    cmdline = "orbis-wave-psslc" + " -profile " + profile[_shader.shader_type] + " " + temp_file_and_path
+    cmdline = "orbis-wave-psslc" + " -profile " + profile[_shader.shader_type] + \
+              " -entry " + _shader.main_func_name + " " + temp_file_and_path
 
     print(cmdline)
 
