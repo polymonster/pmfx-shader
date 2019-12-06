@@ -1159,7 +1159,7 @@ def compile_pssl(_info, pmfx_name, _tp, _shader):
     temp_shader_source.close()
 
     cmdline = "orbis-wave-psslc" + " -profile " + profile[_shader.shader_type] + \
-              " -entry " + _shader.main_func_name + " " + temp_file_and_path
+              " -entry " + _shader.main_func_name + " " + temp_file_and_path + " -o " + output_file_and_path
 
     print(cmdline)
 
