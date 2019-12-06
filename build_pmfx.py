@@ -1592,12 +1592,16 @@ def find_token(token, string):
         if left and right:
             return fp
         # try again
-        return find_token(token, string[fp+len(token):])
+        tt = find_token(token, string[fp+len(token):])
+        if tt == -1:
+            return -1
+        return fp+len(token) + tt
     return -1
 
 
 # replace all occurences of token in source code
 def replace_token(token, replace, string):
+    iter = 0
     while True:
         pos = find_token(token, string)
         if pos == -1:

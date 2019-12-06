@@ -6,7 +6,7 @@
 #define write_texture( name, val, gid ) name[gid] = val
 #define texture_2d( name, sampler_index ) Texture2D name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
 #define texture_3d( name, sampler_index ) Texture3D name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
-#define texture_2dms( type, samples, name, sampler_index ) Texture2DMS<type, samples> name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
+#define texture_2dms( type, samples, name, sampler_index ) MS_Texture2D<type, samples> name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
 #define texture_cube( name, sampler_index )    TextureCube name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
 #define texture_2d_array( name, sampler_index ) Texture2DArray name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
 // structured buffer
