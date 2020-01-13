@@ -1159,7 +1159,7 @@ def compile_pssl(_info, pmfx_name, _tp, _shader):
     temp_shader_source.close()
 
     cmdline = "orbis-wave-psslc" + " -profile " + profile[_shader.shader_type] + \
-              " -entry " + _shader.main_func_name + " " + temp_file_and_path
+              " -entry " + _shader.main_func_name + " " + temp_file_and_path + " -o " + output_file_and_path
 
     print(cmdline)
 
@@ -1592,12 +1592,16 @@ def find_token(token, string):
         if left and right:
             return fp
         # try again
-        return find_token(token, string[fp+len(token):])
+        tt = find_token(token, string[fp+len(token):])
+        if tt == -1:
+            return -1
+        return fp+len(token) + tt
     return -1
 
 
 # replace all occurences of token in source code
 def replace_token(token, replace, string):
+    iter = 0
     while True:
         pos = find_token(token, string)
         if pos == -1:
