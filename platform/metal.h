@@ -9,11 +9,14 @@
 #define texture_2dms( type, samples, name, sampler_index ) texture2d_ms<float> name [[texture(sampler_index)]], sampler sampler_##name [[sampler(sampler_index)]]
 #define texture_cube( name, sampler_index ) texturecube<float> name [[texture(sampler_index)]], sampler sampler_##name [[sampler(sampler_index)]]
 #define texture_2d_array( name, sampler_index ) texture2d_array<float> name [[texture(sampler_index)]], sampler sampler_##name [[sampler(sampler_index)]]
+#define texture_cube_array( name, sampler_index ) texturecube_array<float> name [[texture(sampler_index)]], sampler sampler_##name [[sampler(sampler_index)]]
+// _arg macros are used to pass textures through functions from main
 #define texture_2d_arg(name) thread texture2d<float>& name, thread sampler& sampler_##name
 #define texture_3d_arg(name) thread texture3d<float>& name, thread sampler& sampler_##name
 #define texture_2dms_arg(name) thread texture2d_ms<float>& name, thread sampler& sampler_##name
 #define texture_cube_arg(name) thread texturecube<float>& name, thread sampler& sampler_##name
 #define texture_2d_array_arg(name) thread texture2d_array<float>& name, thread sampler& sampler_##name
+#define texture_cube_array_arg(name) thread texturecube_array<float>& name, thread sampler& sampler_##name
 // structured buffers
 #define structured_buffer_rw( type, name, index ) device type* name [[buffer(index+BUF_OFFSET)]]
 #define structured_buffer_rw_arg( type, name, index ) device type* name [[buffer(index+BUF_OFFSET)]]
