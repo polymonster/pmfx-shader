@@ -92,6 +92,7 @@ def parse_args():
             _info.shader_platform = sys.argv[i + 1]
         if "-shader_version" in sys.argv[i]:
             _info.shader_version = sys.argv[i + 1]
+            _info.user_shader_version = sys.argv[i + 1]
         if sys.argv[i] == "-i":
             j = i + 1
             while j < len(sys.argv) and sys.argv[j][0] != '-':
@@ -2236,7 +2237,6 @@ def parse_pmfx(file, root):
 
     # for techniques in pmfx
     success = True
-    default_shader_version = _info.shader_version
     for technique in _pmfx.json:
         pmfx_json = json.loads(_pmfx.json_text)
         technique_json = pmfx_json[technique].copy()
@@ -2260,7 +2260,7 @@ def parse_pmfx(file, root):
             _tp.permutation_options = permutation_options
 
             valid = True
-            _info.shader_version = default_shader_version
+            _info.shader_version = _info.user_shader_version
             if "supported_platforms" in _tp.technique:
                 sp = _tp.technique["supported_platforms"]
                 if _info.shader_platform not in sp:

@@ -19,6 +19,7 @@ precision highp sampler2DArray;
 #else
 #define sample_texture_2dms( sampler_name, x, y, fragment ) texelFetch( sampler_name, ivec2( x, y ), fragment )
 #define texture_2dms( type, samples, sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DMS sampler_name
+#define texture_cube_array( name, sampler_index ) _tex_binding(sampler_index) uniform samplerCubeArray sampler_name
 #endif
 // compute
 #ifndef GLES
