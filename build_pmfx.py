@@ -1336,6 +1336,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     # binding points for samples and uniform buffers are only supported 420 onwards..
     # you may have luck trying the extension.
     binding_points = int(_info.shader_version) >= 420
+    texture_cube_array = int(_info.shader_version) >= 400
 
     uniform_buffers = ""
     for cbuf in _shader.cbuffers:
@@ -1369,6 +1370,8 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         shader_source += "#define GLSL\n"
         if binding_points:
             shader_source += "#define BINDING_POINTS\n"
+        if texture_cube_array:
+            shader_source += "#define PMFX_TEXTURE_CUBE_ARRAY\n"
     shader_source += "#define TEXTURE_OFFSET " + str(_info.texture_offset) + "\n"
     shader_source += "//" + pmfx_name + " " + _tp.name + " " + _shader.shader_type + " " + str(_tp.id) + "\n"
     shader_source += _info.macros_source

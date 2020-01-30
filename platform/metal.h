@@ -1,3 +1,5 @@
+// feature support
+#define PMFX_TEXTURE_CUBE_ARRAY
 // texture
 #define texture2d_rw( name, index ) texture2d<float, access::read_write> name [[texture(index)]]
 #define texture2d_r( name, index ) texture2d<float, access::read> name [[texture(index)]]
