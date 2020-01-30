@@ -2408,6 +2408,7 @@ if __name__ == "__main__":
         _info.shader_platform = "glsl"
         _info.shader_version = "450"
         _info.shader_sub_platform = "spirv"
+        _info.user_shader_version = _info.shader_version
 
     if _info.shader_platform == "gles":
         _info.shader_platform = "glsl"
