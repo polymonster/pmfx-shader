@@ -658,7 +658,11 @@ def generate_technique_constant_buffers(pmfx_json, _tp):
     cb_str += "};\n"
 
     # append permutation string to shader c struct
-    skips = [_info.shader_platform.upper(), _info.shader_sub_platform.upper()]
+    skips = [
+        _info.shader_platform.upper(),
+        _info.shader_sub_platform.upper(),
+        "PMFX_TEXTURE_CUBE_ARRAY"
+    ]
     permutation_name = ""
     if int(_tp.id) != 0:
         for p in _tp.permutation:
@@ -822,6 +826,14 @@ def generate_permutation_id(define_list, permutation):
     return pid
 
 
+# based on shader platform and version, some features may or may not be available
+def defines_from_caps(define_list):
+    global _info
+    if _info.shader_platform == "metal":
+        define_list.append(("PMFX_TEXTURE_CUBE_ARRAY", [1], -1))
+    return define_list
+
+
 # generate permutation list from technique json
 def generate_permutations(technique, technique_json):
     global _info
@@ -832,6 +844,7 @@ def generate_permutations(technique, technique_json):
     define_string = ""
     define_list.append((_info.shader_platform.upper(), [1], -1))
     define_list.append((_info.shader_sub_platform.upper(), [1], -1))
+    define_list = defines_from_caps(define_list)
     if "permutations" in technique_json:
         for p in technique_json["permutations"].keys():
             pp = technique_json["permutations"][p]
