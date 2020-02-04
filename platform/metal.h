@@ -29,6 +29,8 @@
 #define sample_texture_grad( name, tc, vddx, vddy ) name.sample(sampler_##name, tc, gradient3d(vddx, vddy))
 #define sample_texture_array( name, tc, a ) name.sample(sampler_##name, tc, uint(a))
 #define sample_texture_array_level( name, tc, a, l ) name.sample(sampler_##name, tc, uint(a), level(l))
+#define sample_texture_cube_array( name, tc, a ) sample_texture_array(name, tc, a)
+#define sample_texture_cube_array_level( name, tc, a, l ) sample_texture_array_level(name, tc, a, l)
 // matrix
 #define to_3x3( M4 ) float3x3(M4[0].xyz, M4[1].xyz, M4[2].xyz)
 #define from_columns_3x3(A, B, C) (transpose(float3x3(A, B, C)))
@@ -49,4 +51,5 @@
 #define frac fract
 #define mod(x, y) (x - y * floor(x/y)) 
 #define _pmfx_unroll
+#define _pmfx_loop
 

@@ -9,16 +9,19 @@
 #define texture_2dms( type, samples, name, sampler_index ) Texture2DMS<type, samples> name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
 #define texture_cube( name, sampler_index )    TextureCube name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
 #define texture_2d_array( name, sampler_index ) Texture2DArray name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
+#define texture_cube_array( name, sampler_index ) TextureCubeArray name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
 // structured buffer
 #define structured_buffer_rw( type, name, index ) RWStructuredBuffer<type> name : register(u##index);
 #define structured_buffer( type, name, index ) StructuredBuffer<type> name : register(t##index);
 // sampler
-#define sample_texture_2dms( name, x, y, fragment ) name.Load( uint2(x, y), fragment )
+#define sample_texture_2dms( name, x, y, fragment ) name.Load( int2(x, y), int(fragment) )
 #define sample_texture( name, V ) name.Sample(sampler_##name, V)
 #define sample_texture_level( name, V, l ) name.SampleLevel(sampler_##name, V, l)
 #define sample_texture_grad( name, V, vddx, vddy ) name.SampleGrad(sampler_##name, V, vddx, vddy )
 #define sample_texture_array( name, V, a ) name.Sample(sampler_##name, float3(V.xy, a) )
 #define sample_texture_array_level( name, V, a, l ) name.SampleLevel(sampler_##name, float3(V.xy, a), l)
+#define sample_texture_cube_array( name, V, a ) name.Sample(sampler_##name, float4(V.xyz, a) )
+#define sample_texture_cube_array_level( name, V, a, l ) name.SampleLevel(sampler_##name, float4(V.xyz, a), l)
 // matrix
 #define to_3x3( M4 ) (float3x3)M4
 #define from_columns_3x3(A, B, C) (float3x3(A, B, C))
@@ -34,5 +37,6 @@
 #define mod(x, y) (x - y * floor(x/y))
 #define fract frac
 #define _pmfx_unroll [unroll]
+#define _pmfx_loop [loop]
 
 
