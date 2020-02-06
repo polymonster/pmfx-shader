@@ -831,6 +831,8 @@ def defines_from_caps(define_list):
     global _info
     if _info.shader_platform == "metal":
         define_list.append(("PMFX_TEXTURE_CUBE_ARRAY", [1], -1))
+    if _info.shader_platform == "hlsl":
+        define_list.append(("PMFX_TEXTURE_CUBE_ARRAY", [1], -1))
     return define_list
 
 
