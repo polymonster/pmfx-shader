@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import jsn
 import re
 import math
 import subprocess
@@ -896,7 +897,7 @@ def find_pmfx_json(shader_file_text):
         # pmfx json exists, return the block
         json_loc = shader_file_text.find("{", pmfx_loc)
         pmfx_end = enclose_brackets(shader_file_text[pmfx_loc:])
-        pmfx_json = json.loads(shader_file_text[json_loc:pmfx_end + json_loc])
+        pmfx_json = jsn.loads(shader_file_text[json_loc:pmfx_end + json_loc])
         return pmfx_json
     else:
         # shader can have no pmfx, provided it supplies vs_main and ps_main
