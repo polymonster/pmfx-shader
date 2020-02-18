@@ -2101,6 +2101,7 @@ def generate_input_info(inputs):
         ["NORMAL", "4"],
         ["TANGENT", "4"],
         ["BITANGENT", "4"],
+        ["BLENDWEIGHTS", "4"],
         ["COLOR", "1"],
         ["BLENDINDICES", "1"]
     ]
