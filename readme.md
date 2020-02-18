@@ -235,7 +235,7 @@ Single .pmfx file can contain multiple shader functions so you can share functio
 
 Simply specify vs, ps or cs to select which function in the source to use for that shader stage. If no pmfx: json block is found you can still supply vs_main and ps_main which will be output as a technique named "default".
 
-```json
+```c
 pmfx:
 {    
     gbuffer:
@@ -254,7 +254,7 @@ pmfx:
 
 You can also use json to specify technique constants with range and ui type.. so you can later hook them into a gui:
 
-```json
+```c
 constants:
 {
     albedo      : { type: float4, widget: colour, default: [1.0, 1.0, 1.0, 1.0] },
@@ -278,7 +278,7 @@ ps_output ps_main(vs_output input)
 
 You can inherit techniques by using jsn inherit feature.
 
-```json
+```c
 gbuffer(forward_lit):
 {
     vs: vs_main,
@@ -297,7 +297,7 @@ gbuffer(forward_lit):
 
 Permutations provide an uber shader style compile time branch evaluation to generate optimal shaders but allowing for flexibility to share code as much as possible. The pmfx block is used here again, you can specify permutations inside a technique.
 
-```json
+```c
 permutations:
 {
     SKINNED: [31, [0,1]],
