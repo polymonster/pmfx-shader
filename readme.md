@@ -118,6 +118,7 @@ TEXCOORD     // 32bit float
 NORMAL       // 32bit float
 TANGENT      // 32bit float
 BITANGENT    // 32bit float
+BLENDWEIGHTS // 32bit float
 COLOR        // 8bit unsigned int
 BLENDINDICES // 8bit unsigned int
 ```
@@ -211,7 +212,7 @@ Include files are supported even though some shader platforms or versions may no
 
 ## Unique pmfx features
 
-#### Buffer / register offsets
+#### cbuffer_offset / texture_offset
 
 HLSL has different registers for textures, vertex buffers, cbuffers and un-ordered access views. Metal and Vulkan have some differences where the register indices are shared across different resource types. To avoid collisions in different API backends you can supply offsets using the following command line options.
 
@@ -219,35 +220,45 @@ Metal: -cbuffer_offset (cbuffers start binding at this offset to allow vertex bu
 
 Vulkan: -texture_offset (textures start binding at this point allowing uniform buffers to bind to the prior slots)
 
+### v_flip
+
+OpenGL has different viewport co-ordinates when rendering to the backbuffer vs rendering into a render target, this can propagate it's way far into a code base with conditional "v_flips" happening during different render passes.
+
+To solve this issue in a cross platform way, pmfx will expose a uniform bool called "v_flip" in all gl vertex shaders, this allows you to conditionally flip the y-coordinate when rendering to the backbuffer or not. 
+
+To make this work make sure you also change the winding glFrontFace(GL_CCW) to glFrontFace(GL_CW).
 
 ### Techniques
 
-Single .pmfx file can contain multiple shader functions so you can share functionality, you can define a block of json in the shader to configure techniques, simply specify vs, ps or cs to select which function in the source to use for that shader stage. If no pmfx: json block is found you can still supply vs_main and ps_main which will be output as a technique named "default".
+Single .pmfx file can contain multiple shader functions so you can share functionality, you can define a block of [jsn](https://github.com/polymonster/jsn) in the shader to configure techniques. (jsn is a more lenient and user friendly data format similar to json).
+
+Simply specify vs, ps or cs to select which function in the source to use for that shader stage. If no pmfx: json block is found you can still supply vs_main and ps_main which will be output as a technique named "default".
 
 ```json
 pmfx:
 {    
-    "single_light_directional":
+    gbuffer:
     {
-        "vs": "vs_main",
-        "ps": "ps_single_light"
+        vs: vs_main,
+        ps: ps_gbuffer
     },
-    
-    "compute_job":
+        
+    zonly:
     {
-        "cs": "cs_some_job"
-    }
+        vs: vs_main_zonly,
+        ps: ps_null
+    },
 }
 ```
 
 You can also use json to specify technique constants with range and ui type.. so you can later hook them into a gui:
 
 ```json
-"constants":
+constants:
 {
-    "albedo"      : { "type": "float4", "widget": "colour", "default": [1.0, 1.0, 1.0, 1.0] },
-    "roughness"   : { "type": "float", "widget": "slider", "min": 0, "max": 1, "default": 0.5 },
-    "reflectivity": { "type": "float", "widget": "slider", "min": 0, "max": 1, "default": 0.3 },
+    albedo      : { type: float4, widget: colour, default: [1.0, 1.0, 1.0, 1.0] },
+    roughness   : { type: float, widget: slider, min: 0, max: 1, default: 0.5 },
+    reflectivity: { type: float, widget: slider, min: 0, max: 1, default: 0.3 },
 }
 ```
 
@@ -264,38 +275,37 @@ ps_output ps_main(vs_output input)
 
 ### Inherit
 
-You can inherit techniques or technique constants by simply adding an inherit into the json.
+You can inherit techniques by using jsn inherit feature.
 
 ```json
-"gbuffer":
+gbuffer(forward_lit):
 {
-    "vs": "vs_main",
-    "ps": "ps_gbuffer",
+    vs: vs_main,
+    ps: ps_gbuffer,
 
-    "inherit_constants": ["forward_lit"]
-}
+    permutations:
+    {
+        SKINNED: [31, [0,1]],
+        INSTANCED: [30, [0,1]],
+        UV_SCALE: [1, [0,1]]
+    }
+},
 ```
 
 ### Permutations
 
-Permutations provide an uber shader style compile time branch evaluation to generate optimal shaders but allowing for flexibility to share code as much as possible. The pmfx json block is used here again, you can specify permutations inside a technique.
+Permutations provide an uber shader style compile time branch evaluation to generate optimal shaders but allowing for flexibility to share code as much as possible. The pmfx block is used here again, you can specify permutations inside a technique.
 
 ```json
-"gbuffer":
+permutations:
 {
-    "vs": "vs_main",
-    "ps": "ps_gbuffer",
-
-    "permutations":
-    {
-        "SKINNED": [31, [0,1]],
-        "INSTANCED": [30, [0,1]],
-        "UV_SCALE": [1, [0,1]]
-    },
-
-    "inherit_constants": ["forward_lit"]
-},
+    SKINNED: [31, [0,1]],
+    INSTANCED: [30, [0,1]],
+    UV_SCALE: [1, [0,1]]
+}
 ```
+
+The first parameter is a bit shift that we can check.. so skinned is 1<<31 and uv scale is 1<<0. The second value is number of options, so in the below example we just have on or off, but we could have a quality level 0-5 for instance.
 
 To insert a compile time evaluated branch in code, use a colon after if / else
 
@@ -315,7 +325,7 @@ For each permutation a shader is generated with the technique plus the permutati
 
 ### C++ Header
 
-After compilation a header is output for each .pmfx file containing c struct declarations for the cbuffers, technique constant buffers and vertex inputs. It also containts defines for the shader permutation id / flags.
+After compilation a header is output for each .pmfx file containing c struct declarations for the cbuffers, technique constant buffers and vertex inputs. It also containts defines for the shader permutation id / flags that you can and against.
 
 ```c++
 namespace debug
@@ -330,12 +340,19 @@ namespace debug
         float4x4 projection_matrix;
         float4 user_data;
     };
+    #define OMNI_SHADOW_SKINNED 2147483648
+    #define OMNI_SHADOW_INSTANCED 1073741824
+    #define FORWARD_LIT_SKINNED 2147483648
+    #define FORWARD_LIT_INSTANCED 1073741824
+    #define FORWARD_LIT_UV_SCALE 2
+    #define FORWARD_LIT_SSS 4
+    #define FORWARD_LIT_SDF_SHADOW 8
 }
 ```
 
 ### JSON Reflection Info
 
-Each .pmfx file comes along with a json file containing reflection info. This info contains the locations textures / buffers are bound to, the size of structs, vertex layout description and more. 
+Each .pmfx file comes along with a json file containing reflection info. This info contains the locations textures / buffers are bound to, the size of structs, vertex layout description and more, at this point please remember the output reflection info is fully compliant json, and not lightweight jsn.. this is because of the more widespread support of json.
 
 ```json
 "texture_sampler_bindings": [
