@@ -140,10 +140,11 @@ shader_resources
 ```c
 // texture types
 texture_2d( sampler_name, layout_index );
-texture_3d( sampler_name, layout_index );
-texture_cube( sampler_name, layout_index );
-texture_2d_array( sampler_name, layout_index );
 texture_2dms( type, samples, sampler_name, layout_index );
+texture_2d_array( sampler_name, layout_index );
+texture_cube( sampler_name, layout_index );
+texture_cube_array( sampler_name, layout_index ); // requires sm 4+, gles 400+
+texture_3d( sampler_name, layout_index );
 
 // compute shader texture types
 texture2d_r( image_name, layout_index );
