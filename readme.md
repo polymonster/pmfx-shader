@@ -118,6 +118,7 @@ TEXCOORD     // 32bit float
 NORMAL       // 32bit float
 TANGENT      // 32bit float
 BITANGENT    // 32bit float
+BLENDWEIGHTS // 32bit float
 COLOR        // 8bit unsigned int
 BLENDINDICES // 8bit unsigned int
 ```
