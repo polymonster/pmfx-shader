@@ -9,7 +9,7 @@ import platform
 
 
 # paths and info for current build environment
-class build_info:
+class BuildInfo:
     shader_platform = ""                                                # hlsl, glsl, metal, spir-v, pssl
     shader_sub_platform = ""                                            # gles
     shader_version = ""                                                 # 4_0, 5_0 (hlsl), 330, 420 (glsl), 1.1, 2.0 (metal)
@@ -33,7 +33,7 @@ class build_info:
 
 
 # info and contents of a .pmfx file
-class pmfx_info:
+class PmfxInfo:
     includes = ""                                                       # list of included files
     json = ""                                                           # json object containing techniques
     json_text = ""                                                      # json as text to reload mutable dictionary
@@ -41,7 +41,7 @@ class pmfx_info:
 
 
 # info of pmfx technique permutation which is a combination of vs, ps or cs
-class technique_permutation_info:
+class TechniquePermutationInfo:
     technique_name = ""                                                 # name of technique
     technique = ""                                                      # technique / permutation json
     permutation = ""                                                    # permutation options
@@ -56,7 +56,7 @@ class technique_permutation_info:
 
 
 # info about a single vs, ps, or cs
-class single_shader_info:
+class SingleShaderInfo:
     shader_type = ""                                                    # ie. vs (vertex), ps (pixel), cs (compute)
     main_func_name = ""                                                 # entry point ie. vs_main
     functions_source = ""                                               # source code of all used functions
@@ -1015,7 +1015,7 @@ def find_used_functions(entry_func, function_list):
 
 # generate a vs, ps or cs from _tp (technique permutation data)
 def generate_single_shader(main_func, _tp):
-    _si = single_shader_info()
+    _si = SingleShaderInfo()
     _si.main_func_name = main_func
 
     # find main func
@@ -2214,7 +2214,7 @@ def parse_pmfx(file, root):
     global _info
 
     # new pmfx info
-    _pmfx = pmfx_info()
+    _pmfx = PmfxInfo()
 
     file_and_path = os.path.join(root, file)
     shader_file_text, included_files = create_shader_set(file_and_path, root)
@@ -2268,7 +2268,7 @@ def parse_pmfx(file, root):
         # for permutations in technique
         for permutation in technique_permutations:
             pmfx_json = json.loads(_pmfx.json_text)
-            _tp = technique_permutation_info()
+            _tp = TechniquePermutationInfo()
             _tp.shader = []
             _tp.cbuffers = []
 
@@ -2416,7 +2416,7 @@ if __name__ == "__main__":
     print("--------------------------------------------------------------------------------")
 
     global _info
-    _info = build_info()
+    _info = BuildInfo()
     _info.error_code = 0
 
     parse_args()
