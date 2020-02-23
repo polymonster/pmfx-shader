@@ -293,6 +293,8 @@ gbuffer(forward_lit):
 },
 ```
 
+gbuffer inherits from forward lit, by putting the base clase inside brackets.
+
 ### Permutations
 
 Permutations provide an uber shader style compile time branch evaluation to generate optimal shaders but allowing for flexibility to share code as much as possible. The pmfx block is used here again, you can specify permutations inside a technique.
@@ -306,7 +308,7 @@ permutations:
 }
 ```
 
-The first parameter is a bit shift that we can check.. so skinned is 1<<31 and uv scale is 1<<0. The second value is number of options, so in the below example we just have on or off, but we could have a quality level 0-5 for instance.
+The first parameter is a bit shift that we can check.. so skinned is 1<<31 and uv scale is 1<<1. The second value is number of options, so in the above example we just have on or off, but you could have a quality level 0-5 for instance.
 
 To insert a compile time evaluated branch in code, use a colon after if / else
 
