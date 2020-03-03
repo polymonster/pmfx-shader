@@ -12,8 +12,8 @@ import platform
 class BuildInfo:
     shader_platform = ""                                                # hlsl, glsl, metal, spir-v, pssl
     shader_sub_platform = ""                                            # gles
-    shader_version = ""                                                 # 4_0, 5_0 (hlsl), 330, 420 (glsl), 1.1, 2.0 (metal)
-    user_shader_version = ""                                            # ^^ pmfx might force shader version
+    shader_version = "0"                                                # 4_0, 5_0 (hlsl), 330, 420 (glsl), 1.1, 2.0 (metal)
+    user_shader_version = "0"                                           # ^^ pmfx might force shader version
     metal_sdk = ""                                                      # macosx, iphoneos, appletvos
     metal_min_os = ""                                                   # iOS (9.0 - 13.0), macOS (10.11 - 10.15)
     debug = False                                                       # generate shader with debug info
@@ -827,13 +827,51 @@ def generate_permutation_id(define_list, permutation):
     return pid
 
 
+# return shader version as float for consistent comparisons, version will be a string
+def shader_version_float(platform, version):
+    if platform == "metal":
+        # metal version is already a float
+        return float(version)
+    elif platform == "glsl" or platform == "spiv":
+        # glsl version is integer 330, 400, 450..
+        return float(version)
+    elif platform == "hlsl":
+        # hlsl version is 3_0, 5_0
+        return float(version.replace("_", "."))
+
+
 # based on shader platform and version, some features may or may not be available
 def defines_from_caps(define_list):
     global _info
-    if _info.shader_platform == "metal":
-        define_list.append(("PMFX_TEXTURE_CUBE_ARRAY", [1], -1))
-    if _info.shader_platform == "hlsl":
-        define_list.append(("PMFX_TEXTURE_CUBE_ARRAY", [1], -1))
+    # platform, feature version
+    lookup = {
+        "metal": [
+            ["PMFX_TEXTURE_CUBE_ARRAY", 0.0],
+            ["PMFX_COMPUTE_SHADER", 0.0]
+        ],
+        "glsl": [
+            ["PMFX_TEXTURE_CUBE_ARRAY", 400.0],
+            ["PMFX_COMPUTE_SHADER", 450.0]
+        ],
+        "spirv": [
+            ["PMFX_TEXTURE_CUBE_ARRAY", 400.0],
+            ["PMFX_COMPUTE_SHADER", 450.0]
+        ],
+        "hlsl": [
+            ["PMFX_TEXTURE_CUBE_ARRAY", 4.0],
+            ["PMFX_COMPUTE_SHADER", 5.0]
+        ]
+    }
+    # check platform exists
+    platform = _info.shader_platform
+    if platform not in lookup.keys():
+        return []
+    # add features
+    version = shader_version_float(platform, _info.shader_version)
+    define_list = []
+    for cap in lookup[_info.shader_platform]:
+        if version >= cap[1]:
+            define_list.append((cap[0], [1], -1))
     return define_list
 
 
@@ -2409,8 +2447,8 @@ def parse_pmfx(file, root):
             h_file.close()
 
 
-# entry
-if __name__ == "__main__":
+# main function to avoid shadowing
+def main():
     print("--------------------------------------------------------------------------------")
     print("pmfx shader (v3) ---------------------------------------------------------------")
     print("--------------------------------------------------------------------------------")
@@ -2463,3 +2501,8 @@ if __name__ == "__main__":
 
     # error code for ci
     sys.exit(_info.error_code)
+
+
+# entry
+if __name__ == "__main__":
+    main()

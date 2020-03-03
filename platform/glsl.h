@@ -19,7 +19,7 @@ precision highp sampler2DArray;
 #else
 #define sample_texture_2dms( sampler_name, x, y, fragment ) texelFetch( sampler_name, ivec2( x, y ), fragment )
 #define texture_2dms( type, samples, sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DMS sampler_name
-#define texture_cube_array( name, sampler_index ) _tex_binding(sampler_index) uniform samplerCubeArray sampler_name
+#define texture_cube_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCubeArray sampler_name
 #endif
 // compute
 #ifndef GLES
@@ -34,8 +34,8 @@ precision highp sampler2DArray;
 #define sample_texture_grad( sampler_name, V, vddx, vddy ) textureGrad( sampler_name, V, vddx, vddy )
 #define sample_texture_array( sampler_name, V, a ) texture( sampler_name, vec3(V, a) )
 #define sample_texture_array_level( sampler_name, V, a, l ) textureLod( sampler_name, vec3(V, a), l )
-#define sample_texture_cube_array( name, tc, a ) sample_texture_array(name, tc, a)
-#define sample_texture_cube_array_level( name, tc, a, l ) sample_texture_array_level(name, tc, a, l)
+#define sample_texture_cube_array( sampler_name, V, a ) texture( sampler_name, vec4(V, a))
+#define sample_texture_cube_array_level( sampler_name, V, a, l ) textureLod( sampler_name, vec4(V, a), l )
 // matrix
 #define to_3x3( M4 ) float3x3(M4)
 #define from_columns_3x3(A, B, C) (transpose(float3x3(A, B, C)))
