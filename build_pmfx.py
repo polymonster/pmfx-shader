@@ -1238,7 +1238,7 @@ def compile_hlsl(_info, pmfx_name, _tp, _shader):
     exe = os.path.join(_info.tools_dir, "bin", "fxc", "fxc")
 
     # default sm 4
-    if _info.shader_version == "":
+    if _info.shader_version == "0":
         _info.shader_version = "4_0"
 
     sm = str(_info.shader_version)
@@ -1385,7 +1385,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     instance_inputs, instance_input_semantics = parse_io_struct(_shader.instance_input_decl)
 
     # default 330
-    if _info.shader_version == "":
+    if _info.shader_version == "0":
         _info.shader_version = "330"
 
     # binding points for samples and uniform buffers are only supported 420 onwards..
@@ -2051,7 +2051,7 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
 
         # default to metal 2.0, but allow cmdline override
         metal_version = "2.0"
-        if _info.shader_version != "":
+        if _info.shader_version != "0":
             metal_version = _info.shader_version
 
         # selection of sdk, macos, ios, tvos
