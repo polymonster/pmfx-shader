@@ -661,13 +661,12 @@ def generate_technique_constant_buffers(pmfx_json, _tp):
     # append permutation string to shader c struct
     skips = [
         _info.shader_platform.upper(),
-        _info.shader_sub_platform.upper(),
-        "PMFX_TEXTURE_CUBE_ARRAY"
+        _info.shader_sub_platform.upper()
     ]
     permutation_name = ""
     if int(_tp.id) != 0:
         for p in _tp.permutation:
-            if p[0] in skips:
+            if p[0] in skips or p[0] in caps_list():
                 continue
             if p[1] == 1:
                 permutation_name += "_" + p[0].lower()
@@ -838,6 +837,14 @@ def shader_version_float(platform, version):
     elif platform == "hlsl":
         # hlsl version is 3_0, 5_0
         return float(version.replace("_", "."))
+
+
+# just list of all the caps
+def caps_list():
+    return [
+        "PMFX_TEXTURE_CUBE_ARRAY",
+        "PMFX_COMPUTE_SHADER"
+    ]
 
 
 # based on shader platform and version, some features may or may not be available
@@ -1427,7 +1434,11 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             shader_source += "#define BINDING_POINTS\n"
         if texture_cube_array:
             shader_source += "#define PMFX_TEXTURE_CUBE_ARRAY\n"
-    shader_source += "#define TEXTURE_OFFSET " + str(_info.texture_offset) + "\n"
+    # texture offset is to avoid collisions on descriptor set slots in vulkan
+    if _info.shader_sub_platform == "spirv":
+        shader_source += "#define TEXTURE_OFFSET " + str(_info.texture_offset) + "\n"
+    else:
+        shader_source += "#define TEXTURE_OFFSET 0\n"
     shader_source += "//" + pmfx_name + " " + _tp.name + " " + _shader.shader_type + " " + str(_tp.id) + "\n"
     shader_source += _info.macros_source
 
