@@ -189,7 +189,6 @@ def unstrict_json_safe_filename(file):
 def create_dependency(file):
     file = sanitize_file_path(file)
     modified_time = os.path.getmtime(file)
-    file = unstrict_json_safe_filename(file)
     return {"name": file, "timestamp": float(modified_time)}
 
 
