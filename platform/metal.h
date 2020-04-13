@@ -54,7 +54,7 @@
 // defs
 #define ddx dfdx
 #define ddy dfdy
-#define discard discard_fragment
+#define discard discard_fragment()
 #define lerp mix
 #define frac fract
 #define mod(x, y) (x - y * floor(x/y)) 
