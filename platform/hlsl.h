@@ -5,8 +5,13 @@
 #define texture3d_rw( name, index ) RWTexture3D<float4> name : register(u##index)
 #define texture3d_r( name, index ) Texture3D<float4> name : register(t##index)
 #define texture3d_w( name, index ) texture3d_rw( name, index )
+#define texture2d_array_rw( name, index ) RWTexture2DArray<float4> : register(u##index)
+#define texture2d_array_r( name, index ) Texture2DArray<float4> name : register(t##index)
+#define texture2d_array_w( name, index ) texture2d_array_rw(name, index)
 #define read_texture( name, gid ) name[gid]
 #define write_texture( name, val, gid ) name[gid] = val
+#define read_texture_array( name, gid, slice ) name[uint3(gid.xy, slice)]
+#define write_texture_array( name, val, gid, slice ) name[uint3(gid.xy, slice)] = val
 #define texture_2d( name, sampler_index ) Texture2D name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
 #define texture_3d( name, sampler_index ) Texture3D name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
 #define texture_2dms( type, samples, name, sampler_index ) Texture2DMS<type, samples> name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
