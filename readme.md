@@ -17,6 +17,10 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 - Metal 1.0+ (macOS, iOS, tvOS) 
 - PSSL (wip)
 
+## Dependencies
+Windows users need vcredist 2013 for the glsl/spirv validator.
+https://www.microsoft.com/en-us/download/confirmation.aspx?id=40784
+
 ## Usage
 
 ```
