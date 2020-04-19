@@ -2257,6 +2257,105 @@ def generate_technique_permutation_info(_tp):
     return _tp.technique
 
 
+def compile_single_permutation(pmfx_name, technique, _pmfx, _tp, _info):
+    pmfx_json = json.loads(_pmfx.json_text)
+    c_code = ""
+    valid = True
+    _info.shader_version = _info.user_shader_version
+    if "supported_platforms" in _tp.technique:
+        sp = _tp.technique["supported_platforms"]
+        if _info.shader_platform not in sp:
+            print(_tp.technique_name + " not supported on " + _info.shader_platform)
+            valid = False
+        else:
+            sv = sp[_info.shader_platform]
+            if "all" in sv:
+                pass
+            elif _info.shader_version not in sv:
+                print(_tp.technique_name + " not supported on " +
+                      _info.shader_platform + " " + _info.shader_version +
+                      ", forcing to version " + sv[0])
+                # force shader version to specified
+                _info.shader_version = sv[0]
+
+    if not valid:
+        return
+
+    if _tp.id != 0:
+        _tp.name = _tp.technique_name + "__" + str(_tp.id) + "__"
+    else:
+        _tp.name = _tp.technique_name
+
+    print(_tp.name)
+
+    # strip condition permutations from source
+    _tp.source = evaluate_conditional_blocks(_pmfx.source, _tp.permutation)
+
+    # get permutation constants..
+    _tp.technique = get_permutation_conditionals(_tp.technique, _tp.permutation)
+
+    # global cbuffers
+    _tp.cbuffers = find_constant_buffers(_pmfx.source)
+
+    # technique, permutation specific constants
+    _tp.technique, c_struct, tp_cbuffer = generate_technique_constant_buffers(pmfx_json, _tp)
+    c_code += c_struct
+
+    # add technique / permutation specific cbuffer to the list
+    _tp.cbuffers.append(tp_cbuffer)
+
+    # technique, permutation specific textures..
+    _tp.textures = generate_technique_texture_variables(_tp)
+    _tp.resource_decl = find_shader_resources(_tp.source)
+
+    # add technique textures
+    if _tp.textures:
+        _tp.resource_decl += generate_texture_decl(_tp.textures)
+
+    # find functions
+    _tp.functions = find_functions(_tp.source)
+
+    # find structs
+    struct_list = find_struct_declarations(_tp.source)
+    _tp.struct_decls = ""
+    for struct in struct_list:
+        _tp.struct_decls += struct + "\n"
+
+    # number of threads for cs
+    if "threads" in pmfx_json[technique]:
+        threads = pmfx_json[technique]["threads"]
+        _tp.threads = [1, 1, 1]
+        for i in range(0, len(threads)):
+            _tp.threads[i] = threads[i]
+
+    # generate single shader data
+    shader_types = ["vs", "ps", "cs"]
+    for s in shader_types:
+        if s in _tp.technique.keys():
+            single_shader = generate_single_shader(_tp.technique[s], _tp)
+            single_shader.shader_type = s
+            if single_shader:
+                _tp.shader.append(single_shader)
+
+    # convert single shader to platform specific variation
+    for s in _tp.shader:
+        if _info.shader_platform == "hlsl":
+            ss = compile_hlsl(_info, pmfx_name, _tp, s)
+        elif _info.shader_platform == "pssl":
+            ss = compile_pssl(_info, pmfx_name, _tp, s)
+        elif _info.shader_platform == "glsl":
+            ss = compile_glsl(_info, pmfx_name, _tp, s)
+        elif _info.shader_platform == "metal":
+            ss = compile_metal(_info, pmfx_name, _tp, s)
+        else:
+            print("error: invalid shader platform " + _info.shader_platform)
+        if ss != 0:
+            print("failed: " + pmfx_name)
+            success = False
+        sys.stdout.flush()
+    return c_code
+
+
 # parse a pmfx file which is a collection of techniques and permutations, made up of vs, ps, cs combinations
 def parse_pmfx(file, root):
     global _info
@@ -2315,7 +2414,6 @@ def parse_pmfx(file, root):
 
         # for permutations in technique
         for permutation in technique_permutations:
-            pmfx_json = json.loads(_pmfx.json_text)
             _tp = TechniquePermutationInfo()
             _tp.shader = []
             _tp.cbuffers = []
@@ -2328,101 +2426,9 @@ def parse_pmfx(file, root):
             _tp.mask = mask
             _tp.permutation_options = permutation_options
 
-            valid = True
-            _info.shader_version = _info.user_shader_version
-            if "supported_platforms" in _tp.technique:
-                sp = _tp.technique["supported_platforms"]
-                if _info.shader_platform not in sp:
-                    print(_tp.technique_name + " not supported on " + _info.shader_platform)
-                    valid = False
-                else:
-                    sv = sp[_info.shader_platform]
-                    if "all" in sv:
-                        pass
-                    elif _info.shader_version not in sv:
-                        print(_tp.technique_name + " not supported on " +
-                              _info.shader_platform + " " + _info.shader_version +
-                              ", forcing to version " + sv[0])
-                        # force shader version to specified
-                        _info.shader_version = sv[0]
-
-            if not valid:
-                continue
-
-            if _tp.id != 0:
-                _tp.name = _tp.technique_name + "__" + str(_tp.id) + "__"
-            else:
-                _tp.name = _tp.technique_name
-
-            print(_tp.name)
-
-            # strip condition permutations from source
-            _tp.source = evaluate_conditional_blocks(_pmfx.source, permutation)
-
-            # get permutation constants..
-            _tp.technique = get_permutation_conditionals(_tp.technique, _tp.permutation)
-
-            # global cbuffers
-            _tp.cbuffers = find_constant_buffers(_pmfx.source)
-
-            # technique, permutation specific constants
-            _tp.technique, c_struct, tp_cbuffer = generate_technique_constant_buffers(pmfx_json, _tp)
-            c_code += c_struct
-
-            # add technique / permutation specific cbuffer to the list
-            _tp.cbuffers.append(tp_cbuffer)
-
-            # technique, permutation specific textures..
-            _tp.textures = generate_technique_texture_variables(_tp)
-            _tp.resource_decl = find_shader_resources(_tp.source)
-
-            # add technique textures
-            if _tp.textures:
-                _tp.resource_decl += generate_texture_decl(_tp.textures)
-
-            # find functions
-            _tp.functions = find_functions(_tp.source)
-
-            # find structs
-            struct_list = find_struct_declarations(_tp.source)
-            _tp.struct_decls = ""
-            for struct in struct_list:
-                _tp.struct_decls += struct + "\n"
-
-            # number of threads for cs
-            if "threads" in pmfx_json[technique]:
-                threads = pmfx_json[technique]["threads"]
-                _tp.threads = [1, 1, 1]
-                for i in range(0, len(threads)):
-                    _tp.threads[i] = threads[i]
-
-            # generate single shader data
-            shader_types = ["vs", "ps", "cs"]
-            for s in shader_types:
-                if s in _tp.technique.keys():
-                    single_shader = generate_single_shader(_tp.technique[s], _tp)
-                    single_shader.shader_type = s
-                    if single_shader:
-                        _tp.shader.append(single_shader)
-
-            # convert single shader to platform specific variation
-            for s in _tp.shader:
-                if _info.shader_platform == "hlsl":
-                    ss = compile_hlsl(_info, pmfx_name, _tp, s)
-                elif _info.shader_platform == "pssl":
-                    ss = compile_pssl(_info, pmfx_name, _tp, s)
-                elif _info.shader_platform == "glsl":
-                    ss = compile_glsl(_info, pmfx_name, _tp, s)
-                elif _info.shader_platform == "metal":
-                    ss = compile_metal(_info, pmfx_name, _tp, s)
-                else:
-                    print("error: invalid shader platform " + _info.shader_platform)
-                if ss != 0:
-                    print("failed: " + pmfx_name)
-                    success = False
-                sys.stdout.flush()
-
-            pmfx_output_info["techniques"].append(generate_technique_permutation_info(_tp))
+            c = pmfx_output_info["techniques"].append(generate_technique_permutation_info(_tp))
+            if c:
+                c_code += c
 
     if not success:
         return
