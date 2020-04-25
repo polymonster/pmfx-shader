@@ -6,6 +6,8 @@ import re
 import math
 import subprocess
 import platform
+import copy
+import threading
 
 
 # paths and info for current build environment
@@ -13,7 +15,6 @@ class BuildInfo:
     shader_platform = ""                                                # hlsl, glsl, metal, spir-v, pssl
     shader_sub_platform = ""                                            # gles
     shader_version = "0"                                                # 4_0, 5_0 (hlsl), 330, 420 (glsl), 1.1, 2.0 (metal)
-    user_shader_version = "0"                                           # ^^ pmfx might force shader version
     metal_sdk = ""                                                      # macosx, iphoneos, appletvos
     metal_min_os = ""                                                   # iOS (9.0 - 13.0), macOS (10.11 - 10.15)
     debug = False                                                       # generate shader with debug info
@@ -42,9 +43,11 @@ class PmfxInfo:
 
 # info of pmfx technique permutation which is a combination of vs, ps or cs
 class TechniquePermutationInfo:
+    pmfx_name = ""                                                      # name of the .pmfx shader containing technique
     technique_name = ""                                                 # name of technique
     technique = ""                                                      # technique / permutation json
     permutation = ""                                                    # permutation options
+    shader_version = "0"                                                # shader version to compile with
     source = ""                                                         # conditioned source code for permute
     id = ""                                                             # permutation id
     cbuffers = []                                                       # list of cbuffers source code
@@ -53,6 +56,9 @@ class TechniquePermutationInfo:
     shader = []                                                         # list of shaders, vs, ps or cs
     resource_decl = []                                                  # list of shader resources (textures / buffers)
     threads = []                                                        # number of compute threads, x, y, z
+    error_code = 0                                                      # return value from compilation
+    error_list = []                                                     # list of errors / warnings from compilation
+    output_list = []                                                    # list of output from compilation
 
 
 # info about a single vs, ps, or cs
@@ -94,7 +100,6 @@ def parse_args():
             _info.shader_platform = sys.argv[i + 1]
         if "-shader_version" in sys.argv[i]:
             _info.shader_version = sys.argv[i + 1]
-            _info.user_shader_version = sys.argv[i + 1]
         if sys.argv[i] == "-i":
             j = i + 1
             while j < len(sys.argv) and sys.argv[j][0] != '-':
@@ -202,6 +207,31 @@ def us(v):
     if v == -1:
         return sys.maxsize
     return v
+
+
+# calls subprocess, waits and gets output errors
+def call_wait_subprocess(cmdline):
+    p = subprocess.Popen(cmdline, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    error_code = p.wait()
+    output, err = p.communicate()
+    err_str = err.decode('utf-8')
+    err_str = err_str.strip(" ")
+    err_list = err_str.split("\n")
+    out_str = output.decode('utf-8')
+    out_str = out_str.strip(" ")
+    out_list = out_str.split("\n")
+
+    clean_err = []
+    for e in err_list:
+        if len(e) > 0:
+            clean_err.append(e.strip())
+
+    clean_out = []
+    for o in out_list:
+        if len(o) > 0:
+            clean_out.append(o.strip())
+
+    return error_code, clean_err, clean_out
 
 
 # recursively merge members of 2 json objects
@@ -1223,19 +1253,10 @@ def compile_pssl(_info, pmfx_name, _tp, _shader):
     cmdline = "orbis-wave-psslc" + " -profile " + profile[_shader.shader_type] + \
               " -entry " + _shader.main_func_name + " " + temp_file_and_path + " -o " + output_file_and_path
 
-    print(cmdline)
-
-    p = subprocess.Popen(cmdline, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    error_code = p.wait()
-    output, err = p.communicate()
-    err_str = err.decode('utf-8')
-    err_str = err_str.strip(" ")
-    err_list = err_str.split("\n")
-    for e in err_list:
-        if e != "":
-            print(e)
-
-    return error_code
+    error_code, error_list, output_list = call_wait_subprocess(cmdline)
+    _tp.error_code = error_code
+    _tp.error_list = error_list
+    _tp.output_list = output_list
 
 
 # compile hlsl shader model 4
@@ -1244,10 +1265,10 @@ def compile_hlsl(_info, pmfx_name, _tp, _shader):
     exe = os.path.join(_info.tools_dir, "bin", "fxc", "fxc")
 
     # default sm 4
-    if _info.shader_version == "0":
-        _info.shader_version = "4_0"
+    if _tp.shader_version == "0":
+        _tp.shader_version = "4_0"
 
-    sm = str(_info.shader_version)
+    sm = str(_tp.shader_version)
 
     shader_model = {
         "vs": "vs_" + sm,
@@ -1280,23 +1301,10 @@ def compile_hlsl(_info, pmfx_name, _tp, _shader):
         cmdline += "/Fc /Od /Zi" + " "
     cmdline += "/Fo " + output_file_and_path + " " + temp_file_and_path + " "
 
-    # process = subprocess.Popen([exe + ".exe", cmdline], shell=True, stdout=subprocess.PIPE)
-    # rt = subprocess.call(cmdline, shell=True)
-
-    p = subprocess.Popen(cmdline, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    error_code = p.wait()
-    output, err = p.communicate()
-    err_str = err.decode('utf-8')
-    err_str = err_str.strip(" ")
-    err_list = err_str.split("\n")
-    for e in err_list:
-        if e != "":
-            print(e)
-
-    if error_code != 0:
-        _info.error_code = error_code
-
-    return error_code
+    error_code, error_list, output_list = call_wait_subprocess(cmdline)
+    _tp.error_code = error_code
+    _tp.error_list = error_list
+    _tp.output_list = output_list
 
 
 # parse shader inputs annd output source into a list of elements and semantics
@@ -1391,13 +1399,13 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     instance_inputs, instance_input_semantics = parse_io_struct(_shader.instance_input_decl)
 
     # default 330
-    if _info.shader_version == "0":
-        _info.shader_version = "330"
+    if _tp.shader_version == "0":
+        _tp.shader_version = "330"
 
     # binding points for samples and uniform buffers are only supported 420 onwards..
     # you may have luck trying the extension.
-    binding_points = int(_info.shader_version) >= 420
-    texture_cube_array = int(_info.shader_version) >= 400
+    binding_points = int(_tp.shader_version) >= 420
+    texture_cube_array = int(_tp.shader_version) >= 400
 
     uniform_buffers = ""
     for cbuf in _shader.cbuffers:
@@ -1427,7 +1435,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         shader_source += "#define GLSL\n"
         shader_source += "#define GLES\n"
     else:
-        shader_source += "#version " + _info.shader_version + " core\n"
+        shader_source += "#version " + _tp.shader_version + " core\n"
         shader_source += "#define GLSL\n"
         if binding_points:
             shader_source += "#define BINDING_POINTS\n"
@@ -1580,20 +1588,10 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         exe += " -V "
         exe += " -o " + output_file_and_path
 
-    p = subprocess.Popen(exe + " " + temp_file_and_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-    error_code = p.wait()
-    output, err = p.communicate()
-    output = output.decode('utf-8')
-    output = output.strip(" ")
-    output = output.split("\n")
-
-    for e in output:
-        if e != "":
-            print(e)
-
-    if error_code != 0:
-        _info.error_code = error_code
+    error_code, error_list, output_list = call_wait_subprocess(exe + " " + temp_file_and_path)
+    _tp.error_code = error_code
+    _tp.error_list = error_list
+    _tp.output_list = output_list
 
     if _info.shader_sub_platform != "spirv":
         # copy glsl shader to data
@@ -1948,7 +1946,7 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
     elif _shader.shader_type == "ps":
         shader_source += _shader.input_struct_name + " input [[stage_in]]"
     elif _shader.shader_type == "cs":
-        shader_source += "uint3 gid[[thread_position_in_grid]]"
+        shader_source += "uint2 gid[[thread_position_in_grid]]"
 
     # vertex stream out
     if stream_out:
@@ -2058,11 +2056,10 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
         temp_shader_source.close()
         return 0
     else:
-
         # default to metal 2.0, but allow cmdline override
         metal_version = "2.0"
-        if _info.shader_version != "0":
-            metal_version = _info.shader_version
+        if _tp.shader_version != "0":
+            metal_version = _tp.shader_version
 
         # selection of sdk, macos, ios, tvos
         metal_sdk = "macosx"
@@ -2104,15 +2101,21 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
         cmdline = "xcrun -sdk " + metal_sdk + " metal " + metal_min_os + " " + metal_version + " -c "
         cmdline += temp_file_and_path + " "
         cmdline += "-o " + intermediate_file_and_path
-        rv = subprocess.call(cmdline, shell=True)
 
-        if rv == 0:
+        error_code, error_list, output_list = call_wait_subprocess(cmdline)
+
+        if error_code == 0:
             cmdline = "xcrun -sdk " + metal_sdk + " metallib "
             cmdline += intermediate_file_and_path + " "
             cmdline += "-o " + output_file_and_path
-            rv = subprocess.call(cmdline, shell=True)
 
-        return rv
+            error_code, error_list_2, output_list_2 = call_wait_subprocess(cmdline)
+            error_list.extend(error_list_2)
+            output_list.extend(output_list_2)
+
+        _tp.error_code = error_code
+        _tp.error_list = error_list
+        _tp.output_list = output_list
 
 
 # generate a shader info file with an array of technique permutation descriptions and dependency timestamps
@@ -2257,103 +2260,19 @@ def generate_technique_permutation_info(_tp):
     return _tp.technique
 
 
-def compile_single_permutation(pmfx_name, technique, _pmfx, _tp, _info):
-    pmfx_json = json.loads(_pmfx.json_text)
-    c_code = ""
-    valid = True
-    _info.shader_version = _info.user_shader_version
-    if "supported_platforms" in _tp.technique:
-        sp = _tp.technique["supported_platforms"]
-        if _info.shader_platform not in sp:
-            print(_tp.technique_name + " not supported on " + _info.shader_platform)
-            valid = False
-        else:
-            sv = sp[_info.shader_platform]
-            if "all" in sv:
-                pass
-            elif _info.shader_version not in sv:
-                print(_tp.technique_name + " not supported on " +
-                      _info.shader_platform + " " + _info.shader_version +
-                      ", forcing to version " + sv[0])
-                # force shader version to specified
-                _info.shader_version = sv[0]
-
-    if not valid:
-        return
-
-    if _tp.id != 0:
-        _tp.name = _tp.technique_name + "__" + str(_tp.id) + "__"
-    else:
-        _tp.name = _tp.technique_name
-
-    print(_tp.name)
-
-    # strip condition permutations from source
-    _tp.source = evaluate_conditional_blocks(_pmfx.source, _tp.permutation)
-
-    # get permutation constants..
-    _tp.technique = get_permutation_conditionals(_tp.technique, _tp.permutation)
-
-    # global cbuffers
-    _tp.cbuffers = find_constant_buffers(_pmfx.source)
-
-    # technique, permutation specific constants
-    _tp.technique, c_struct, tp_cbuffer = generate_technique_constant_buffers(pmfx_json, _tp)
-    c_code += c_struct
-
-    # add technique / permutation specific cbuffer to the list
-    _tp.cbuffers.append(tp_cbuffer)
-
-    # technique, permutation specific textures..
-    _tp.textures = generate_technique_texture_variables(_tp)
-    _tp.resource_decl = find_shader_resources(_tp.source)
-
-    # add technique textures
-    if _tp.textures:
-        _tp.resource_decl += generate_texture_decl(_tp.textures)
-
-    # find functions
-    _tp.functions = find_functions(_tp.source)
-
-    # find structs
-    struct_list = find_struct_declarations(_tp.source)
-    _tp.struct_decls = ""
-    for struct in struct_list:
-        _tp.struct_decls += struct + "\n"
-
-    # number of threads for cs
-    if "threads" in pmfx_json[technique]:
-        threads = pmfx_json[technique]["threads"]
-        _tp.threads = [1, 1, 1]
-        for i in range(0, len(threads)):
-            _tp.threads[i] = threads[i]
-
-    # generate single shader data
-    shader_types = ["vs", "ps", "cs"]
-    for s in shader_types:
-        if s in _tp.technique.keys():
-            single_shader = generate_single_shader(_tp.technique[s], _tp)
-            single_shader.shader_type = s
-            if single_shader:
-                _tp.shader.append(single_shader)
-
-    # convert single shader to platform specific variation
+# compiles single shader using platform specific compiler or validator, _tp is technique / permutation info
+def compile_single_shader(_tp):
     for s in _tp.shader:
         if _info.shader_platform == "hlsl":
-            ss = compile_hlsl(_info, pmfx_name, _tp, s)
+            compile_hlsl(_info, _tp.pmfx_name, _tp, s)
         elif _info.shader_platform == "pssl":
-            ss = compile_pssl(_info, pmfx_name, _tp, s)
+            compile_pssl(_info, _tp.pmfx_name, _tp, s)
         elif _info.shader_platform == "glsl":
-            ss = compile_glsl(_info, pmfx_name, _tp, s)
+            compile_glsl(_info, _tp.pmfx_name, _tp, s)
         elif _info.shader_platform == "metal":
-            ss = compile_metal(_info, pmfx_name, _tp, s)
+            compile_metal(_info, _tp.pmfx_name, _tp, s)
         else:
             print("error: invalid shader platform " + _info.shader_platform)
-        if ss != 0:
-            print("failed: " + pmfx_name)
-            success = False
-        sys.stdout.flush()
-    return c_code
 
 
 # parse a pmfx file which is a collection of techniques and permutations, made up of vs, ps, cs combinations
@@ -2405,6 +2324,7 @@ def parse_pmfx(file, root):
 
     # for techniques in pmfx
     success = True
+    compile_jobs = []
     for technique in _pmfx.json:
         pmfx_json = json.loads(_pmfx.json_text)
         technique_json = pmfx_json[technique].copy()
@@ -2414,7 +2334,9 @@ def parse_pmfx(file, root):
 
         # for permutations in technique
         for permutation in technique_permutations:
+            pmfx_json = json.loads(_pmfx.json_text)
             _tp = TechniquePermutationInfo()
+            _tp.pmfx_name = pmfx_name
             _tp.shader = []
             _tp.cbuffers = []
 
@@ -2426,9 +2348,106 @@ def parse_pmfx(file, root):
             _tp.mask = mask
             _tp.permutation_options = permutation_options
 
-            c = pmfx_output_info["techniques"].append(generate_technique_permutation_info(_tp))
-            if c:
-                c_code += c
+            valid = True
+            _tp.shader_version = _info.shader_version
+            if "supported_platforms" in _tp.technique:
+                sp = _tp.technique["supported_platforms"]
+                if _info.shader_platform not in sp:
+                    print(_tp.technique_name + " not supported on " + _info.shader_platform)
+                    valid = False
+                else:
+                    sv = sp[_info.shader_platform]
+                    if "all" in sv:
+                        pass
+                    elif _tp.shader_version not in sv:
+                        print(_tp.technique_name + " not supported on " +
+                              _info.shader_platform + " " + _info.shader_version +
+                              ", forcing to version " + sv[0])
+                        # force shader version to specified
+                        _tp.shader_version = sv[0]
+
+            if not valid:
+                continue
+
+            if _tp.id != 0:
+                _tp.name = _tp.technique_name + "__" + str(_tp.id) + "__"
+            else:
+                _tp.name = _tp.technique_name
+
+            # strip condition permutations from source
+            _tp.source = evaluate_conditional_blocks(_pmfx.source, permutation)
+
+            # get permutation constants..
+            _tp.technique = get_permutation_conditionals(_tp.technique, _tp.permutation)
+
+            # global cbuffers
+            _tp.cbuffers = find_constant_buffers(_pmfx.source)
+
+            # technique, permutation specific constants
+            _tp.technique, c_struct, tp_cbuffer = generate_technique_constant_buffers(pmfx_json, _tp)
+            c_code += c_struct
+
+            # add technique / permutation specific cbuffer to the list
+            _tp.cbuffers.append(tp_cbuffer)
+
+            # technique, permutation specific textures..
+            _tp.textures = generate_technique_texture_variables(_tp)
+            _tp.resource_decl = find_shader_resources(_tp.source)
+
+            # add technique textures
+            if _tp.textures:
+                _tp.resource_decl += generate_texture_decl(_tp.textures)
+
+            # find functions
+            _tp.functions = find_functions(_tp.source)
+
+            # find structs
+            struct_list = find_struct_declarations(_tp.source)
+            _tp.struct_decls = ""
+            for struct in struct_list:
+                _tp.struct_decls += struct + "\n"
+
+            # number of threads for cs
+            if "threads" in pmfx_json[technique]:
+                threads = pmfx_json[technique]["threads"]
+                _tp.threads = [1, 1, 1]
+                for i in range(0, len(threads)):
+                    _tp.threads[i] = threads[i]
+
+            # generate single shader data
+            shader_types = ["vs", "ps", "cs"]
+            for s in shader_types:
+                if s in _tp.technique.keys():
+                    single_shader = generate_single_shader(_tp.technique[s], _tp)
+                    single_shader.shader_type = s
+                    if single_shader:
+                        _tp.shader.append(single_shader)
+            compile_jobs.append(copy.copy(_tp))
+
+    threads = []
+    for j in compile_jobs:
+        x = threading.Thread(target=compile_single_shader, args=(j,))
+        threads.append(x)
+        x.start()
+
+    for i in range(0, len(compile_jobs)):
+        threads[i].join()
+        c = compile_jobs[i]
+        str_id = ""
+        if c.id != 0:
+            str_id = "__" + str(c.id) + "__"
+        output_name = c.pmfx_name + "::" + c.technique_name + str_id
+        if j.error_code == 0:
+            print(output_name)
+        else:
+            print(output_name + " failed to compile")
+            success = False
+        for out in c.output_list:
+            print(out)
+        for err in c.error_list:
+            success = False
+            print(err)
+        pmfx_output_info["techniques"].append(generate_technique_permutation_info(compile_jobs[i]))
 
     if not success:
         return
@@ -2479,7 +2498,6 @@ def main():
         _info.shader_platform = "glsl"
         _info.shader_version = "450"
         _info.shader_sub_platform = "spirv"
-        _info.user_shader_version = _info.shader_version
 
     if _info.shader_platform == "gles":
         _info.shader_platform = "glsl"
