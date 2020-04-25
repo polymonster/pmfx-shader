@@ -211,6 +211,11 @@ def us(v):
 
 # calls subprocess, waits and gets output errors
 def call_wait_subprocess(cmdline):
+    exclude_output = [
+        "Microsoft (R)",
+        "Copyright (C)",
+        "compilation object save succeeded;"
+    ]
     p = subprocess.Popen(cmdline, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     error_code = p.wait()
     output, err = p.communicate()
@@ -228,8 +233,14 @@ def call_wait_subprocess(cmdline):
 
     clean_out = []
     for o in out_list:
-        if len(o) > 0:
-            clean_out.append(o.strip())
+        o = o.strip()
+        exclude = False
+        for ex in exclude_output:
+            if o.startswith(ex):
+                exclude = True
+                break
+        if len(o) > 0 and not exclude:
+            clean_out.append(o)
 
     return error_code, clean_err, clean_out
 
@@ -2441,16 +2452,11 @@ def parse_pmfx(file, root):
             print(output_name)
         else:
             print(output_name + " failed to compile")
-            success = False
         for out in c.output_list:
             print(out)
         for err in c.error_list:
-            success = False
             print(err)
         pmfx_output_info["techniques"].append(generate_technique_permutation_info(compile_jobs[i]))
-
-    if not success:
-        return
 
     # write a shader info file with timestamp for dependencies
     generate_shader_info(file_and_path, included_files, pmfx_output_info)
