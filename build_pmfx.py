@@ -1957,7 +1957,7 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
     elif _shader.shader_type == "ps":
         shader_source += _shader.input_struct_name + " input [[stage_in]]"
     elif _shader.shader_type == "cs":
-        shader_source += "uint2 gid[[thread_position_in_grid]]"
+        shader_source += "uint3 gid[[thread_position_in_grid]]"
 
     # vertex stream out
     if stream_out:
