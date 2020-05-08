@@ -2,6 +2,7 @@
 // precision qualifiers
 precision highp float;
 precision highp sampler2DArray;
+precision highp sampler2DArrayShadow;
 #endif    
 // texture
 #ifdef BINDING_POINTS
@@ -13,6 +14,8 @@ precision highp sampler2DArray;
 #define texture_3d( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler3D sampler_name
 #define texture_cube( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCube sampler_name
 #define texture_2d_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DArray sampler_name
+#define depth_2d( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DShadow sampler_name
+#define depth_2d_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DArrayShadow sampler_name
 #ifdef GLES
 #define sample_texture_2dms( sampler_name, x, y, fragment ) texture( sampler_name, vec2(0.0, 0.0) )
 #define texture_2dms( type, samples, sampler_name, sampler_index ) uniform sampler2D sampler_name
@@ -45,6 +48,9 @@ precision highp sampler2DArray;
 #define sample_texture_array_level( sampler_name, V, a, l ) textureLod( sampler_name, vec3(V, a), l )
 #define sample_texture_cube_array( sampler_name, V, a ) texture( sampler_name, vec4(V, a))
 #define sample_texture_cube_array_level( sampler_name, V, a, l ) textureLod( sampler_name, vec4(V, a), l )
+// sampler gather / compare
+#define sample_depth_compare( name, tc, compare_value ) texture( name, vec3(tc.xy, compare_value) )
+#define sample_depth_compare_array( name, tc, a, compare_value ) texture( name, vec4(tc.xy, a, compare_value) )
 // matrix
 #define to_3x3( M4 ) float3x3(M4)
 #define from_columns_3x3(A, B, C) (transpose(float3x3(A, B, C)))
@@ -63,6 +69,12 @@ precision highp sampler2DArray;
 #define float4 vec4
 #define float3 vec3
 #define float2 vec2
+#define uint4 uvec4
+#define uint3 uvec3
+#define uint2 uvec2
+#define int4 ivec4
+#define int3 ivec3
+#define int2 ivec2
 #define modf mod
 #define frac fract
 #define lerp mix

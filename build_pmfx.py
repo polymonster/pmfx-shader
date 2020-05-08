@@ -8,6 +8,7 @@ import subprocess
 import platform
 import copy
 import threading
+import cgu
 
 
 # paths and info for current build environment
@@ -998,19 +999,15 @@ def find_used_resources(shader_source, resource_decl):
     if not resource_decl:
         return
     # find resource uses
-    uses = ["sample_texture", "read_texture", "write_texture"]
+    uses = ["sample_texture", "read_texture", "write_texture", "sample_depth"]
     resource_uses = []
     pos = 0
     while True:
-        sampler = -1
-        for u in uses:
-            sampler = shader_source.find(u, pos)
-            if sampler != -1:
-                break
-        if sampler == -1:
+        sampler, tok = cgu.find_first(shader_source, uses, pos)
+        if sampler == sys.maxsize:
             break;
         start = shader_source.find("(", sampler)
-        end = shader_source.find(")", sampler)
+        end = shader_source.find(";", sampler)
         if us(sampler) < us(start) < us(end):
             args = shader_source[start+1:end-1].split(",")
             if len(args) > 0:

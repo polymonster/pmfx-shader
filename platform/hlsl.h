@@ -12,12 +12,15 @@
 #define write_texture( name, val, gid ) name[gid] = val
 #define read_texture_array( name, gid, slice ) name[uint3(gid.xy, slice)]
 #define write_texture_array( name, val, gid, slice ) name[uint3(gid.xy, slice)] = val
-#define texture_2d( name, sampler_index ) Texture2D name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
-#define texture_3d( name, sampler_index ) Texture3D name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
-#define texture_2dms( type, samples, name, sampler_index ) Texture2DMS<type, samples> name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
-#define texture_cube( name, sampler_index )    TextureCube name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
-#define texture_2d_array( name, sampler_index ) Texture2DArray name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
-#define texture_cube_array( name, sampler_index ) TextureCubeArray name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index); 
+#define texture_2d( name, sampler_index ) Texture2D name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index)
+#define texture_3d( name, sampler_index ) Texture3D name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index)
+#define texture_2dms( type, samples, name, sampler_index ) Texture2DMS<type, samples> name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index)
+#define texture_cube( name, sampler_index )    TextureCube name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index)
+#define texture_2d_array( name, sampler_index ) Texture2DArray name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index)
+#define texture_cube_array( name, sampler_index ) TextureCubeArray name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index)
+// depth texture (required for gl and metal)
+#define depth_2d( name, sampler_index ) texture_2d( name, sampler_index )
+#define depth_2d_array( name, sampler_index ) texture_2d_array( name, sampler_index )
 // structured buffer
 #define structured_buffer_rw( type, name, index ) RWStructuredBuffer<type> name : register(u##index);
 #define structured_buffer( type, name, index ) StructuredBuffer<type> name : register(t##index);
@@ -30,6 +33,9 @@
 #define sample_texture_array_level( name, V, a, l ) name.SampleLevel(sampler_##name, float3(V.xy, a), l)
 #define sample_texture_cube_array( name, V, a ) name.Sample(sampler_##name, float4(V.xyz, a) )
 #define sample_texture_cube_array_level( name, V, a, l ) name.SampleLevel(sampler_##name, float4(V.xyz, a), l)
+// gather / compare
+#define sample_depth_compare( name, tc, compare_value ) name.SampleCmp(sampler_##name, tc, compare_value)
+#define sample_depth_compare_array( name, tc, a, compare_value ) name.SampleCmp(sampler_##name, float3(tc.xy, a), compare_value)
 // matrix
 #define to_3x3( M4 ) (float3x3)M4
 #define from_columns_3x3(A, B, C) (float3x3(A, B, C))
