@@ -30,15 +30,15 @@ precision highp sampler2DArrayShadow;
 #endif
 // compute
 #ifndef GLES
-#define texture2d_rw( image_name, layout_index ) layout (binding = layout_index+TEXTURE_OFFSET, rgba8) uniform image2D image_name
-#define texture2d_r( image_name, layout_index ) layout (binding = layout_index+TEXTURE_OFFSET, rgba8) uniform readonly image2D image_name
-#define texture2d_w( image_name, layout_index ) texture2d_rw(image_name, layout_index)
-#define texture3d_rw( image_name, layout_index ) layout (binding = layout_index+TEXTURE_OFFSET, rgba8) uniform image3D image_name
-#define texture3d_r( image_name, layout_index ) layout (binding = layout_index+TEXTURE_OFFSET, rgba8) uniform readonly image3D image_name
-#define texture3d_w( image_name, layout_index ) texture3d_rw(image_name, layout_index)
-#define texture2d_array_rw( image_name, layout_index ) layout (binding = layout_index+TEXTURE_OFFSET, rgba8) uniform image2DArray image_name
-#define texture2d_array_r( image_name, layout_index ) layout (binding = layout_index+TEXTURE_OFFSET, rgba8) uniform readonly image2DArray image_name
-#define texture2d_array_w( image_name, layout_index ) texture2d_array_rw(image_name, layout_index)
+#define texture_2d_rw( image_name, layout_index ) layout (binding = layout_index+TEXTURE_OFFSET, rgba8) uniform image2D image_name
+#define texture_2d_r( image_name, layout_index ) layout (binding = layout_index+TEXTURE_OFFSET, rgba8) uniform readonly image2D image_name
+#define texture_2d_w( image_name, layout_index ) texture2d_rw(image_name, layout_index)
+#define texture_3d_rw( image_name, layout_index ) layout (binding = layout_index+TEXTURE_OFFSET, rgba8) uniform image3D image_name
+#define texture_3d_r( image_name, layout_index ) layout (binding = layout_index+TEXTURE_OFFSET, rgba8) uniform readonly image3D image_name
+#define texture_3d_w( image_name, layout_index ) texture3d_rw(image_name, layout_index)
+#define texture_2d_array_rw( image_name, layout_index ) layout (binding = layout_index+TEXTURE_OFFSET, rgba8) uniform image2DArray image_name
+#define texture_2d_array_r( image_name, layout_index ) layout (binding = layout_index+TEXTURE_OFFSET, rgba8) uniform readonly image2DArray image_name
+#define texture_2d_array_w( image_name, layout_index ) texture2d_array_rw(image_name, layout_index)
 #define read_texture( image_name, coord ) imageLoad(image_name, coord)
 #define write_texture( image_name, value, coord ) imageStore(image_name, coord, value)
 #define read_texture_array( image_name, coord, slice ) imageLoad(image_name, ivec3(coord.xy, slice))

@@ -1,13 +1,13 @@
 // compute texture
-#define texture2d_rw( name, index ) texture2d<float, access::read_write> name [[texture(index)]]
-#define texture2d_r( name, index ) texture2d<float, access::read> name [[texture(index)]]
-#define texture2d_w( name, index ) texture2d<float, access::write> name [[texture(index)]]
-#define texture3d_rw( name, index ) texture3d<float, access::read_write> name [[texture(index)]]
-#define texture3d_r( name, index ) texture3d<float, access::read> name [[texture(index)]]
-#define texture3d_w( name, index ) texture3d<float, access::write> name [[texture(index)]]
-#define texture2d_array_rw( name, index ) texture2d_array<float, access::read_write> name [[texture(index)]]
-#define texture2d_array_r( name, index ) texture2d_array<float, access::read> name [[texture(index)]]
-#define texture2d_array_w( name, index ) texture2d_array<float, access::write> name [[texture(index)]]
+#define texture_2d_rw( name, index ) texture2d<float, access::read_write> name [[texture(index)]]
+#define texture_2d_r( name, index ) texture2d<float, access::read> name [[texture(index)]]
+#define texture_2d_w( name, index ) texture2d<float, access::write> name [[texture(index)]]
+#define texture_3d_rw( name, index ) texture3d<float, access::read_write> name [[texture(index)]]
+#define texture_3d_r( name, index ) texture3d<float, access::read> name [[texture(index)]]
+#define texture_3d_w( name, index ) texture3d<float, access::write> name [[texture(index)]]
+#define texture_2d_array_rw( name, index ) texture2d_array<float, access::read_write> name [[texture(index)]]
+#define texture_2d_array_r( name, index ) texture2d_array<float, access::read> name [[texture(index)]]
+#define texture_2d_array_w( name, index ) texture2d_array<float, access::write> name [[texture(index)]]
 #define read_texture( name, gid ) name.read(gid)
 #define write_texture( name, val, gid ) name.write(val, gid)
 #define read_texture_array( name, gid, slice ) name.read(gid, uint(slice))
