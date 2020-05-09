@@ -157,6 +157,9 @@ depth_2d_array( sampler_name, layout_index );
 texture2d_r( image_name, layout_index );
 texture2d_w( image_name, layout_index );
 texture2d_rw( image_name, layout_index );
+texture3d_r( image_name, layout_index );
+texture3d_w( image_name, layout_index );
+texture3d_rw( image_name, layout_index );
 
 // compute shader buffer types
 structured_buffer( type, name, index );
