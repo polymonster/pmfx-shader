@@ -149,6 +149,10 @@ texture_cube( sampler_name, layout_index );
 texture_cube_array( sampler_name, layout_index ); // requires sm 4+, gles 400+
 texture_3d( sampler_name, layout_index );
 
+// depth formats are required for sampler compare ops
+depth_2d( sampler_name, layout_index ); 
+depth_2d_array( sampler_name, layout_index );
+
 // compute shader texture types
 texture2d_r( image_name, layout_index );
 texture2d_w( image_name, layout_index );
@@ -166,6 +170,13 @@ structured_buffer_rw( type, name, index );
 float4 col = sample_texture( diffuse_texture, texcoord.xy );
 float4 cube = sample_texture( cubemap_texture, normal.xyz );
 float4 msaa_sample = sample_texture_2dms( msaa_texture, x, y, fragment );
+float4 level = sampler_texture_level( texture, texcoord.xy, mip_level);
+float4 array = sampler_texture_array( texture, texcoord.xy, array_slice);
+float4 array_level = sampler_texture_array_level( texture, texcoord.xy, array_slice, mip_level);
+
+// sample compare
+float shadow = sample_depth_compare( shadow_map, texcoord.xy, compare_ref);
+float shadow_array = sample_depth_compare_array( shadow_map, texcoord.xy, array_slice, compare_ref);
 
 // compute rw texture
 float4 rwtex = read_texture( tex_rw, gid );
@@ -216,7 +227,7 @@ Include files are supported even though some shader platforms or versions may no
 
 ## Unique pmfx features
 
-#### cbuffer_offset / texture_offset
+### cbuffer_offset / texture_offset
 
 HLSL has different registers for textures, vertex buffers, cbuffers and un-ordered access views. Metal and Vulkan have some differences where the register indices are shared across different resource types. To avoid collisions in different API backends you can supply offsets using the following command line options.
 
@@ -226,7 +237,7 @@ Vulkan: -texture_offset (textures start binding at this point allowing uniform b
 
 ### v_flip
 
-OpenGL has different viewport co-ordinates when rendering to the backbuffer vs rendering into a render target, this can propagate it's way far into a code base with conditional "v_flips" happening during different render passes.
+OpenGL has different viewport co-ordinates to texture coordinate so when rendering to the backbuffer vs rendering into a render target you can get output results that are flipped in the y-axis, this can propagate it's way far into a code base with conditional "v_flips" happening during different render passes.
 
 To solve this issue in a cross platform way, pmfx will expose a uniform bool called "v_flip" in all gl vertex shaders, this allows you to conditionally flip the y-coordinate when rendering to the backbuffer or not. 
 
@@ -331,7 +342,7 @@ For each permutation a shader is generated with the technique plus the permutati
 
 ### C++ Header
 
-After compilation a header is output for each .pmfx file containing c struct declarations for the cbuffers, technique constant buffers and vertex inputs. It also containts defines for the shader permutation id / flags that you can and against.
+After compilation a header is output for each .pmfx file containing c struct declarations for the cbuffers, technique constant buffers and vertex inputs. It also containts defines for the shader permutation id / flags that you can check and test against.
 
 ```c++
 namespace debug
