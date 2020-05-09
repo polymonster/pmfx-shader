@@ -154,12 +154,15 @@ depth_2d( sampler_name, layout_index );
 depth_2d_array( sampler_name, layout_index );
 
 // compute shader texture types
-texture2d_r( image_name, layout_index );
-texture2d_w( image_name, layout_index );
-texture2d_rw( image_name, layout_index );
-texture3d_r( image_name, layout_index );
-texture3d_w( image_name, layout_index );
-texture3d_rw( image_name, layout_index );
+texture_2d_r( image_name, layout_index );
+texture_2d_w( image_name, layout_index );
+texture_2d_rw( image_name, layout_index );
+texture_3d_r( image_name, layout_index );
+texture_3d_w( image_name, layout_index );
+texture_3d_rw( image_name, layout_index );
+texture_2d_array_r( image_name, layout_index );
+texture_2d_array_w( image_name, layout_index );
+texture_2d_array_rw( image_name, layout_index );
 
 // compute shader buffer types
 structured_buffer( type, name, index );
