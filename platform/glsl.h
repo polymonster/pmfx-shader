@@ -6,7 +6,11 @@ precision highp sampler2DArrayShadow;
 #endif    
 // texture
 #ifdef BINDING_POINTS
+#if TEXTURE_OFFSET
 #define _tex_binding(sampler_index) layout(binding = sampler_index+TEXTURE_OFFSET)
+#else
+#define _tex_binding(sampler_index) layout(binding = sampler_index)
+#endif
 #else
 #define _tex_binding(sampler_index)  
 #endif
