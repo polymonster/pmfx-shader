@@ -9,6 +9,7 @@ import platform
 import copy
 import threading
 import cgu
+import hashlib
 
 
 # paths and info for current build environment
@@ -78,6 +79,7 @@ class SingleShaderInfo:
     resource_decl = []                                                  # decl of only used resources by shader
     cbuffers = []                                                       # array of cbuffer decls used by shader
     sv_semantics = []                                                   # array of tuple [(semantic, variable name), ..]
+    duplicate = False
 
 
 # parse command line args passed in
@@ -1178,6 +1180,17 @@ def format_source(source, indent_size):
     return formatted
 
 
+# hashes a shader to find identical shaders which have different permutation options
+def shader_hash(_shader):
+    hash_source = ""
+    hash_source += _shader.input_decl
+    hash_source += _shader.instance_input_decl
+    hash_source += _shader.output_decl
+    hash_source += _shader.resource_decl
+    hash_source += _shader.functions_source
+    return hashlib.md5(hash_source.encode('utf-8')).hexdigest()
+
+
 # hlsl source.. pssl is similar
 def _hlsl_source(_info, pmfx_name, _tp, _shader):
     shader_source = _info.macros_source
@@ -2258,9 +2271,12 @@ def generate_technique_permutation_info(_tp):
     _tp.technique["instance_inputs"] = generate_input_info(_tp.shader[0].instance_input_decl)
     _tp.technique["vs_outputs"] = generate_input_info(_tp.shader[0].output_decl)
     # vs and ps files
-    _tp.technique["vs_file"] = _tp.name + ".vsc"
-    _tp.technique["ps_file"] = _tp.name + ".psc"
-    _tp.technique["cs_file"] = _tp.name + ".csc"
+    if "vs" in _tp.filenames.keys():
+        _tp.technique["vs_file"] = _tp.filenames["vs"] + ".vsc"
+    if "ps" in _tp.filenames.keys():
+        _tp.technique["ps_file"] = _tp.filenames["ps"] + ".psc"
+    if "cs" in _tp.filenames.keys():
+        _tp.technique["cs_file"] = _tp.filenames["cs"] + ".csc"
     # permutation
     _tp.technique["permutations"] = _tp.permutation_options
     _tp.technique["permutation_id"] = _tp.id
@@ -2271,6 +2287,8 @@ def generate_technique_permutation_info(_tp):
 # compiles single shader using platform specific compiler or validator, _tp is technique / permutation info
 def compile_single_shader(_tp):
     for s in _tp.shader:
+        if s.duplicate:
+            continue
         if _info.shader_platform == "hlsl":
             compile_hlsl(_info, _tp.pmfx_name, _tp, s)
         elif _info.shader_platform == "pssl":
@@ -2432,14 +2450,31 @@ def parse_pmfx(file, root):
                         _tp.shader.append(single_shader)
             compile_jobs.append(copy.copy(_tp))
 
+    # find duplicated / redundant permutation combinations
+    unique = dict()
+    for j in compile_jobs:
+        j.filenames = dict()
+        for s in j.shader:
+            hash = shader_hash(s)
+            if hash not in unique:
+                s.duplicate = False
+                unique[str(hash)] = j.name
+                j.filenames[s.shader_type] = j.name
+            else:
+                s.duplicate = True
+                j.filenames[s.shader_type] = unique[str(hash)]
+
     threads = []
     for j in compile_jobs:
         x = threading.Thread(target=compile_single_shader, args=(j,))
         threads.append(x)
         x.start()
 
+    # wait for threads
+    for t in threads:
+        t.join()
+
     for i in range(0, len(compile_jobs)):
-        threads[i].join()
         c = compile_jobs[i]
         str_id = ""
         if c.id != 0:
