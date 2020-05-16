@@ -249,6 +249,10 @@ To solve this issue in a cross platform way, pmfx will expose a uniform bool cal
 
 To make this work make sure you also change the winding glFrontFace(GL_CCW) to glFrontFace(GL_CW).
 
+### cbuffer padding
+
+HLSL/Direct3D requires cbuffers to be padded to 16 bytes alignment, pmfx allows you to create cbuffers with any size and will pad the rest out for you.
+
 ### Techniques
 
 Single .pmfx file can contain multiple shader functions so you can share functionality, you can define a block of [jsn](https://github.com/polymonster/jsn) in the shader to configure techniques. (jsn is a more lenient and user friendly data format similar to json).
