@@ -1188,6 +1188,7 @@ def shader_hash(_shader):
     hash_source += _shader.output_decl
     hash_source += _shader.resource_decl
     hash_source += _shader.functions_source
+    hash_source += _shader.main_func_source
     return hashlib.md5(hash_source.encode('utf-8')).hexdigest()
 
 
@@ -1209,7 +1210,6 @@ def _hlsl_source(_info, pmfx_name, _tp, _shader):
             if i < 2:
                 shader_source += ", "
         shader_source += ")]"
-
     shader_source += _shader.main_func_source
     shader_source = format_source(shader_source, 4)
     return shader_source
