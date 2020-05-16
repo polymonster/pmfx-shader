@@ -346,11 +346,13 @@ else:
 
 For each permutation a shader is generated with the technique plus the permutation id. The id is generated from the values passed in the permutation object.
 
-Adding permutations can cause the number of generated shaders to grow exponentially, pmfx will detect redundant shader combinations using md5 hashing, to re-use duplicate permutation combinations and avoid un-necessary compilation, additional permutations are compiled asyncrounsly to make use of mulit-core cpu's.
+Adding permutations can cause the number of generated shaders to grow exponentially, pmfx will detect redundant shader combinations using md5 hashing, to re-use duplicate permutation combinations and avoid un-necessary compilation.
 
 ### C++ Header
 
-After compilation a header is output for each .pmfx file containing c struct declarations for the cbuffers, technique constant buffers and vertex inputs. It also containts defines for the shader permutation id / flags that you can check and test against.
+After compilation a header is output for each .pmfx file containing c struct declarations for the cbuffers, technique constant buffers and vertex inputs. You can use these sturcts to fill buffers in your c++ code and use sizeof for buffer update calls in your graphics api. 
+
+It also contains defines for the shader permutation id / flags that you can check and test against to select the correct shader permutations for a draw call (ie. skinned, instanced, etc).
 
 ```c++
 namespace debug
