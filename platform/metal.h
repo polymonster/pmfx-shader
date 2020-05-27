@@ -66,7 +66,7 @@
 #define discard discard_fragment()
 #define lerp mix
 #define frac fract
-#define mod(x, y) (x - y * floor(x/y)) 
+#define mod(x, y) (x - y * floor(x/y))
 #define _pmfx_unroll
 #define _pmfx_loop
 

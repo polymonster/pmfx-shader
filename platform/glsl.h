@@ -80,6 +80,7 @@ precision highp sampler2DArrayShadow;
 #define int3 ivec3
 #define int2 ivec2
 #define modf mod
+#define fmod mod
 #define frac fract
 #define lerp mix
 #define mul( A, B ) ((A) * (B))
