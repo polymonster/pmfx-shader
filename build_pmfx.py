@@ -173,6 +173,14 @@ def get_platform_name():
     return plat
 
 
+# gets shader sub platform name, gles (glsl) spirv (glsl)
+def shader_sub_platform():
+    sub_platforms = ["gles", "spirv"]
+    if _info.shader_sub_platform in sub_platforms:
+        return _info.shader_sub_platform
+    return _info.shader_platform
+
+
 # get extension for windows
 def get_platform_exe():
     if get_platform_name() == "win64":
@@ -392,6 +400,9 @@ def check_dependencies(filename, included_files):
                     return False
             else:
                 print(sanitized_name + " is not in list")
+                return False
+        if "failures" in info.keys():
+            if len(info["failures"]) > 0:
                 return False
         info_file.close()
     else:
@@ -874,7 +885,7 @@ def shader_version_float(platform, version):
     if platform == "metal":
         # metal version is already a float
         return float(version)
-    elif platform == "glsl" or platform == "spiv":
+    elif platform == "glsl" or platform == "spiv" or platform == "gles":
         # glsl version is integer 330, 400, 450..
         return float(version)
     elif platform == "hlsl":
@@ -903,6 +914,10 @@ def defines_from_caps(define_list):
             ["PMFX_TEXTURE_CUBE_ARRAY", 400.0],
             ["PMFX_COMPUTE_SHADER", 450.0]
         ],
+        "gles": [
+            ["PMFX_TEXTURE_CUBE_ARRAY", 310.0],
+            ["PMFX_COMPUTE_SHADER", 310.0]
+        ],
         "spirv": [
             ["PMFX_TEXTURE_CUBE_ARRAY", 400.0],
             ["PMFX_COMPUTE_SHADER", 450.0]
@@ -913,13 +928,13 @@ def defines_from_caps(define_list):
         ]
     }
     # check platform exists
-    platform = _info.shader_platform
+    platform = shader_sub_platform
     if platform not in lookup.keys():
         return []
     # add features
     version = shader_version_float(platform, _info.shader_version)
     define_list = []
-    for cap in lookup[_info.shader_platform]:
+    for cap in lookup[platform]:
         if version >= cap[1]:
             define_list.append((cap[0], [1], -1))
     return define_list
@@ -933,6 +948,7 @@ def generate_permutations(technique, technique_json):
     permutation_options = dict()
     permutation_option_mask = 0
     define_string = ""
+
     define_list.append((_info.shader_platform.upper(), [1], -1))
     define_list.append((_info.shader_sub_platform.upper(), [1], -1))
     define_list = defines_from_caps(define_list)
@@ -1454,7 +1470,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     # header and macros
     shader_source = ""
     if _info.shader_sub_platform == "gles":
-        shader_source += "#version 300 es\n"
+        shader_source += "#version " + _tp.shader_version + " es\n"
         shader_source += "#define GLSL\n"
         shader_source += "#define GLES\n"
     else:
@@ -2149,6 +2165,7 @@ def generate_shader_info(filename, included_files, techniques):
     shader_info = dict()
     shader_info["files"] = []
     shader_info["techniques"] = techniques["techniques"]
+    shader_info["failures"] = techniques["failures"]
 
     # special files which affect the validity of compiled shaders
     shader_info["files"].append(create_dependency(_info.this_file))
@@ -2379,17 +2396,18 @@ def parse_pmfx(file, root):
             valid = True
             _tp.shader_version = _info.shader_version
             if "supported_platforms" in _tp.technique:
+                p = shader_sub_platform()
                 sp = _tp.technique["supported_platforms"]
-                if _info.shader_platform not in sp:
-                    print(_tp.technique_name + " not supported on " + _info.shader_platform)
+                if p not in sp:
+                    print(_tp.technique_name + " not supported on " + p)
                     valid = False
                 else:
-                    sv = sp[_info.shader_platform]
+                    sv = sp[p]
                     if "all" in sv:
                         pass
                     elif _tp.shader_version not in sv:
                         print(_tp.technique_name + " not supported on " +
-                              _info.shader_platform + " " + _info.shader_version +
+                              p + " " + _info.shader_version +
                               ", forcing to version " + sv[0])
                         # force shader version to specified
                         _tp.shader_version = sv[0]
@@ -2476,16 +2494,18 @@ def parse_pmfx(file, root):
     for t in threads:
         t.join()
 
+    pmfx_output_info["failures"] = dict()
     for i in range(0, len(compile_jobs)):
         c = compile_jobs[i]
         str_id = ""
         if c.id != 0:
             str_id = "__" + str(c.id) + "__"
         output_name = c.pmfx_name + "::" + c.technique_name + str_id
-        if j.error_code == 0:
+        if c.error_code == 0:
             print(output_name)
         else:
             print(output_name + " failed to compile")
+            pmfx_output_info["failures"][c.pmfx_name] = True
         for out in c.output_list:
             print(out)
         for err in c.error_list:

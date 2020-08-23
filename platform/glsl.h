@@ -3,6 +3,9 @@
 precision highp float;
 precision highp sampler2DArray;
 precision highp sampler2DArrayShadow;
+precision highp sampler2DShadow;
+precision highp sampler3D;
+precision highp samplerCube;
 #endif    
 // texture
 #ifdef BINDING_POINTS
