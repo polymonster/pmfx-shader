@@ -1441,10 +1441,11 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     if _tp.shader_version == "0":
         _tp.shader_version = "330"
 
+    # some capabilities
     # binding points for samples and uniform buffers are only supported 420 onwards..
-    # you may have luck trying the extension.
     binding_points = int(_tp.shader_version) >= 420
     texture_cube_array = int(_tp.shader_version) >= 400
+    sampler_shadow = get_platform_name() != "osx"
 
     uniform_buffers = ""
     for cbuf in _shader.cbuffers:
@@ -1477,14 +1478,17 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         shader_source += "#version " + _tp.shader_version + " core\n"
         shader_source += "#define GLSL\n"
         if binding_points:
-            shader_source += "#define BINDING_POINTS\n"
+            shader_source += "#define PMFX_BINDING_POINTS\n"
         if texture_cube_array:
             shader_source += "#define PMFX_TEXTURE_CUBE_ARRAY\n"
+        if sampler_shadow:
+            shader_source += "#define PMFX_SAMPLER_SHADOW\n"
+
     # texture offset is to avoid collisions on descriptor set slots in vulkan
     if _info.shader_sub_platform == "spirv":
-        shader_source += "#define TEXTURE_OFFSET " + str(_info.texture_offset) + "\n"
+        shader_source += "#define PMFX_TEXTURE_OFFSET " + str(_info.texture_offset) + "\n"
     else:
-        shader_source += "#define TEXTURE_OFFSET 0\n"
+        shader_source += "#define PMFX_TEXTURE_OFFSET 0\n"
     shader_source += "//" + pmfx_name + " " + _tp.name + " " + _shader.shader_type + " " + str(_tp.id) + "\n"
     shader_source += _info.macros_source
 
