@@ -1446,6 +1446,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     binding_points = int(_tp.shader_version) >= 420
     texture_cube_array = int(_tp.shader_version) >= 400
     sampler_shadow = get_platform_name() != "osx"
+    sampler_shadow_disable = get_platform_name() == "osx"
 
     uniform_buffers = ""
     for cbuf in _shader.cbuffers:
@@ -1474,6 +1475,8 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         shader_source += "#version " + _tp.shader_version + " es\n"
         shader_source += "#define GLSL\n"
         shader_source += "#define GLES\n"
+        if sampler_shadow_disable:
+            shader_source += "#define PMFX_SAMPLER_SHADOW_DISABLE\n"
     else:
         shader_source += "#version " + _tp.shader_version + " core\n"
         shader_source += "#define GLSL\n"
@@ -1483,6 +1486,8 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             shader_source += "#define PMFX_TEXTURE_CUBE_ARRAY\n"
         if sampler_shadow:
             shader_source += "#define PMFX_SAMPLER_SHADOW\n"
+        if sampler_shadow_disable:
+            shader_source += "#define PMFX_SAMPLER_SHADOW_DISABLE\n"
 
     # texture offset is to avoid collisions on descriptor set slots in vulkan
     if _info.shader_sub_platform == "spirv":

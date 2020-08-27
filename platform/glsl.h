@@ -73,12 +73,18 @@ precision highp samplerCube;
 #define sample_texture_cube_array_level( sampler_name, V, a, l ) textureLod( sampler_name, vec4(V, a), l )
 
 // depth sampler / compare.. beware these dont work on mac so you get fixed < comparison
+// gles does not support shadow sampler arrays
 #ifdef PMFX_SAMPLER_SHADOW
 #define sample_depth_compare( name, tc, compare_value ) texture( name, vec3(tc.xy, compare_value) )
 #define sample_depth_compare_array( name, tc, a, compare_value ) texture( name, vec4(tc.xy, a, compare_value) )
 #else
+#ifdef PMFX_SAMPLER_SHADOW_DISABLE
+#define sample_depth_compare( name, tc, compare_value ) 1.0
+#define sample_depth_compare_array( name, tc, a, compare_value ) 1.0
+#else
 #define sample_depth_compare( name, tc, compare_value ) texture( name, vec2(tc.xy) ).r < compare_value ? 0.0 : 1.0
 #define sample_depth_compare_array( name, tc, a, compare_value ) texture( name, vec3(tc.xy, a) ).r < compare_value ? 0.0 : 1.0
+#endif
 #endif
 
 // matrix
