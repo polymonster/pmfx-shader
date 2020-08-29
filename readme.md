@@ -13,6 +13,7 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 
 - HLSL Shader Model 3+
 - GLSL 330+
+- GLES 310+ (WebGL 2.0)
 - SPIR-V. (Vulkan, OpenGL)
 - Metal 1.0+ (macOS, iOS, tvOS) 
 - PSSL (wip)
