@@ -1482,7 +1482,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         if texture_cube_array:
             shader_source += "#define PMFX_TEXTURE_CUBE_ARRAY\n"
         if texture_arrays:
-            texture_arrays += "#define PMFX_TEXTURE_ARRAYS\n"
+            shader_source += "#define PMFX_TEXTURE_ARRAYS\n"
 
     # texture offset is to avoid collisions on descriptor set slots in vulkan
     if _info.shader_sub_platform == "spirv":
