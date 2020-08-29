@@ -7,8 +7,35 @@ precision highp sampler2DShadow;
 precision highp sampler3D;
 precision highp samplerCube;
 #endif
+
+// defs
+#define float4x4 mat4
+#define float3x3 mat3
+#define float2x2 mat2
+#define float4 vec4
+#define float3 vec3
+#define float2 vec2
+#define uint4 uvec4
+#define uint3 uvec3
+#define uint2 uvec2
+#define int4 ivec4
+#define int3 ivec3
+#define int2 ivec2
+#define modf mod
+#define fmod mod
+#define frac fract
+#define lerp mix
+#define mul( A, B ) ((A) * (B))
+#define mul_tbn( A, B ) ((B) * (A))
+#define saturate( A ) (clamp( A, 0.0, 1.0 ))
+#define atan2( A, B ) (atan(A, B))
+#define ddx dFdx
+#define ddy dFdy
+#define _pmfx_unroll
+#define _pmfx_loop
+
     
-// texture location binding is not supported on all glsl version
+// texture location binding is not supported on all glsl version's
 #ifdef PMFX_BINDING_POINTS
 #if PMFX_TEXTURE_OFFSET
 #define _tex_binding(sampler_index) layout(binding = sampler_index + PMFX_TEXTURE_OFFSET)
@@ -26,15 +53,8 @@ precision highp samplerCube;
 #define texture_3d( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler3D sampler_name
 #define texture_cube( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCube sampler_name
 #define texture_2d_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DArray sampler_name
-
-// depth texture
-#ifdef PMFX_SAMPLER_SHADOW
 #define depth_2d( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DShadow sampler_name
 #define depth_2d_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DArrayShadow sampler_name
-#else
-#define depth_2d( sampler_name, sampler_index ) texture_2d(sampler_name, sampler_index)
-#define depth_2d_array( sampler_name, sampler_index ) texture_2d_array(sampler_name, sampler_index)
-#endif
 
 // multisample texture
 #ifdef GLES
@@ -67,24 +87,21 @@ precision highp samplerCube;
 #define sample_texture( sampler_name, V ) texture( sampler_name, V )
 #define sample_texture_level( sampler_name, V, l ) textureLod( sampler_name, V, l )
 #define sample_texture_grad( sampler_name, V, vddx, vddy ) textureGrad( sampler_name, V, vddx, vddy )
+#define sample_depth_compare( name, tc, compare_value ) texture( name, vec3(tc.xy, compare_value) )
 #define sample_texture_array( sampler_name, V, a ) texture( sampler_name, vec3(V, a) )
 #define sample_texture_array_level( sampler_name, V, a, l ) textureLod( sampler_name, vec3(V, a), l )
+
+// gles and glsl on mac have issues with sampling texture arrays inside a loop with a dynamic index
+#ifdef PMFX_TEXTURE_ARRAYS
+#define sample_depth_compare_array( name, tc, a, compare_value ) texture( name, vec4(tc.xy, a, compare_value) )
+#define sample_texture_cube_array_level( sampler_name, V, a, l ) textureLod( sampler_name, vec4(V, a), l )
 #define sample_texture_cube_array( sampler_name, V, a ) texture( sampler_name, vec4(V, a))
 #define sample_texture_cube_array_level( sampler_name, V, a, l ) textureLod( sampler_name, vec4(V, a), l )
-
-// depth sampler / compare.. beware these dont work on mac so you get fixed < comparison
-// gles does not support shadow sampler arrays
-#ifdef PMFX_SAMPLER_SHADOW
-#define sample_depth_compare( name, tc, compare_value ) texture( name, vec3(tc.xy, compare_value) )
-#define sample_depth_compare_array( name, tc, a, compare_value ) texture( name, vec4(tc.xy, a, compare_value) )
 #else
-#ifdef PMFX_SAMPLER_SHADOW_DISABLE
-#define sample_depth_compare( name, tc, compare_value ) 1.0
 #define sample_depth_compare_array( name, tc, a, compare_value ) 1.0
-#else
-#define sample_depth_compare( name, tc, compare_value ) texture( name, vec2(tc.xy) ).r < compare_value ? 0.0 : 1.0
-#define sample_depth_compare_array( name, tc, a, compare_value ) texture( name, vec3(tc.xy, a) ).r < compare_value ? 0.0 : 1.0
-#endif
+#define sample_texture_cube_array_level( sampler_name, V, a, l ) vec4(0.0, 0.0, 0.0, 0.0)
+#define sample_texture_cube_array( sampler_name, V, a ) vec4(0.0, 0.0, 0.0, 0.0)
+#define sample_texture_cube_array_level( sampler_name, V, a, l ) vec4(0.0, 0.0, 0.0, 0.0)
 #endif
 
 // matrix
@@ -99,29 +116,3 @@ precision highp samplerCube;
 #define remap_depth( d ) (d = d * 0.5 + 0.5)
 #define remap_ndc_ray( r ) float2(r.x, r.y)  
 #define depth_ps_output gl_FragDepth
-
-// def
-#define float4x4 mat4
-#define float3x3 mat3
-#define float2x2 mat2
-#define float4 vec4
-#define float3 vec3
-#define float2 vec2
-#define uint4 uvec4
-#define uint3 uvec3
-#define uint2 uvec2
-#define int4 ivec4
-#define int3 ivec3
-#define int2 ivec2
-#define modf mod
-#define fmod mod
-#define frac fract
-#define lerp mix
-#define mul( A, B ) ((A) * (B))
-#define mul_tbn( A, B ) ((B) * (A))
-#define saturate( A ) (clamp( A, 0.0, 1.0 ))
-#define atan2( A, B ) (atan(A, B))
-#define ddx dFdx
-#define ddy dFdy
-#define _pmfx_unroll
-#define _pmfx_loop

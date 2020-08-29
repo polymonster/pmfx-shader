@@ -1445,8 +1445,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     # binding points for samples and uniform buffers are only supported 420 onwards..
     binding_points = int(_tp.shader_version) >= 420
     texture_cube_array = int(_tp.shader_version) >= 400
-    sampler_shadow = get_platform_name() != "osx"
-    sampler_shadow_disable = get_platform_name() == "osx"
+    texture_arrays = get_platform_name() != "osx"
 
     uniform_buffers = ""
     for cbuf in _shader.cbuffers:
@@ -1475,8 +1474,6 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         shader_source += "#version " + _tp.shader_version + " es\n"
         shader_source += "#define GLSL\n"
         shader_source += "#define GLES\n"
-        if sampler_shadow_disable:
-            shader_source += "#define PMFX_SAMPLER_SHADOW_DISABLE\n"
     else:
         shader_source += "#version " + _tp.shader_version + " core\n"
         shader_source += "#define GLSL\n"
@@ -1484,10 +1481,8 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             shader_source += "#define PMFX_BINDING_POINTS\n"
         if texture_cube_array:
             shader_source += "#define PMFX_TEXTURE_CUBE_ARRAY\n"
-        if sampler_shadow:
-            shader_source += "#define PMFX_SAMPLER_SHADOW\n"
-        if sampler_shadow_disable:
-            shader_source += "#define PMFX_SAMPLER_SHADOW_DISABLE\n"
+        if texture_arrays:
+            texture_arrays += "#define PMFX_TEXTURE_ARRAYS\n"
 
     # texture offset is to avoid collisions on descriptor set slots in vulkan
     if _info.shader_sub_platform == "spirv":
@@ -2415,6 +2410,7 @@ def parse_pmfx(file, root):
                     if "all" in sv:
                         pass
                     elif _tp.shader_version not in sv:
+                        valid = False
                         print(_tp.technique_name + " not supported on " +
                               p + " " + _info.shader_version +
                               ", forcing to version " + sv[0])
