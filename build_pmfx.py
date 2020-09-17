@@ -885,12 +885,13 @@ def shader_version_float(platform, version):
     if platform == "metal":
         # metal version is already a float
         return float(version)
-    elif platform == "glsl" or platform == "spiv" or platform == "gles":
+    elif platform == "glsl" or platform == "spirv" or platform == "gles":
         # glsl version is integer 330, 400, 450..
         return float(version)
     elif platform == "hlsl":
         # hlsl version is 3_0, 5_0
         return float(version.replace("_", "."))
+    assert 0
 
 
 # just list of all the caps
