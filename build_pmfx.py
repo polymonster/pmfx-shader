@@ -928,7 +928,7 @@ def defines_from_caps(define_list):
         ]
     }
     # check platform exists
-    platform = shader_sub_platform
+    platform = shader_sub_platform()
     if platform not in lookup.keys():
         return []
     # add features
