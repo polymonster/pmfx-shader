@@ -1475,6 +1475,9 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         shader_source += "#version " + _tp.shader_version + " es\n"
         shader_source += "#define GLSL\n"
         shader_source += "#define GLES\n"
+        if texture_arrays:
+            shader_source += "#define PMFX_TEXTURE_ARRAYS\n"
+        shader_source += "#define PMFX_TEXTURE_CUBE_ARRAY\n"
     else:
         shader_source += "#version " + _tp.shader_version + " core\n"
         shader_source += "#define GLSL\n"
