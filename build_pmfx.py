@@ -1446,7 +1446,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     # binding points for samples and uniform buffers are only supported 420 onwards..
     binding_points = int(_tp.shader_version) >= 420
     texture_cube_array = int(_tp.shader_version) >= 400
-    texture_arrays = get_platform_name() != "osx"
+    texture_arrays = True
 
     uniform_buffers = ""
     for cbuf in _shader.cbuffers:
