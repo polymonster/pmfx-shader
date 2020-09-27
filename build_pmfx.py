@@ -33,6 +33,7 @@ class BuildInfo:
     platform_macros_file = ""                                           # glsl.h, hlsl.h, metal.h
     macros_source = ""                                                  # source code inside _shader_macros.h
     error_code = 0                                                      # non-zero if any shaders failed to build
+    cmdline_string = ""                                                 # stores the full cmdline passed
 
 
 # info and contents of a .pmfx file
@@ -94,6 +95,8 @@ def parse_args():
     _info.debug = False
     if len(sys.argv) == 1:
         display_help()
+    for arg in sys.argv:
+        _info.cmdline_string += arg + " "
     for i in range(1, len(sys.argv)):
         if "-help" in sys.argv[i]:
             display_help()
@@ -132,7 +135,6 @@ def parse_args():
             _info.metal_min_os = sys.argv[i+1]
         if sys.argv[i] == "-metal_sdk":
             _info.metal_sdk = sys.argv[i+1]
-
 
 
 # display help for args
@@ -367,7 +369,6 @@ def replace_io_tokens(text):
 # get info filename for dependency checking
 def get_resource_info_filename(filename, build_dir):
     global _info
-    global _info
     base_filename = os.path.basename(filename)
     dir_path = os.path.dirname(filename)
     info_filename = os.path.join(_info.output_dir, os.path.splitext(base_filename)[0], "info.json")
@@ -375,6 +376,7 @@ def get_resource_info_filename(filename, build_dir):
 
 
 # check file time stamps and build times to determine if rebuild needs to happen
+# returns true if the file does not need re-building, false if a file/dependency is out of date or input has changed
 def check_dependencies(filename, included_files):
     global _info
     # look for .json file
@@ -389,6 +391,8 @@ def check_dependencies(filename, included_files):
     if os.path.exists(info_filename) and os.path.getsize(info_filename) > 0:
         info_file = open(info_filename, "r")
         info = json.loads(info_file.read())
+        if "cmdline" not in info or _info.cmdline_string != info["cmdline"]:
+            return False
         for prev_built_with_file in info["files"]:
             sanitized_name = sanitize_file_path(prev_built_with_file["name"])
             if sanitized_name in file_list:
@@ -2171,6 +2175,7 @@ def generate_shader_info(filename, included_files, techniques):
     info_filename, base_filename, dir_path = get_resource_info_filename(filename, _info.output_dir)
 
     shader_info = dict()
+    shader_info["cmdline"] = _info.cmdline_string
     shader_info["files"] = []
     shader_info["techniques"] = techniques["techniques"]
     shader_info["failures"] = techniques["failures"]
@@ -2551,6 +2556,19 @@ def parse_pmfx(file, root):
             h_file.close()
 
 
+# handles some hardcoded cases of platform varitions
+def configure_sub_platforms():
+    global _info
+    if _info.shader_platform == "spirv":
+        _info.shader_platform = "glsl"
+        _info.shader_version = "450"
+        _info.shader_sub_platform = "spirv"
+
+    if _info.shader_platform == "gles":
+        _info.shader_platform = "glsl"
+        _info.shader_sub_platform = "gles"
+
+
 # main function to avoid shadowing
 def main():
     print("--------------------------------------------------------------------------------")
@@ -2562,15 +2580,7 @@ def main():
     _info.error_code = 0
 
     parse_args()
-
-    if _info.shader_platform == "spirv":
-        _info.shader_platform = "glsl"
-        _info.shader_version = "450"
-        _info.shader_sub_platform = "spirv"
-
-    if _info.shader_platform == "gles":
-        _info.shader_platform = "glsl"
-        _info.shader_sub_platform = "gles"
+    configure_sub_platforms()
 
     # get dirs for build output
     _info.root_dir = os.getcwd()
