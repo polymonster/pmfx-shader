@@ -1,7 +1,7 @@
 # pmfx-shader
 [![Build Status](https://travis-ci.org/polymonster/pmfx-shader.svg?branch=master)](https://travis-ci.org/polymonster/pmfx-shader) [![Build status](https://ci.appveyor.com/api/projects/status/wohe0i5v0hvnjnfb?svg=true)](https://ci.appveyor.com/project/polymonster/pmfx-shader)
 
-A cross platform shader language with multi-threaded offline compilation or platform shader source code generation. json reflection info, c++ header with your shaders structs, fx-like techniques and compile time branch evaluation via (uber-shader) "permutations".
+A cross platform shader language with multi-threaded offline compilation or platform shader source code generation. Output json reflection info and c++ header with your shaders structs, fx-like techniques and compile time branch evaluation via (uber-shader) "permutations".
 
 A single file does all the shader parsing and code generation. Simple syntax changes are handled through macros and defines found in [platform](https://github.com/polymonster/pmfx-shader/tree/master/platform), so it is simple to add new features or change things to behave how you like. More complex differences between shader languages (such as Metals lack of global textures / buffers) are handled through code-generation. 
 
