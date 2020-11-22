@@ -2435,6 +2435,8 @@ def parse_pmfx(file, root):
                 _tp.name = _tp.technique_name
 
             # strip condition permutations from source
+            permutation.append((_info.shader_platform.upper(), 1))
+            permutation.append((shader_sub_platform().upper(), 1))
             _tp.source = evaluate_conditional_blocks(_pmfx.source, permutation)
 
             # get permutation constants..
