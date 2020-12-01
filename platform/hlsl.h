@@ -52,6 +52,7 @@
 #define fract frac
 #define _pmfx_unroll [unroll]
 #define _pmfx_loop [loop]
+#define mix lerp
 #pragma warning( disable : 3078) // 'i': loop control variable conflicts with a previous declaration
 #pragma warning( disable : 4000) // use of potentially uninitialized variable (from function return)
 
