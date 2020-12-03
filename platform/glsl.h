@@ -116,3 +116,17 @@ precision highp samplerCube;
 #define remap_depth( d ) (d = d * 0.5 + 0.5)
 #define remap_ndc_ray( r ) float2(r.x, r.y)  
 #define depth_ps_output gl_FragDepth
+
+// atomics
+#define atomic_load(atomic, original) original = atomicCounter(atomic)
+#define atomic_store(atomic, value) atomic = value
+#define atomic_increment(atomic, original) original = atomicCounterIncrement(atomic)
+#define atomic_decrement(atomic, original) original =  atomicCounterDecrement(atomic)
+#define atomic_add(atomic, value, original) original =  atomicCounterAdd(atomic, value)
+#define atomic_subtract(atomic, value original) original =  atomicCounterSubtract(atomic, value)
+#define atomic_min(atomic, value, original) original =  atomicCounterMin(atomic, value)
+#define atomic_max(atomic, value, original) original = atomicCounterMax(atomic, value)
+#define atomic_and(atomic, value, original) original = atomicCounterAnd(atomic, value)
+#define atomic_or(atomic, value, original) original = atomicCounterOr(atomic, value)
+#define atomic_xor(atomic, value, original) original =  atomicCounterXor(atomic, value)
+#define atomic_exchange(atomic, value, original) original =  atomicCounterExchange(atomic, value)
