@@ -89,7 +89,7 @@ python3 build_pmfx.py -shader_platform glsl -shader_version 330 -i examples -o o
 
 ## Usage
 
-Use HLSL syntax everwhere for shaders, with some small differences:
+Use mostly HLSL syntax for shaders, with some small differences:
 
 #### Always use structs for inputs and outputs.
 
@@ -218,6 +218,27 @@ vs_output vs_main( vs_input input )
     
     return output;
 }
+```
+
+### Atomic Operations
+
+Support for glsl, hlsl and metal compatible atomics is available with this limited API for atomic counters.
+
+```
+atomic_uint u;
+atomic_int i;
+atomic_load(atomic, original)
+atomic_store(atomic, value, original)
+atomic_increment(atomic, original)
+atomic_decrement(atomic, original)
+atomic_add(atomic, value, original)
+atomic_subtract(atomic, value, original)
+atomic_min(atomic, value, original)
+atomic_max(atomic, value, original)
+atomic_and(atomic, value, original)
+atomic_or(atomic, value, original)
+atomic_xor(atomic, value, original)
+atomic_exchange(atomic, value, original)
 ```
 
 #### Includes
