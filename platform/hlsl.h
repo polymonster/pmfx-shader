@@ -64,8 +64,8 @@
 #pragma warning( disable : 4000) // use of potentially uninitialized variable (from function return)
 
 // atomics
-#define atomic_uint groupshared uint
-#define atomic_int groupshared int
+#define atomic_uint uint
+#define atomic_int int
 
 #define atomic_load(atomic) atomic
 #define atomic_store(atomic, value) atomic = value
