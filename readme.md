@@ -194,9 +194,9 @@ struct val = structured_buffer[gid]; // read
 structured_buffer[gid] = val;        // write
 ```
 
-#### Cbuffers
+#### cbuffers
 
-Cbuffers are a unique kind of resource, this is just because they are so in HLSL. you can use cbuffers as you normally do in HLSL.
+cbuffers are a unique kind of resource, this is just because they are so in HLSL. you can use cbuffers as you normally do in HLSL.
 
 ```hlsl
 cbuffer per_view : register(b0)
@@ -231,7 +231,7 @@ atomic_int i;
 
 // operations
 atomic_load(atomic, original)
-atomic_store(atomic, value, original)
+atomic_store(atomic, value)
 atomic_increment(atomic, original)
 atomic_decrement(atomic, original)
 atomic_add(atomic, value, original)
