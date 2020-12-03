@@ -224,9 +224,12 @@ vs_output vs_main( vs_input input )
 
 Support for glsl, hlsl and metal compatible atomics is available with this limited API for atomic counters.
 
-```
+```hlsl
+// types
 atomic_uint u;
 atomic_int i;
+
+// operations
 atomic_load(atomic, original)
 atomic_store(atomic, value, original)
 atomic_increment(atomic, original)
@@ -239,6 +242,10 @@ atomic_and(atomic, value, original)
 atomic_or(atomic, value, original)
 atomic_xor(atomic, value, original)
 atomic_exchange(atomic, value, original)
+
+// usage, increments counter and stores the original value in 'index'
+uint index = 0;
+atomic_increment(u, index);
 ```
 
 #### Includes
