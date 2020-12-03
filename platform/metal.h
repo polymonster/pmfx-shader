@@ -81,7 +81,7 @@
 
 // atomics
 #define atomic_load(atomic, original) original = atomic_load_explicit(atomic, memory_order_relaxed)
-#define atomic_store(atomic, value) original = atomic_store_explicit(atomic, value, memory_order_relaxed)
+#define atomic_store(atomic, value) atomic_store_explicit(atomic, value, memory_order_relaxed)
 #define atomic_increment(atomic, original) original = atomic_fetch_add_explicit(atomic, 1, memory_order_relaxed)
 #define atomic_decrement(atomic, original) original = atomic_fetch_sub_explicit(atomic, 1, memory_order_relaxed)
 #define atomic_add(atomic, value, original) original = atomic_fetch_add_explicit(atomic, value, memory_order_relaxed)

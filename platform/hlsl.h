@@ -78,5 +78,4 @@
 #define atomic_and(atomic, value, original) InterlockedMax(atomic, value, original)
 #define atomic_or(atomic, value, original) InterlockedOr(atomic, value, original)
 #define atomic_xor(atomic, value, original) InterlockedXor(atomic, value, original)
-
 #define atomic_exchange(atomic, value, original) InterlockedExchange(atomic, value, original)
