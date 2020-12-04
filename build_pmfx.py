@@ -1298,9 +1298,11 @@ def compile_pssl(_info, pmfx_name, _tp, _shader):
               " -entry " + _shader.main_func_name + " " + temp_file_and_path + " -o " + output_file_and_path
 
     error_code, error_list, output_list = call_wait_subprocess(cmdline)
-    _tp.error_code = error_code
-    _tp.error_list = error_list
-    _tp.output_list = output_list
+
+    if error_code != 0:
+        _tp.error_code = error_code
+        _tp.error_list = error_list
+        _tp.output_list = output_list
 
 
 # compile hlsl shader model 4
@@ -1346,9 +1348,11 @@ def compile_hlsl(_info, pmfx_name, _tp, _shader):
     cmdline += "/Fo " + output_file_and_path + " " + temp_file_and_path + " "
 
     error_code, error_list, output_list = call_wait_subprocess(cmdline)
-    _tp.error_code = error_code
-    _tp.error_list = error_list
-    _tp.output_list = output_list
+
+    if error_code != 0:
+        _tp.error_code = error_code
+        _tp.error_list = error_list
+        _tp.output_list = output_list
 
 
 # parse shader inputs annd output source into a list of elements and semantics
@@ -2164,9 +2168,10 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
             error_list.extend(error_list_2)
             output_list.extend(output_list_2)
 
-        _tp.error_code = error_code
-        _tp.error_list = error_list
-        _tp.output_list = output_list
+        if error_code != 0:
+            _tp.error_code = error_code
+            _tp.error_list = error_list
+            _tp.output_list = output_list
 
 
 # generate a shader info file with an array of technique permutation descriptions and dependency timestamps
