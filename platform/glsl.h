@@ -81,6 +81,8 @@ precision highp samplerCube;
 #define write_texture( image_name, value, coord ) imageStore(image_name, coord, value)
 #define read_texture_array( image_name, coord, slice ) imageLoad(image_name, ivec3(coord.xy, slice))
 #define write_texture_array( image_name, value, coord, slice ) imageStore(image_name, ivec3(coord.xy, slice), value)
+
+#define structured_buffer(type, name, index) layout(std430, binding = index) buffer name { type data[]; };
 #endif
 
 // sampler
