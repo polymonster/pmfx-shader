@@ -333,7 +333,9 @@ def get_type_declaration_scope(source, type_pos):
         if scope_start != -1:
             scp = source.find(";", scope_start)
             pp = source.find("{", scope_start)
-            if pp > scp:
+            if us(pp) > scp:
+                if scp == -1:
+                    return scopes
                 pos = scp
                 continue
             scope_end = enclose("{", "}", source, scope_start)
@@ -398,9 +400,18 @@ def find_type_declarations(type_specifier, source):
         start_pos = find_token(type_specifier, source[pos:])
         if start_pos != -1:
             start_pos += pos
-            end_pos = enclose("{", "}", source, start_pos)
-            declaration = source[start_pos:end_pos]
-            members = get_members(type_specifier, declaration)
+            # handle forward decl
+            fp, tok = find_first(source, ["{", ";"], start_pos)
+            forward = False
+            members = []
+            if tok == ";":
+                declaration = source[start_pos:fp]
+                forward = True
+                end_pos = fp
+            else:
+                end_pos = enclose("{", "}", source, start_pos)
+                declaration = source[start_pos:end_pos]
+                members = get_members(type_specifier, declaration)
             scope = get_type_declaration_scope(source, start_pos)
             name = type_name(declaration)
             qualified_name = ""
@@ -419,7 +430,8 @@ def find_type_declarations(type_specifier, source):
                 "scope": scope,
                 "typedefs": typedefs,
                 "typedef_names": typedef_names,
-                "attributes": attributes
+                "attributes": attributes,
+                "forward_declaration": forward
             })
             pos = end_pos+1
         else:
