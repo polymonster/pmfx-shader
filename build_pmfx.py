@@ -83,6 +83,12 @@ class SingleShaderInfo:
     duplicate = False
 
 
+# used for eval to allow undefined variables
+class Reflector(object):
+    def __getitem__(self, name):
+        return 0
+
+
 # parse command line args passed in
 def parse_args():
     global _info
@@ -823,8 +829,9 @@ def evaluate_conditional_blocks(source, permutation):
         for v in permutation:
             gv[str(v[0])] = v[1]
 
-        conditional_block = ""
+        lv = dict()
 
+        conditional_block = ""
         i = body_start
         stack_size = 1
         while True:
@@ -837,12 +844,18 @@ def evaluate_conditional_blocks(source, permutation):
             i += 1
 
         if not case_accepted:
-            try:
-                if eval(conditions, gv):
-                    conditional_block = source[body_start:i]
-                    case_accepted = True
-            except NameError:
-                conditional_block = ""
+            while True:
+                try:
+                    if eval(conditions, gv, lv):
+                        conditional_block = source[body_start:i]
+                        case_accepted = True
+                        break
+                    else:
+                        break
+                except NameError as e:
+                    defname = re.search("name '([^\']*)' is not defined", str(e)).group(1)
+                    lv[defname] = 0
+                    conditional_block = ""
         else:
             conditional_block = ""
 
@@ -1485,7 +1498,6 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         shader_source += "#define GLES\n"
         if texture_arrays:
             shader_source += "#define PMFX_TEXTURE_ARRAYS\n"
-        shader_source += "#define PMFX_TEXTURE_CUBE_ARRAY\n"
     else:
         shader_source += "#version " + _tp.shader_version + " core\n"
         shader_source += "#define GLSL\n"

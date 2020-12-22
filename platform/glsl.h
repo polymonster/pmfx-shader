@@ -60,6 +60,7 @@ precision highp samplerCube;
 #ifdef GLES
 #define sample_texture_2dms( sampler_name, x, y, fragment ) texture( sampler_name, vec2(0.0, 0.0) )
 #define texture_2dms( type, samples, sampler_name, sampler_index ) uniform sampler2D sampler_name
+#define texture_cube_array( sampler_name, sampler_index ) uniform int sampler_name
 #else
 #define sample_texture_2dms( sampler_name, x, y, fragment ) texelFetch( sampler_name, ivec2( x, y ), fragment )
 #define texture_2dms( type, samples, sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DMS sampler_name
@@ -92,18 +93,15 @@ precision highp samplerCube;
 #define sample_depth_compare( name, tc, compare_value ) texture( name, vec3(tc.xy, compare_value) )
 #define sample_texture_array( sampler_name, V, a ) texture( sampler_name, vec3(V, a) )
 #define sample_texture_array_level( sampler_name, V, a, l ) textureLod( sampler_name, vec3(V, a), l )
-
-// gles and glsl on mac have issues with sampling texture arrays inside a loop with a dynamic index
-#ifdef PMFX_TEXTURE_ARRAYS
 #define sample_depth_compare_array( name, tc, a, compare_value ) texture( name, vec4(tc.xy, a, compare_value) )
+
+// cube arrays are not supoorted on webgl / gles 3.0-
+#ifdef PMFX_TEXTURE_CUBE_ARRAY
 #define sample_texture_cube_array_level( sampler_name, V, a, l ) textureLod( sampler_name, vec4(V, a), l )
 #define sample_texture_cube_array( sampler_name, V, a ) texture( sampler_name, vec4(V, a))
-#define sample_texture_cube_array_level( sampler_name, V, a, l ) textureLod( sampler_name, vec4(V, a), l )
 #else
-#define sample_depth_compare_array( name, tc, a, compare_value ) 1.0
 #define sample_texture_cube_array_level( sampler_name, V, a, l ) vec4(0.0, 0.0, 0.0, 0.0)
 #define sample_texture_cube_array( sampler_name, V, a ) vec4(0.0, 0.0, 0.0, 0.0)
-#define sample_texture_cube_array_level( sampler_name, V, a, l ) vec4(0.0, 0.0, 0.0, 0.0)
 #endif
 
 // matrix
