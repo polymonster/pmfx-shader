@@ -82,8 +82,8 @@ precision highp samplerCube;
 #define write_texture( image_name, value, coord ) imageStore(image_name, coord, value)
 #define read_texture_array( image_name, coord, slice ) imageLoad(image_name, ivec3(coord.xy, slice))
 #define write_texture_array( image_name, value, coord, slice ) imageStore(image_name, ivec3(coord.xy, slice), value)
-
-#define structured_buffer(type, name, index) layout(std430, binding = index) buffer name { type data[]; };
+#define structured_buffer(type, name, index) layout(std430, binding=index) buffer name##_buffer { type name[]; }
+#define structured_buffer_rw(type, name, index) layout(std430, binding=index) buffer name##_buffer { type name[]; }
 #endif
 
 // sampler
@@ -118,8 +118,9 @@ precision highp samplerCube;
 #define depth_ps_output gl_FragDepth
 
 // atomics
+#define atomic_counter(name, index) layout(binding=index, offset=0) uniform atomic_uint name
 #define atomic_load(atomic, original) original = atomicCounter(atomic)
-#define atomic_store(atomic, value) atomic = value
+#define atomic_store(atomic, value) atomicCounterExchange(atomic, value)
 #define atomic_increment(atomic, original) original = atomicCounterIncrement(atomic)
 #define atomic_decrement(atomic, original) original = atomicCounterDecrement(atomic)
 #define atomic_add(atomic, value, original) original = atomicCounterAdd(atomic, value)

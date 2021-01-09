@@ -80,6 +80,7 @@
 #define _pmfx_loop
 
 // atomics
+#define atomic_counter(name, index) structured_buffer_rw(atomic_uint, name, index)
 #define atomic_load(atomic, original) original = atomic_load_explicit(&atomic, memory_order_relaxed)
 #define atomic_store(atomic, value) atomic_store_explicit(&atomic, value, memory_order_relaxed)
 #define atomic_increment(atomic, original) original = atomic_fetch_add_explicit(&atomic, 1, memory_order_relaxed)

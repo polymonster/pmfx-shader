@@ -1452,6 +1452,23 @@ def insert_layout_location(loc):
     return ""
 
 
+# gets structured buffers from resource decls (type, name, binding)
+def get_structured_buffers(shader):
+    res = shader.resource_decl.split(";")
+    sb = []
+    for r in res:
+        r = r.strip()
+        if len(r) == 0:
+            continue
+        if r.find("structured_buffer") != -1:
+            decl = r[r.find("("):].split(",")
+            args = []
+            for d in decl:
+                args.append(d.strip().strip("(").strip(")").strip())
+            sb.append(args)
+    return sb
+
+
 # compile glsl
 def compile_glsl(_info, pmfx_name, _tp, _shader):
     # parse inputs and outputs into semantics
