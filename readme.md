@@ -168,6 +168,7 @@ texture_2d_array_rw( image_name, layout_index );
 // compute shader buffer types
 structured_buffer( type, name, index );
 structured_buffer_rw( type, name, index );
+atomic_counter(name, index);
 ```
 
 #### Accessing resources
@@ -222,7 +223,7 @@ vs_output vs_main( vs_input input )
 
 ### Atomic Operations
 
-Support for glsl, hlsl and metal compatible atomics is available with this limited API for atomic counters.
+Support for glsl, hlsl and metal compatible atomics is available with this limited API for atomic counters. The atomic_counter resource type is a RWStructuredBuffer<uint> in hlsl, a atomic_uint read/write buffer in Metal and a uniform atomic_uint in GLSL.
 
 ```hlsl
 // types
@@ -243,9 +244,15 @@ atomic_or(atomic, value, original)
 atomic_xor(atomic, value, original)
 atomic_exchange(atomic, value, original)
 
-// usage, increments counter and stores the original value in 'index'
+// usage
+shader_resources
+{
+    atomic_counter(counter, 0); // counter bound to index 0
+}
+
+// increments counter and stores the original value in 'index'
 uint index = 0;
-atomic_increment(u, index);
+atomic_increment(counter, index);
 ```
 
 #### Includes
