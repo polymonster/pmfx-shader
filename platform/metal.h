@@ -95,5 +95,3 @@
 #define atomic_exchange(atomic, value, original) original = atomic_exchange_explicit(&atomic, value, memory_order_relaxed)
 #define threadgroup_barrier() threadgroup_barrier(mem_flags::mem_threadgroup)
 #define device_barrier() threadgroup_barrier(mem_flags::mem_device)
-
-

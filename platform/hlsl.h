@@ -79,7 +79,5 @@
 #define atomic_or(atomic, value, original) InterlockedOr(atomic, value, original)
 #define atomic_xor(atomic, value, original) InterlockedXor(atomic, value, original)
 #define atomic_exchange(atomic, value, original) InterlockedExchange(atomic, value, original)
-#define threadgroup_barrier() GroupMemoryBarrierWithGroupSync()
-#define device_barrier() DeviceMemoryBarrierWithGroupSync()
-
-
+#define threadgroup_barrier GroupMemoryBarrierWithGroupSync
+#define device_barrier DeviceMemoryBarrierWithGroupSync
