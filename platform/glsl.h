@@ -118,7 +118,7 @@ precision highp samplerCube;
 #define depth_ps_output gl_FragDepth
 
 // atomics
-#define atomic_counter(name, index) layout(binding=index, offset=0) uniform atomic_uint name
+#define atomic_counter(name, index) layout(binding=index, offset=0) uniform atomic_uint[1] name
 #define atomic_load(atomic, original) original = atomicCounter(atomic)
 #define atomic_store(atomic, value) atomicCounterExchange(atomic, value)
 #define atomic_increment(atomic, original) original = atomicCounterIncrement(atomic)
@@ -131,3 +131,5 @@ precision highp samplerCube;
 #define atomic_or(atomic, value, original) original = atomicCounterOr(atomic, value)
 #define atomic_xor(atomic, value, original) original = atomicCounterXor(atomic, value)
 #define atomic_exchange(atomic, value, original) original = atomicCounterExchange(atomic, value)
+#define threadgroup_barrier() barrier()
+#define device_barrier() barrier()

@@ -67,15 +67,19 @@
 #define atomic_uint uint
 #define atomic_int int
 #define atomic_counter(name, index) RWStructuredBuffer<uint> name : register(u##index)
-#define atomic_load(atomic) atomic[0]
-#define atomic_store(atomic, value) atomic[0] = value
-#define atomic_increment(atomic, original) InterlockedAdd(atomic[0], 1, original)
-#define atomic_decrement(atomic, original) InterlockedAdd(atomic[0], (int)-1, original)
-#define atomic_add(atomic, value, original) InterlockedAdd(atomic[0], value, original)
-#define atomic_subtract(atomic, value, original) InterlockedAdd(atomic[0], value, original)
-#define atomic_min(atomic, value, original) InterlockedAdd(atomic[0], (int)value, original)
-#define atomic_max(atomic, value, original) InterlockedMin(atomic[0], value, original)
-#define atomic_and(atomic, value, original) InterlockedMax(atomic[0], value, original)
-#define atomic_or(atomic, value, original) InterlockedOr(atomic[0], value, original)
-#define atomic_xor(atomic, value, original) InterlockedXor(atomic[0], value, original)
-#define atomic_exchange(atomic, value, original) InterlockedExchange(atomic[0], value, original)
+#define atomic_load(atomic) atomic
+#define atomic_store(atomic, value) atomic = value
+#define atomic_increment(atomic, original) InterlockedAdd(atomic, 1, original)
+#define atomic_decrement(atomic, original) InterlockedAdd(atomic, (int)-1, original)
+#define atomic_add(atomic, value, original) InterlockedAdd(atomic, value, original)
+#define atomic_subtract(atomic, value, original) InterlockedAdd(atomic, value, original)
+#define atomic_min(atomic, value, original) InterlockedAdd(atomic, (int)value, original)
+#define atomic_max(atomic, value, original) InterlockedMin(atomic, value, original)
+#define atomic_and(atomic, value, original) InterlockedMax(atomic, value, original)
+#define atomic_or(atomic, value, original) InterlockedOr(atomic, value, original)
+#define atomic_xor(atomic, value, original) InterlockedXor(atomic, value, original)
+#define atomic_exchange(atomic, value, original) InterlockedExchange(atomic, value, original)
+#define threadgroup_barrier() GroupMemoryBarrierWithGroupSync()
+#define device_barrier() DeviceMemoryBarrierWithGroupSync()
+
+
