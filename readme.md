@@ -223,7 +223,7 @@ vs_output vs_main( vs_input input )
 
 ### Atomic Operations
 
-Support for glsl, hlsl and metal compatible atomics is available with this limited API for atomic counters. The atomic_counter resource type is a RWStructuredBuffer<uint> in hlsl, a atomic_uint read/write buffer in Metal and a uniform atomic_uint in GLSL.
+Support for glsl, hlsl and metal compatible atomics and memory barriers is available. The atomic_counter resource type is a RWStructuredBuffer<uint> in hlsl, a atomic_uint read/write buffer in Metal and a uniform atomic_uint in GLSL.
 
 ```hlsl
 // types
@@ -243,6 +243,8 @@ atomic_and(atomic, value, original)
 atomic_or(atomic, value, original)
 atomic_xor(atomic, value, original)
 atomic_exchange(atomic, value, original)
+threadgroup_barrier()
+device_barrier()
 
 // usage
 shader_resources
