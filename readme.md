@@ -178,9 +178,9 @@ atomic_counter(name, index);
 float4 col = sample_texture( diffuse_texture, texcoord.xy );
 float4 cube = sample_texture( cubemap_texture, normal.xyz );
 float4 msaa_sample = sample_texture_2dms( msaa_texture, x, y, fragment );
-float4 level = sampler_texture_level( texture, texcoord.xy, mip_level);
-float4 array = sampler_texture_array( texture, texcoord.xy, array_slice);
-float4 array_level = sampler_texture_array_level( texture, texcoord.xy, array_slice, mip_level);
+float4 level = sample_texture_level( texture, texcoord.xy, mip_level);
+float4 array = sample_texture_array( texture, texcoord.xy, array_slice);
+float4 array_level = sample_texture_array_level( texture, texcoord.xy, array_slice, mip_level);
 
 // sample compare
 float shadow = sample_depth_compare( shadow_map, texcoord.xy, compare_ref);
