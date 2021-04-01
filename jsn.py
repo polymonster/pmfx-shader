@@ -531,7 +531,7 @@ def inherit_dict_recursive(d, d2):
                 inherit_dict(d, d2[i])
             else:
                 print("[jsn error] missing key `" + i + "` used by jsn_inherit")
-                exit(1)
+                sys.exit(1)
     for k, v in d.items():
         if type(v) == dict:
             inherit_dict_recursive(v, d)
@@ -563,7 +563,7 @@ def get_imports(jsn, import_dirs):
                     break
             if not found:
                 print("[jsn error]: cannot find import file " + stripped)
-                exit(1)
+                sys.exit(1)
     return jsn[bp:], imports
 
 
@@ -608,7 +608,7 @@ def resolve_vars(value, vars):
                     return vars[var_name]
         else:
             print("[jsn error] undefined variable '" + var_name + "'")
-            exit(1)
+            sys.exit(1)
         count += 1
     return None
 
@@ -705,7 +705,7 @@ def loads(jsn, import_dirs=None, vars=True):
         for l in range(0, len(jsn_lines)):
             print(str(l+1) + " " + jsn_lines[l])
         traceback.print_exc()
-        exit(1)
+        sys.exit(1)
 
     # import
     for i in imports:
@@ -755,7 +755,7 @@ def main():
     info = parse_args()
     if len(info.inputs) == 0 or not info.output_dir:
         display_help()
-        exit(1)
+        sys.exit(1)
     for i in info.inputs:
         if os.path.isdir(i):
             for root, dirs, files in os.walk(i):
