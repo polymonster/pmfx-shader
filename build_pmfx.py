@@ -157,7 +157,7 @@ def display_help():
     print("    -texture_offset (optional) [vulkan only] (default 32) ")
     print("        specifies an offset applied to texture locations to avoid collisions with buffers")
     print("    -v_flip (optional) (inserts glsl uniform to control geometry flipping)") 
-    exit(0)
+    sys.exit(0)
 
 
 # duplicated from pmtech/tools/scripts/util
@@ -1211,7 +1211,7 @@ def compile_pssl(_info, pmfx_name, _tp, _shader):
     if not orbis_sdk:
         print("error: you must have orbis sdk installed, "
               "'SCE_ORBIS_SDK_DIR' environment variable is set and is added to your PATH.")
-        exit(0)
+        sys.exit(1)
 
     shader_source = _hlsl_source(_info, pmfx_name, _tp, _shader)
 
