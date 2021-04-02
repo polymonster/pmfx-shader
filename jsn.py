@@ -9,17 +9,18 @@ import platform
 
 
 # struct to store the build info for jobs from parsed commandline args
-class build_info:
+class BuildInfo:
     inputs = []         # list of files
+    import_dirs = []    # lst of import directories to search
     output_dir = ""     # output directory
     print_out = False   # print out the resulting json from jsn to the console
 
 
 # parse command line args passed in
 def parse_args():
-    info = build_info()
+    info = BuildInfo()
     if len(sys.argv) == 1:
-        display_help
+        display_help()
     for i in range(1, len(sys.argv)):
         if sys.argv[i] == "-i":
             j = i + 1
@@ -27,9 +28,15 @@ def parse_args():
                 info.inputs.append(sys.argv[j])
                 j = j + 1
             i = j
-        if sys.argv[i] == "-o":
+        elif sys.argv[i] == "-I":
+            j = i + 1
+            while j < len(sys.argv) and sys.argv[j][0] != '-':
+                info.import_dirs.append(sys.argv[j])
+                j = j + 1
+            i = j
+        elif sys.argv[i] == "-o":
             info.output_dir = sys.argv[i + 1]
-        if sys.argv[i] == "-p":
+        elif sys.argv[i] == "-p":
             info.print_out = True
     return info
 
@@ -40,6 +47,7 @@ def display_help():
     print("    -help display this message")
     print("    -i list of input files or directories to process")
     print("    -o output file or directory ")
+    print("    -I list of import directories, to search for imports")
     print("    -p print output to console ")
 
 
@@ -65,8 +73,7 @@ def create_dir(dst_file):
         dir = os.path.dirname(dir)
     if len(dir) == 0:
         return
-    if not os.path.exists(dir):
-        os.makedirs(dir)
+    os.makedirs(dir, exist_ok=True)
 
 
 # change extension
@@ -142,6 +149,15 @@ def find_strings(jsn):
         else:
             prev_char = c
     return str_list
+
+
+# trims whitespace from lines
+def trim_whitespace(jsn):
+    lines = jsn.split('\n')
+    trimmed = ""
+    for l in lines:
+        trimmed += l.strip() + "\n"
+    return trimmed
 
 
 # remove whitespace and newlines to simplify subsequent ops
@@ -364,20 +380,27 @@ def quote_array(jsn):
         elem_end = jsn.find(",", pos)
         if elem_end == -1:
             elem_end = len(jsn)
-        elem = jsn[pos:elem_end]
+        elem = jsn[pos:elem_end].strip()
         if len(elem) == 0:
             break
         if get_value_type(elem) == "object":
-            element_wise += quote_object(elem)
+            elem_end = enclose_brackets("{", "}", jsn, pos)
+            sub_object = jsn[pos:elem_end]
+            element_wise += quote_object(sub_object)
         elif get_value_type(elem) == "array":
             elem_end = enclose_brackets("[", "]", jsn, pos)
             sub_array = jsn[pos+1:elem_end-1]
             element_wise += quote_array(sub_array)
+        elif elem[0] == '\"':
+            elem_end += enclose_brackets("\"", "\"", jsn, pos)
+            element_wise = jsn[pos:elem_end]
         else:
             element_wise += quote_value(elem, 0, 0)[0]
         if elem_end == len(jsn):
             break
         pos = elem_end+1
+        if pos >= len(jsn):
+            break
         element_wise += ","
     return "[" + element_wise + "]"
 
@@ -397,8 +420,8 @@ def quote_object(jsn):
         # ignore : inside quotes
         iq = is_inside_quotes(str_list, pos)
         if iq:
-            quoted += jsn[cur:iq]
-            pos = iq
+            quoted += jsn[cur:iq] + ":"
+            pos = iq + 1
             continue
         delim = 0
         for d in delimiters:
@@ -464,7 +487,22 @@ def remove_trailing_commas(jsn):
             if jsn[j] in trail:
                 continue
         clean += char
+    if clean[len(clean)-1] == ",":
+        clean = clean[:len(clean)-1]
     return clean
+
+
+# inserts commas in place of newlines \n
+def add_new_line_commas(jsn):
+    prev_char = ""
+    corrected = ""
+    ignore_previous = [",", ":", "{", "\n", "\\", "["]
+    for char in jsn:
+        if char == '\n' and prev_char not in ignore_previous:
+            corrected += ','
+        corrected += char
+        prev_char = char
+    return corrected
 
 
 # inherit dict member wise
@@ -491,53 +529,87 @@ def inherit_dict_recursive(d, d2):
         for i in inherits:
             if i in d2.keys():
                 inherit_dict(d, d2[i])
+            else:
+                print("[jsn error] missing key `" + i + "` used by jsn_inherit")
+                sys.exit(1)
     for k, v in d.items():
         if type(v) == dict:
             inherit_dict_recursive(v, d)
 
 
 # finds files to import (includes)
-def get_imports(jsn):
+def get_imports(jsn, import_dirs):
     imports = []
     bp = jsn.find("{")
     head = jsn[:bp].split("\n")
+    has_imports = False
+    for i in head:
+        if i.find("import") != -1:
+            has_imports = True
+    if not has_imports:
+        return jsn[bp:], imports
+    if not import_dirs:
+        filedir = os.getcwd()
+        import_dirs = [filedir]
     for i in head:
         if i.find("import") != -1:
             stripped = i[len("import"):].strip().strip("\"").strip()
-            imports.append(os.path.join(os.getcwd(), stripped))
+            found = False
+            for dir in import_dirs:
+                import_path_dir = os.path.join(dir, stripped)
+                if os.path.exists(import_path_dir):
+                    imports.append(import_path_dir)
+                    found = True
+                    break
+            if not found:
+                print("[jsn error]: cannot find import file " + stripped)
+                sys.exit(1)
     return jsn[bp:], imports
 
 
-# resolves a single "${var}" into a typed value or a token pasted string
-def resolve_single_var(value, vars):
+# finds all '${vars}' within a string returning in list [${va}, ${vb}, ...]
+def vars_in_string(string):
+    pos = 0
+    variables = []
+    while True:
+        sp = string.find("${", pos)
+        if sp != -1:
+            ep = string.find("}", sp)
+            variables.append(string[sp:ep + 1])
+            pos = sp + 2
+        else:
+            break
+    return variables
+            
+    
+# resolves "${var}" into a typed value or a token pasted string, handle multiple vars within strings or arrays
+def resolve_vars(value, vars):
     value_string = str(value)
-    sp = value_string.find("${")
-    if sp != -1:
-        ep = value_string.find("}", sp)
-        var_string = value_string[sp:ep + 1]
-        sp += 2
-        var_name = value_string[sp:ep]
+    vv = vars_in_string(value_string)
+    count = 0
+    for v in vv:
+        var_name = v[2:len(v)-1]
         if var_name in vars.keys():
             if type(value) == list:
                 nl = list()
                 for i in value:
-                    ri = resolve_single_var(i, vars)
+                    ri = resolve_vars(i, vars)
                     if ri:
-                        nl.append(resolve_single_var(i, vars))
+                        nl.append(resolve_vars(i, vars))
                     else:
                         nl.append(i)
                 return nl
             else:
                 if type(vars[var_name]) == str:
-                    return value.replace(var_string, vars[var_name])
+                    value = value.replace(v, vars[var_name])
+                    if len(vv) == count+1:
+                        return value
                 else:
                     return vars[var_name]
         else:
-            print(platform.system())
-            print(json.dumps(vars, indent=4))
-            print(value)
-            print("error: undefined variable '" + value_string[sp:ep] + "'")
-            exit(1)
+            print("[jsn error] undefined variable '" + var_name + "'")
+            sys.exit(1)
+        count += 1
     return None
 
 
@@ -554,14 +626,14 @@ def resolve_vars_recursive(d, vars):
         elif type(value) == list:
             resolved_list = []
             for i in value:
-                ri = resolve_single_var(i, stack_vars)
+                ri = resolve_vars(i, stack_vars)
                 if ri:
                     resolved_list.append(ri)
                 else:
                     resolved_list.append(i)
             d[k] = resolved_list
         else:
-            var = resolve_single_var(d[k], stack_vars)
+            var = resolve_vars(d[k], stack_vars)
             if var:
                 d[k] = var
     if "jsn_vars" in d.keys():
@@ -600,15 +672,25 @@ def resolve_platform_keys(d):
     if platform.system() in name_lookup:
         platform_name = name_lookup[platform.system()]
     else:
-        print("warning: unknown platform system " + platform.system())
+        print("[jsn warning] unknown platform system " + platform.system())
     resolve_platform_keys_recursive(d, platform_name)
 
 
+# load from file
+def load_from_file(filepath, import_dirs):
+    jsn_contents = open(filepath).read()
+    filepath = os.path.join(os.getcwd(), filepath)
+    import_dirs.append(os.path.dirname(filepath))
+    return loads(jsn_contents, import_dirs)
+
+
 # convert jsn to json
-def loads(jsn):
-    jsn, imports = get_imports(jsn)
+def loads(jsn, import_dirs=None, vars=True):
+    jsn, imports = get_imports(jsn, import_dirs)
     jsn = remove_comments(jsn)
     jsn = change_quotes(jsn)
+    jsn = trim_whitespace(jsn)
+    jsn = add_new_line_commas(jsn)
     jsn = collapse_line_breaks(jsn)
     jsn = clean_src(jsn)
     jsn = quote_object(jsn)
@@ -623,11 +705,11 @@ def loads(jsn):
         for l in range(0, len(jsn_lines)):
             print(str(l+1) + " " + jsn_lines[l])
         traceback.print_exc()
-        exit(1)
+        sys.exit(1)
 
     # import
     for i in imports:
-        include_dict = loads(open(i, "r").read())
+        include_dict = loads(open(i, "r").read(), import_dirs, False)
         inherit_dict(j, include_dict)
 
     # resolve platform specific keys
@@ -637,33 +719,43 @@ def loads(jsn):
     inherit_dict_recursive(j, j)
 
     # resolve vars
-    resolve_vars_recursive(j, dict())
+    if vars:
+        resolve_vars_recursive(j, dict())
 
     return j
+
+
+# return a list of all imports for this file
+def get_import_file_list(filepath, import_dirs=None):
+    jsn = open(filepath, "r").read()
+    jsn, imports = get_imports(jsn, import_dirs)
+    for i in imports:
+        recursive_imports = get_import_file_list(i, import_dirs)
+        for ri in recursive_imports:
+            if ri not in imports:
+                imports.append(ri)
+    abs_imports = []
+    for i in imports:
+        abs_imports.append(os.path.normpath(os.path.join(os.getcwd(), i)))
+    return abs_imports
 
 
 # convert jsn to json and write to a file
 def convert_jsn(info, input_file, output_file):
     print("converting: " + input_file + " to " + output_file)
-    file = open(input_file, "r")
     output_file = open(output_file, "w+")
-    jdict = loads(file.read())
+    jdict = load_from_file(input_file, info.import_dirs)
     if info.print_out:
         print(json.dumps(jdict, indent=4))
     output_file.write(json.dumps(jdict, indent=4))
     output_file.close()
-    file.close()
 
 
-# output .jsn files as json,
-if __name__ == "__main__":
-    print("--------------------------------------------------------------------------------")
-    print("jsn ----------------------------------------------------------------------------")
-    print("--------------------------------------------------------------------------------")
+def main():
     info = parse_args()
-    if len(info.inputs) == 0 or info.output_dir == None:
+    if len(info.inputs) == 0 or not info.output_dir:
         display_help()
-        exit(1)
+        sys.exit(1)
     for i in info.inputs:
         if os.path.isdir(i):
             for root, dirs, files in os.walk(i):
@@ -681,3 +773,9 @@ if __name__ == "__main__":
                 output_file = change_ext(output_file, ".json")
             create_dir(output_file)
             convert_jsn(info, i, output_file)
+
+
+# output .jsn files as json,
+if __name__ == "__main__":
+    main()
+

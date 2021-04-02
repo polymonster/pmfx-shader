@@ -1,7 +1,7 @@
 # pmfx-shader
 [![Build Status](https://travis-ci.org/polymonster/pmfx-shader.svg?branch=master)](https://travis-ci.org/polymonster/pmfx-shader) [![Build status](https://ci.appveyor.com/api/projects/status/wohe0i5v0hvnjnfb?svg=true)](https://ci.appveyor.com/project/polymonster/pmfx-shader)
 
-Cross platform shader compilation, with output reflection info, c++ header with shader structs, fx-like techniques and compile time branch evaluation via (uber-shader) "permutations". 
+A cross platform shader language with multi-threaded offline compilation or platform shader source code generation. Output json reflection info and c++ header with your shaders structs, fx-like techniques and compile time branch evaluation via (uber-shader) "permutations".
 
 A single file does all the shader parsing and code generation. Simple syntax changes are handled through macros and defines found in [platform](https://github.com/polymonster/pmfx-shader/tree/master/platform), so it is simple to add new features or change things to behave how you like. More complex differences between shader languages (such as Metals lack of global textures / buffers) are handled through code-generation. 
 
@@ -13,6 +13,7 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 
 - HLSL Shader Model 3+
 - GLSL 330+
+- GLES 310+ (WebGL 2.0)
 - SPIR-V. (Vulkan, OpenGL)
 - Metal 1.0+ (macOS, iOS, tvOS) 
 - PSSL (wip)
@@ -88,7 +89,7 @@ python3 build_pmfx.py -shader_platform glsl -shader_version 330 -i examples -o o
 
 ## Usage
 
-Use HLSL syntax everwhere for shaders, with some small differences:
+Use mostly HLSL syntax for shaders, with some small differences:
 
 #### Always use structs for inputs and outputs.
 
@@ -149,14 +150,25 @@ texture_cube( sampler_name, layout_index );
 texture_cube_array( sampler_name, layout_index ); // requires sm 4+, gles 400+
 texture_3d( sampler_name, layout_index );
 
+// depth formats are required for sampler compare ops
+depth_2d( sampler_name, layout_index ); 
+depth_2d_array( sampler_name, layout_index );
+
 // compute shader texture types
-texture2d_r( image_name, layout_index );
-texture2d_w( image_name, layout_index );
-texture2d_rw( image_name, layout_index );
+texture_2d_r( image_name, layout_index );
+texture_2d_w( image_name, layout_index );
+texture_2d_rw( image_name, layout_index );
+texture_3d_r( image_name, layout_index );
+texture_3d_w( image_name, layout_index );
+texture_3d_rw( image_name, layout_index );
+texture_2d_array_r( image_name, layout_index );
+texture_2d_array_w( image_name, layout_index );
+texture_2d_array_rw( image_name, layout_index );
 
 // compute shader buffer types
 structured_buffer( type, name, index );
 structured_buffer_rw( type, name, index );
+atomic_counter(name, index);
 ```
 
 #### Accessing resources
@@ -166,6 +178,13 @@ structured_buffer_rw( type, name, index );
 float4 col = sample_texture( diffuse_texture, texcoord.xy );
 float4 cube = sample_texture( cubemap_texture, normal.xyz );
 float4 msaa_sample = sample_texture_2dms( msaa_texture, x, y, fragment );
+float4 level = sample_texture_level( texture, texcoord.xy, mip_level);
+float4 array = sample_texture_array( texture, texcoord.xy, array_slice);
+float4 array_level = sample_texture_array_level( texture, texcoord.xy, array_slice, mip_level);
+
+// sample compare
+float shadow = sample_depth_compare( shadow_map, texcoord.xy, compare_ref);
+float shadow_array = sample_depth_compare_array( shadow_map, texcoord.xy, array_slice, compare_ref);
 
 // compute rw texture
 float4 rwtex = read_texture( tex_rw, gid );
@@ -176,9 +195,9 @@ struct val = structured_buffer[gid]; // read
 structured_buffer[gid] = val;        // write
 ```
 
-#### Cbuffers
+#### cbuffers
 
-Cbuffers are a unique kind of resource, this is just because they are so in HLSL. you can use cbuffers as you normally do in HLSL.
+cbuffers are a unique kind of resource, this is just because they are so in HLSL. you can use cbuffers as you normally do in HLSL.
 
 ```hlsl
 cbuffer per_view : register(b0)
@@ -202,6 +221,42 @@ vs_output vs_main( vs_input input )
 }
 ```
 
+### Atomic Operations
+
+Support for glsl, hlsl and metal compatible atomics and memory barriers is available. The atomic_counter resource type is a RWStructuredBuffer<uint> in hlsl, a atomic_uint read/write buffer in Metal and a uniform atomic_uint in GLSL.
+
+```hlsl
+// types
+atomic_uint u;
+atomic_int i;
+
+// operations
+atomic_load(atomic, original)
+atomic_store(atomic, value)
+atomic_increment(atomic, original)
+atomic_decrement(atomic, original)
+atomic_add(atomic, value, original)
+atomic_subtract(atomic, value, original)
+atomic_min(atomic, value, original)
+atomic_max(atomic, value, original)
+atomic_and(atomic, value, original)
+atomic_or(atomic, value, original)
+atomic_xor(atomic, value, original)
+atomic_exchange(atomic, value, original)
+threadgroup_barrier()
+device_barrier()
+
+// usage
+shader_resources
+{
+    atomic_counter(counter, 0); // counter bound to index 0
+}
+
+// increments counter and stores the original value in 'index'
+uint index = 0;
+atomic_increment(counter, index);
+```
+
 #### Includes
 
 Include files are supported even though some shader platforms or versions may not support them natively.
@@ -216,7 +271,7 @@ Include files are supported even though some shader platforms or versions may no
 
 ## Unique pmfx features
 
-#### cbuffer_offset / texture_offset
+### cbuffer_offset / texture_offset
 
 HLSL has different registers for textures, vertex buffers, cbuffers and un-ordered access views. Metal and Vulkan have some differences where the register indices are shared across different resource types. To avoid collisions in different API backends you can supply offsets using the following command line options.
 
@@ -226,11 +281,15 @@ Vulkan: -texture_offset (textures start binding at this point allowing uniform b
 
 ### v_flip
 
-OpenGL has different viewport co-ordinates when rendering to the backbuffer vs rendering into a render target, this can propagate it's way far into a code base with conditional "v_flips" happening during different render passes.
+OpenGL has different viewport co-ordinates to texture coordinate so when rendering to the backbuffer vs rendering into a render target you can get output results that are flipped in the y-axis, this can propagate it's way far into a code base with conditional "v_flips" happening during different render passes.
 
 To solve this issue in a cross platform way, pmfx will expose a uniform bool called "v_flip" in all gl vertex shaders, this allows you to conditionally flip the y-coordinate when rendering to the backbuffer or not. 
 
 To make this work make sure you also change the winding glFrontFace(GL_CCW) to glFrontFace(GL_CW).
+
+### cbuffer padding
+
+HLSL/Direct3D requires cbuffers to be padded to 16 bytes alignment, pmfx allows you to create cbuffers with any size and will pad the rest out for you.
 
 ### Techniques
 
@@ -329,9 +388,13 @@ else:
 
 For each permutation a shader is generated with the technique plus the permutation id. The id is generated from the values passed in the permutation object.
 
+Adding permutations can cause the number of generated shaders to grow exponentially, pmfx will detect redundant shader combinations using md5 hashing, to re-use duplicate permutation combinations and avoid un-necessary compilation.
+
 ### C++ Header
 
-After compilation a header is output for each .pmfx file containing c struct declarations for the cbuffers, technique constant buffers and vertex inputs. It also containts defines for the shader permutation id / flags that you can and against.
+After compilation a header is output for each .pmfx file containing c struct declarations for the cbuffers, technique constant buffers and vertex inputs. You can use these sturcts to fill buffers in your c++ code and use sizeof for buffer update calls in your graphics api. 
+
+It also contains defines for the shader permutation id / flags that you can check and test against to select the correct shader permutations for a draw call (ie. skinned, instanced, etc).
 
 ```c++
 namespace debug

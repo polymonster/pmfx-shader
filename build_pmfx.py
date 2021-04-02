@@ -8,6 +8,8 @@ import subprocess
 import platform
 import copy
 import threading
+import cgu
+import hashlib
 
 
 # paths and info for current build environment
@@ -31,6 +33,7 @@ class BuildInfo:
     platform_macros_file = ""                                           # glsl.h, hlsl.h, metal.h
     macros_source = ""                                                  # source code inside _shader_macros.h
     error_code = 0                                                      # non-zero if any shaders failed to build
+    cmdline_string = ""                                                 # stores the full cmdline passed
 
 
 # info and contents of a .pmfx file
@@ -77,6 +80,13 @@ class SingleShaderInfo:
     resource_decl = []                                                  # decl of only used resources by shader
     cbuffers = []                                                       # array of cbuffer decls used by shader
     sv_semantics = []                                                   # array of tuple [(semantic, variable name), ..]
+    duplicate = False
+
+
+# used for eval to allow undefined variables
+class Reflector(object):
+    def __getitem__(self, name):
+        return 0
 
 
 # parse command line args passed in
@@ -91,6 +101,8 @@ def parse_args():
     _info.debug = False
     if len(sys.argv) == 1:
         display_help()
+    for arg in sys.argv:
+        _info.cmdline_string += arg + " "
     for i in range(1, len(sys.argv)):
         if "-help" in sys.argv[i]:
             display_help()
@@ -131,7 +143,6 @@ def parse_args():
             _info.metal_sdk = sys.argv[i+1]
 
 
-
 # display help for args
 def display_help():
     print("commandline arguments:")
@@ -168,6 +179,14 @@ def get_platform_name():
         if platform.system() == "Linux":
             plat = "linux"
     return plat
+
+
+# gets shader sub platform name, gles (glsl) spirv (glsl)
+def shader_sub_platform():
+    sub_platforms = ["gles", "spirv"]
+    if _info.shader_sub_platform in sub_platforms:
+        return _info.shader_sub_platform
+    return _info.shader_platform
 
 
 # get extension for windows
@@ -356,7 +375,6 @@ def replace_io_tokens(text):
 # get info filename for dependency checking
 def get_resource_info_filename(filename, build_dir):
     global _info
-    global _info
     base_filename = os.path.basename(filename)
     dir_path = os.path.dirname(filename)
     info_filename = os.path.join(_info.output_dir, os.path.splitext(base_filename)[0], "info.json")
@@ -364,6 +382,7 @@ def get_resource_info_filename(filename, build_dir):
 
 
 # check file time stamps and build times to determine if rebuild needs to happen
+# returns true if the file does not need re-building, false if a file/dependency is out of date or input has changed
 def check_dependencies(filename, included_files):
     global _info
     # look for .json file
@@ -378,6 +397,8 @@ def check_dependencies(filename, included_files):
     if os.path.exists(info_filename) and os.path.getsize(info_filename) > 0:
         info_file = open(info_filename, "r")
         info = json.loads(info_file.read())
+        if "cmdline" not in info or _info.cmdline_string != info["cmdline"]:
+            return False
         for prev_built_with_file in info["files"]:
             sanitized_name = sanitize_file_path(prev_built_with_file["name"])
             if sanitized_name in file_list:
@@ -389,6 +410,9 @@ def check_dependencies(filename, included_files):
                     return False
             else:
                 print(sanitized_name + " is not in list")
+                return False
+        if "failures" in info.keys():
+            if len(info["failures"]) > 0:
                 return False
         info_file.close()
     else:
@@ -805,8 +829,9 @@ def evaluate_conditional_blocks(source, permutation):
         for v in permutation:
             gv[str(v[0])] = v[1]
 
-        conditional_block = ""
+        lv = dict()
 
+        conditional_block = ""
         i = body_start
         stack_size = 1
         while True:
@@ -819,12 +844,18 @@ def evaluate_conditional_blocks(source, permutation):
             i += 1
 
         if not case_accepted:
-            try:
-                if eval(conditions, gv):
-                    conditional_block = source[body_start:i]
-                    case_accepted = True
-            except NameError:
-                conditional_block = ""
+            while True:
+                try:
+                    if eval(conditions, gv, lv):
+                        conditional_block = source[body_start:i]
+                        case_accepted = True
+                        break
+                    else:
+                        break
+                except NameError as e:
+                    defname = re.search("name '([^\']*)' is not defined", str(e)).group(1)
+                    lv[defname] = 0
+                    conditional_block = ""
         else:
             conditional_block = ""
 
@@ -871,12 +902,13 @@ def shader_version_float(platform, version):
     if platform == "metal":
         # metal version is already a float
         return float(version)
-    elif platform == "glsl" or platform == "spiv":
+    elif platform == "glsl" or platform == "spirv" or platform == "gles":
         # glsl version is integer 330, 400, 450..
         return float(version)
     elif platform == "hlsl":
         # hlsl version is 3_0, 5_0
         return float(version.replace("_", "."))
+    assert 0
 
 
 # just list of all the caps
@@ -900,6 +932,10 @@ def defines_from_caps(define_list):
             ["PMFX_TEXTURE_CUBE_ARRAY", 400.0],
             ["PMFX_COMPUTE_SHADER", 450.0]
         ],
+        "gles": [
+            ["PMFX_TEXTURE_CUBE_ARRAY", 310.0],
+            ["PMFX_COMPUTE_SHADER", 310.0]
+        ],
         "spirv": [
             ["PMFX_TEXTURE_CUBE_ARRAY", 400.0],
             ["PMFX_COMPUTE_SHADER", 450.0]
@@ -910,13 +946,13 @@ def defines_from_caps(define_list):
         ]
     }
     # check platform exists
-    platform = _info.shader_platform
+    platform = shader_sub_platform()
     if platform not in lookup.keys():
         return []
     # add features
     version = shader_version_float(platform, _info.shader_version)
     define_list = []
-    for cap in lookup[_info.shader_platform]:
+    for cap in lookup[platform]:
         if version >= cap[1]:
             define_list.append((cap[0], [1], -1))
     return define_list
@@ -930,6 +966,7 @@ def generate_permutations(technique, technique_json):
     permutation_options = dict()
     permutation_option_mask = 0
     define_string = ""
+
     define_list.append((_info.shader_platform.upper(), [1], -1))
     define_list.append((_info.shader_sub_platform.upper(), [1], -1))
     define_list = defines_from_caps(define_list)
@@ -998,19 +1035,15 @@ def find_used_resources(shader_source, resource_decl):
     if not resource_decl:
         return
     # find resource uses
-    uses = ["sample_texture", "read_texture", "write_texture"]
+    uses = ["sample_texture", "read_texture", "write_texture", "sample_depth"]
     resource_uses = []
     pos = 0
     while True:
-        sampler = -1
-        for u in uses:
-            sampler = shader_source.find(u, pos)
-            if sampler != -1:
-                break
-        if sampler == -1:
+        sampler, tok = cgu.find_first(shader_source, uses, pos)
+        if sampler == sys.maxsize:
             break;
         start = shader_source.find("(", sampler)
-        end = shader_source.find(")", sampler)
+        end = shader_source.find(";", sampler)
         if us(sampler) < us(start) < us(end):
             args = shader_source[start+1:end-1].split(",")
             if len(args) > 0:
@@ -1181,6 +1214,20 @@ def format_source(source, indent_size):
     return formatted
 
 
+# hashes a shader to find identical shaders which have different permutation options
+def shader_hash(_shader):
+    hash_source = ""
+    hash_source += _shader.input_decl
+    hash_source += _shader.instance_input_decl
+    hash_source += _shader.output_decl
+    hash_source += _shader.resource_decl
+    hash_source += _shader.functions_source
+    hash_source += _shader.main_func_source
+    for cb in _shader.cbuffers:
+        hash_source += cb
+    return hashlib.md5(hash_source.encode('utf-8')).hexdigest()
+
+
 # hlsl source.. pssl is similar
 def _hlsl_source(_info, pmfx_name, _tp, _shader):
     shader_source = _info.macros_source
@@ -1199,7 +1246,6 @@ def _hlsl_source(_info, pmfx_name, _tp, _shader):
             if i < 2:
                 shader_source += ", "
         shader_source += ")]"
-
     shader_source += _shader.main_func_source
     shader_source = format_source(shader_source, 4)
     return shader_source
@@ -1265,9 +1311,11 @@ def compile_pssl(_info, pmfx_name, _tp, _shader):
               " -entry " + _shader.main_func_name + " " + temp_file_and_path + " -o " + output_file_and_path
 
     error_code, error_list, output_list = call_wait_subprocess(cmdline)
-    _tp.error_code = error_code
-    _tp.error_list = error_list
-    _tp.output_list = output_list
+
+    if error_code != 0:
+        _tp.error_code = error_code
+        _tp.error_list = error_list
+        _tp.output_list = output_list
 
 
 # compile hlsl shader model 4
@@ -1313,9 +1361,11 @@ def compile_hlsl(_info, pmfx_name, _tp, _shader):
     cmdline += "/Fo " + output_file_and_path + " " + temp_file_and_path + " "
 
     error_code, error_list, output_list = call_wait_subprocess(cmdline)
-    _tp.error_code = error_code
-    _tp.error_list = error_list
-    _tp.output_list = output_list
+
+    if error_code != 0:
+        _tp.error_code = error_code
+        _tp.error_list = error_list
+        _tp.output_list = output_list
 
 
 # parse shader inputs annd output source into a list of elements and semantics
@@ -1402,6 +1452,23 @@ def insert_layout_location(loc):
     return ""
 
 
+# gets structured buffers from resource decls (type, name, binding)
+def get_structured_buffers(shader):
+    res = shader.resource_decl.split(";")
+    sb = []
+    for r in res:
+        r = r.strip()
+        if len(r) == 0:
+            continue
+        if r.find("structured_buffer") != -1:
+            decl = r[r.find("("):].split(",")
+            args = []
+            for d in decl:
+                args.append(d.strip().strip("(").strip(")").strip())
+            sb.append(args)
+    return sb
+
+
 # compile glsl
 def compile_glsl(_info, pmfx_name, _tp, _shader):
     # parse inputs and outputs into semantics
@@ -1413,10 +1480,11 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     if _tp.shader_version == "0":
         _tp.shader_version = "330"
 
+    # some capabilities
     # binding points for samples and uniform buffers are only supported 420 onwards..
-    # you may have luck trying the extension.
     binding_points = int(_tp.shader_version) >= 420
     texture_cube_array = int(_tp.shader_version) >= 400
+    texture_arrays = True
 
     uniform_buffers = ""
     for cbuf in _shader.cbuffers:
@@ -1442,21 +1510,26 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     # header and macros
     shader_source = ""
     if _info.shader_sub_platform == "gles":
-        shader_source += "#version 300 es\n"
+        shader_source += "#version " + _tp.shader_version + " es\n"
         shader_source += "#define GLSL\n"
         shader_source += "#define GLES\n"
+        if texture_arrays:
+            shader_source += "#define PMFX_TEXTURE_ARRAYS\n"
     else:
         shader_source += "#version " + _tp.shader_version + " core\n"
         shader_source += "#define GLSL\n"
         if binding_points:
-            shader_source += "#define BINDING_POINTS\n"
+            shader_source += "#define PMFX_BINDING_POINTS\n"
         if texture_cube_array:
             shader_source += "#define PMFX_TEXTURE_CUBE_ARRAY\n"
+        if texture_arrays:
+            shader_source += "#define PMFX_TEXTURE_ARRAYS\n"
+
     # texture offset is to avoid collisions on descriptor set slots in vulkan
     if _info.shader_sub_platform == "spirv":
-        shader_source += "#define TEXTURE_OFFSET " + str(_info.texture_offset) + "\n"
+        shader_source += "#define PMFX_TEXTURE_OFFSET " + str(_info.texture_offset) + "\n"
     else:
-        shader_source += "#define TEXTURE_OFFSET 0\n"
+        shader_source += "#define PMFX_TEXTURE_OFFSET 0\n"
     shader_source += "//" + pmfx_name + " " + _tp.name + " " + _shader.shader_type + " " + str(_tp.id) + "\n"
     shader_source += _info.macros_source
 
@@ -1957,7 +2030,7 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
     elif _shader.shader_type == "ps":
         shader_source += _shader.input_struct_name + " input [[stage_in]]"
     elif _shader.shader_type == "cs":
-        shader_source += "uint2 gid[[thread_position_in_grid]]"
+        shader_source += "uint3 gid[[thread_position_in_grid]]"
 
     # vertex stream out
     if stream_out:
@@ -2124,9 +2197,10 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
             error_list.extend(error_list_2)
             output_list.extend(output_list_2)
 
-        _tp.error_code = error_code
-        _tp.error_list = error_list
-        _tp.output_list = output_list
+        if error_code != 0:
+            _tp.error_code = error_code
+            _tp.error_list = error_list
+            _tp.output_list = output_list
 
 
 # generate a shader info file with an array of technique permutation descriptions and dependency timestamps
@@ -2135,8 +2209,10 @@ def generate_shader_info(filename, included_files, techniques):
     info_filename, base_filename, dir_path = get_resource_info_filename(filename, _info.output_dir)
 
     shader_info = dict()
+    shader_info["cmdline"] = _info.cmdline_string
     shader_info["files"] = []
     shader_info["techniques"] = techniques["techniques"]
+    shader_info["failures"] = techniques["failures"]
 
     # special files which affect the validity of compiled shaders
     shader_info["files"].append(create_dependency(_info.this_file))
@@ -2261,9 +2337,12 @@ def generate_technique_permutation_info(_tp):
     _tp.technique["instance_inputs"] = generate_input_info(_tp.shader[0].instance_input_decl)
     _tp.technique["vs_outputs"] = generate_input_info(_tp.shader[0].output_decl)
     # vs and ps files
-    _tp.technique["vs_file"] = _tp.name + ".vsc"
-    _tp.technique["ps_file"] = _tp.name + ".psc"
-    _tp.technique["cs_file"] = _tp.name + ".csc"
+    if "vs" in _tp.filenames.keys():
+        _tp.technique["vs_file"] = _tp.filenames["vs"] + ".vsc"
+    if "ps" in _tp.filenames.keys():
+        _tp.technique["ps_file"] = _tp.filenames["ps"] + ".psc"
+    if "cs" in _tp.filenames.keys():
+        _tp.technique["cs_file"] = _tp.filenames["cs"] + ".csc"
     # permutation
     _tp.technique["permutations"] = _tp.permutation_options
     _tp.technique["permutation_id"] = _tp.id
@@ -2274,6 +2353,8 @@ def generate_technique_permutation_info(_tp):
 # compiles single shader using platform specific compiler or validator, _tp is technique / permutation info
 def compile_single_shader(_tp):
     for s in _tp.shader:
+        if s.duplicate:
+            continue
         if _info.shader_platform == "hlsl":
             compile_hlsl(_info, _tp.pmfx_name, _tp, s)
         elif _info.shader_platform == "pssl":
@@ -2362,17 +2443,19 @@ def parse_pmfx(file, root):
             valid = True
             _tp.shader_version = _info.shader_version
             if "supported_platforms" in _tp.technique:
+                p = shader_sub_platform()
                 sp = _tp.technique["supported_platforms"]
-                if _info.shader_platform not in sp:
-                    print(_tp.technique_name + " not supported on " + _info.shader_platform)
+                if p not in sp:
+                    print(_tp.technique_name + " not supported on " + p)
                     valid = False
                 else:
-                    sv = sp[_info.shader_platform]
+                    sv = sp[p]
                     if "all" in sv:
                         pass
                     elif _tp.shader_version not in sv:
+                        valid = False
                         print(_tp.technique_name + " not supported on " +
-                              _info.shader_platform + " " + _info.shader_version +
+                              p + " " + _info.shader_version +
                               ", forcing to version " + sv[0])
                         # force shader version to specified
                         _tp.shader_version = sv[0]
@@ -2386,6 +2469,8 @@ def parse_pmfx(file, root):
                 _tp.name = _tp.technique_name
 
             # strip condition permutations from source
+            permutation.append((_info.shader_platform.upper(), 1))
+            permutation.append((shader_sub_platform().upper(), 1))
             _tp.source = evaluate_conditional_blocks(_pmfx.source, permutation)
 
             # get permutation constants..
@@ -2435,23 +2520,42 @@ def parse_pmfx(file, root):
                         _tp.shader.append(single_shader)
             compile_jobs.append(copy.copy(_tp))
 
+    # find duplicated / redundant permutation combinations
+    unique = dict()
+    for j in compile_jobs:
+        j.filenames = dict()
+        for s in j.shader:
+            hash = shader_hash(s)
+            if hash not in unique:
+                s.duplicate = False
+                unique[str(hash)] = j.name
+                j.filenames[s.shader_type] = j.name
+            else:
+                s.duplicate = True
+                j.filenames[s.shader_type] = unique[str(hash)]
+
     threads = []
     for j in compile_jobs:
         x = threading.Thread(target=compile_single_shader, args=(j,))
         threads.append(x)
         x.start()
 
+    # wait for threads
+    for t in threads:
+        t.join()
+
+    pmfx_output_info["failures"] = dict()
     for i in range(0, len(compile_jobs)):
-        threads[i].join()
         c = compile_jobs[i]
         str_id = ""
         if c.id != 0:
             str_id = "__" + str(c.id) + "__"
         output_name = c.pmfx_name + "::" + c.technique_name + str_id
-        if j.error_code == 0:
+        if c.error_code == 0:
             print(output_name)
         else:
             print(output_name + " failed to compile")
+            pmfx_output_info["failures"][c.pmfx_name] = True
         for out in c.output_list:
             print(out)
         for err in c.error_list:
@@ -2488,6 +2592,19 @@ def parse_pmfx(file, root):
             h_file.close()
 
 
+# handles some hardcoded cases of platform varitions
+def configure_sub_platforms():
+    global _info
+    if _info.shader_platform == "spirv":
+        _info.shader_platform = "glsl"
+        _info.shader_version = "450"
+        _info.shader_sub_platform = "spirv"
+
+    if _info.shader_platform == "gles":
+        _info.shader_platform = "glsl"
+        _info.shader_sub_platform = "gles"
+
+
 # main function to avoid shadowing
 def main():
     print("--------------------------------------------------------------------------------")
@@ -2499,15 +2616,7 @@ def main():
     _info.error_code = 0
 
     parse_args()
-
-    if _info.shader_platform == "spirv":
-        _info.shader_platform = "glsl"
-        _info.shader_version = "450"
-        _info.shader_sub_platform = "spirv"
-
-    if _info.shader_platform == "gles":
-        _info.shader_platform = "glsl"
-        _info.shader_sub_platform = "gles"
+    configure_sub_platforms()
 
     # get dirs for build output
     _info.root_dir = os.getcwd()
