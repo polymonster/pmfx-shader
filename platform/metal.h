@@ -24,6 +24,8 @@
 // depth texture
 #define depth_2d( name, sampler_index ) depth2d<float> name [[texture(sampler_index)]], sampler sampler_##name [[sampler(sampler_index)]]
 #define depth_2d_array( name, sampler_index ) depth2d_array<float> name [[texture(sampler_index)]], sampler sampler_##name [[sampler(sampler_index)]]
+#define depth_cube( name, sampler_index ) depthcube<float> name [[texture(sampler_index)]], sampler sampler_##name [[sampler(sampler_index)]]
+#define depth_cube_array( name, sampler_index ) depthcube_array<float> name [[texture(sampler_index)]], sampler sampler_##name [[sampler(sampler_index)]]
 
 // _arg macros are used to pass textures through functions from main
 #define texture_2d_arg( name ) thread texture2d<float>& name, thread sampler& sampler_##name
@@ -34,6 +36,8 @@
 #define texture_cube_array_arg( name ) thread texturecube_array<float>& name, thread sampler& sampler_##name
 #define depth_2d_arg( name ) thread depth2d<float>& name, thread sampler& sampler_##name
 #define depth_2d_array_arg( name ) thread depth2d_array<float>& name, thread sampler& sampler_##name
+#define depth_cube_arg( name ) thread depthcube<float>& name, thread sampler& sampler_##name
+#define depth_cube_array_arg( name ) thread depthcube_array<float>& name, thread sampler& sampler_##name
 
 // structured buffers
 #define structured_buffer_rw( type, name, index ) device type* name [[buffer(index+BUF_OFFSET)]]
@@ -54,6 +58,8 @@
 // sampler compare / gather
 #define sample_depth_compare( name, tc, compare_value ) name.sample_compare(sampler_##name, tc, compare_value, min_lod_clamp(0))
 #define sample_depth_compare_array( name, tc, a, compare_value ) name.sample_compare(sampler_##name, tc, uint(a), compare_value, min_lod_clamp(0))
+#define sample_depth_compare_cube( name, tc, compare_value ) name.sample_compare(sampler_##name, tc, compare_value, min_lod_clamp(0))
+#define sample_depth_compare_cube_array( name, tc, a, compare_value ) name.sample_compare(sampler_##name, tc, uint(a), compare_value, min_lod_clamp(0))
 
 // matrix
 #define to_3x3( M4 ) float3x3(M4[0].xyz, M4[1].xyz, M4[2].xyz)

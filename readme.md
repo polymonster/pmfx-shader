@@ -51,7 +51,7 @@ commandline arguments:
         specifies an offset applied to cbuffer locations to avoid collisions with vertex buffers
     -texture_offset (optional) [vulkan only] (default 32) 
         specifies an offset applied to texture locations to avoid collisions with buffers
-    -v_flip (optional) (inserts glsl uniform to control geometry flipping)
+    -v_flip (optional) (inserts glsl uniform to flip verts in the y axis)
 
 ```
 
@@ -153,6 +153,8 @@ texture_3d( sampler_name, layout_index );
 // depth formats are required for sampler compare ops
 depth_2d( sampler_name, layout_index ); 
 depth_2d_array( sampler_name, layout_index );
+depth_cube( sampler_name, layout_index ); 
+depth_cube_array( sampler_name, layout_index );
 
 // compute shader texture types
 texture_2d_r( image_name, layout_index );
@@ -185,6 +187,8 @@ float4 array_level = sample_texture_array_level( texture, texcoord.xy, array_sli
 // sample compare
 float shadow = sample_depth_compare( shadow_map, texcoord.xy, compare_ref);
 float shadow_array = sample_depth_compare_array( shadow_map, texcoord.xy, array_slice, compare_ref);
+float cube_shadow = sample_depth_compare_cube( shadow_map, texcoord.xyz, compare_ref);
+float cube_shadow_array = sample_depth_compare_cube_array( shadow_map, texcoord.xyz, array_slice, compare_ref);
 
 // compute rw texture
 float4 rwtex = read_texture( tex_rw, gid );

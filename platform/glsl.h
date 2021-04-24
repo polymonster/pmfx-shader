@@ -6,6 +6,7 @@ precision highp sampler2DArrayShadow;
 precision highp sampler2DShadow;
 precision highp sampler3D;
 precision highp samplerCube;
+precision highp samplerCubeArrayShadow;
 #endif
 
 // defs
@@ -53,8 +54,12 @@ precision highp samplerCube;
 #define texture_3d( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler3D sampler_name
 #define texture_cube( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCube sampler_name
 #define texture_2d_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DArray sampler_name
+
+// depth text formats for compare samples
 #define depth_2d( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DShadow sampler_name
 #define depth_2d_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DArrayShadow sampler_name
+#define depth_cube( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCubeShadow sampler_name
+#define depth_cube_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCubeArrayShadow sampler_name
 
 // multisample texture
 #ifdef GLES
@@ -90,18 +95,21 @@ precision highp samplerCube;
 #define sample_texture( sampler_name, V ) texture( sampler_name, V )
 #define sample_texture_level( sampler_name, V, l ) textureLod( sampler_name, V, l )
 #define sample_texture_grad( sampler_name, V, vddx, vddy ) textureGrad( sampler_name, V, vddx, vddy )
-#define sample_depth_compare( name, tc, compare_value ) texture( name, vec3(tc.xy, compare_value) )
 #define sample_texture_array( sampler_name, V, a ) texture( sampler_name, vec3(V, a) )
 #define sample_texture_array_level( sampler_name, V, a, l ) textureLod( sampler_name, vec3(V, a), l )
+#define sample_depth_compare( name, tc, compare_value ) texture( name, vec3(tc.xy, compare_value) )
 #define sample_depth_compare_array( name, tc, a, compare_value ) texture( name, vec4(tc.xy, a, compare_value) )
+#define sample_depth_compare_cube( name, tc, compare_value ) texture( name, vec4(tc.xyz, compare_value) )
 
 // cube arrays are not supoorted on webgl / gles 3.0-
 #ifdef PMFX_TEXTURE_CUBE_ARRAY
 #define sample_texture_cube_array_level( sampler_name, V, a, l ) textureLod( sampler_name, vec4(V, a), l )
 #define sample_texture_cube_array( sampler_name, V, a ) texture( sampler_name, vec4(V, a))
+#define sample_depth_compare_cube_array( name, V, a, compare_value ) texture( name, vec4(V.xyz, a), compare_value )
 #else
 #define sample_texture_cube_array_level( sampler_name, V, a, l ) vec4(0.0, 0.0, 0.0, 0.0)
 #define sample_texture_cube_array( sampler_name, V, a ) vec4(0.0, 0.0, 0.0, 0.0)
+#define sample_depth_compare_cube_array( name, V, a, compare_value ) vec4(0.0, 0.0, 0.0, 0.0)
 #endif
 
 // matrix

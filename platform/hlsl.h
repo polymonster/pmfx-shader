@@ -22,6 +22,8 @@
 // depth texture (required for gl and metal)
 #define depth_2d( name, sampler_index ) Texture2D name : register(t##sampler_index); ; SamplerComparisonState sampler_##name : register(s##sampler_index)
 #define depth_2d_array( name, sampler_index ) Texture2DArray name : register(t##sampler_index); ; SamplerComparisonState sampler_##name : register(s##sampler_index)
+#define depth_cube( name, sampler_index ) TextureCube name : register(t##sampler_index); ; SamplerComparisonState sampler_##name : register(s##sampler_index)
+#define depth_cube_array( name, sampler_index ) TextureCubeArray name : register(t##sampler_index); ; SamplerComparisonState sampler_##name : register(s##sampler_index)
 
 // structured buffer
 #define structured_buffer_rw( type, name, index ) RWStructuredBuffer<type> name : register(u##index)
@@ -40,6 +42,8 @@
 // gather / compare
 #define sample_depth_compare( name, tc, compare_value ) saturate(name.SampleCmp(sampler_##name, tc, compare_value))
 #define sample_depth_compare_array( name, tc, a, compare_value ) saturate(name.SampleCmp(sampler_##name, float3(tc.xy, a), compare_value))
+#define sample_depth_compare_cube( name, tc, compare_value ) saturate(name.SampleCmp(sampler_##name, tc, compare_value))
+#define sample_depth_compare_cube_array( name, tc, a, compare_value ) saturate(name.SampleCmp(sampler_##name, float4(tc.x, tc.y, tc.z, a), compare_value))
 
 // matrix
 #define to_3x3( M4 ) (float3x3)M4
