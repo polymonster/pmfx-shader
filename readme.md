@@ -16,7 +16,8 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 - GLES 310+ (WebGL 2.0)
 - SPIR-V. (Vulkan, OpenGL)
 - Metal 1.0+ (macOS, iOS, tvOS) 
-- PSSL (wip)
+- NVN (Nintendo Switch)
+- PSSL (Orbis)
 
 ## Dependencies
 Windows users need [vcredist 2013](https://www.microsoft.com/en-us/download/confirmation.aspx?id=40784) for the glsl/spirv validator.
@@ -85,6 +86,15 @@ python3 build_pmfx.py -shader_platform hlsl -shader_version 4_0 -i examples -o o
 
 ```
 python3 build_pmfx.py -shader_platform glsl -shader_version 330 -i examples -o output/bin -h output/structs -t output/temp
+```
+
+## Console Platforms
+
+Compilation for Orbis and Nvn is possible but you will need the SDK's installed and the environment variables set in your path:
+
+```
+SCE_ORBIS_SDK_DIR 
+NINTENDO_SDK_ROOT
 ```
 
 ## Usage
