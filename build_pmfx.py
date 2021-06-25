@@ -146,7 +146,7 @@ def parse_args():
 # display help for args
 def display_help():
     print("commandline arguments:")
-    print("    -shader_platform <hlsl, glsl, gles, spirv, metal>")
+    print("    -shader_platform <hlsl, glsl, gles, spirv, metal, nvn>")
     print("    -shader_version (optional) <shader version unless overriden in technique>")
     print("        hlsl: 3_0, 4_0 (default), 5_0")
     print("        glsl: 330 (default), 420, 450")
@@ -168,6 +168,7 @@ def display_help():
     print("    -texture_offset (optional) [vulkan only] (default 32) ")
     print("        specifies an offset applied to texture locations to avoid collisions with buffers")
     print("    -v_flip (optional) (inserts glsl uniform to control geometry flipping)") 
+    sys.stdout.flush()
     sys.exit(0)
 
 
@@ -406,10 +407,10 @@ def check_dependencies(filename, included_files):
                     return False
                 if prev_built_with_file["timestamp"] < os.path.getmtime(sanitized_name):
                     info_file.close()
-                    print(os.path.basename(sanitized_name) + " is out of date")
+                    print(os.path.basename(sanitized_name) + " is out of date", flush=True)
                     return False
             else:
-                print(sanitized_name + " is not in list")
+                print(sanitized_name + " is not in list", flush=True)
                 return False
         if "failures" in info.keys():
             if len(info["failures"]) > 0:
@@ -1145,7 +1146,7 @@ def generate_single_shader(main_func, _tp):
                 main = func
 
     if main == "":
-        print("error: could not find main function " + main_func)
+        print("error: could not find main function " + main_func, flush=True)
         return None
 
     # find used functions,
@@ -1256,7 +1257,7 @@ def compile_pssl(_info, pmfx_name, _tp, _shader):
     orbis_sdk = os.getenv("SCE_ORBIS_SDK_DIR")
     if not orbis_sdk:
         print("error: you must have orbis sdk installed, "
-              "'SCE_ORBIS_SDK_DIR' environment variable is set and is added to your PATH.")
+              "'SCE_ORBIS_SDK_DIR' environment variable is set and is added to your PATH.", flush=True)
         sys.exit(1)
 
     shader_source = _hlsl_source(_info, pmfx_name, _tp, _shader)
@@ -1666,22 +1667,50 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
 
     output_file_and_path = os.path.join(output_path, _tp.name + extension[_shader.shader_type])
 
-    exe = os.path.join(_info.tools_dir, "bin", "glsl", get_platform_name(), "validator" + get_platform_exe())
+    if _info.shader_sub_platform == "nvn":
+        nvn_sdk = os.getenv("NINTENDO_SDK_ROOT")
+        if not nvn_sdk:
+            print("error: you must have nintendo switch sdk installed, "
+                "'NINTENDO_SDK_ROOT' environment variable is set and is added to your PATH.", flush=True)
+            sys.exit(1)
 
-    if _info.shader_sub_platform == "spirv":
-        exe += " -V "
-        exe += " -o " + output_file_and_path
+        exe = os.path.join(nvn_sdk, "Tools", "Graphics", "GraphicsTools", "ShaderConverter.exe")
 
-    error_code, error_list, output_list = call_wait_subprocess(exe + " " + temp_file_and_path)
-    _tp.error_code = error_code
-    _tp.error_list = error_list
-    _tp.output_list = output_list
+        const_args = "--api-type nvn --code-type Binary_Ir --source-format glsl"
 
-    if _info.shader_sub_platform != "spirv":
-        # copy glsl shader to data
-        shader_file = open(output_file_and_path, "w")
-        shader_file.write(shader_source)
-        shader_file.close()
+        nvn_type = {
+            "vs": "--vertex-shader",
+            "ps": "--pixel-shader",
+            "cs": "--compute-shader"
+        }
+
+        cmd = nvn_type[_shader.shader_type] + " " + sanitize_file_path(temp_file_and_path) + " "
+        cmd += const_args + " "
+        cmd += "--output-path " + sanitize_file_path(output_file_and_path) + " "
+        cmd += "--output-name " + _tp.name + " "
+
+        error_code, error_list, output_list = call_wait_subprocess(exe + " " + cmd)
+        _tp.error_code = error_code
+        _tp.error_list = error_list
+        _tp.output_list = output_list
+
+    else:
+        exe = os.path.join(_info.tools_dir, "bin", "glsl", get_platform_name(), "validator" + get_platform_exe())
+
+        if _info.shader_sub_platform == "spirv":
+            exe += " -V "
+            exe += " -o " + output_file_and_path
+
+        error_code, error_list, output_list = call_wait_subprocess(exe + " " + temp_file_and_path)
+        _tp.error_code = error_code
+        _tp.error_list = error_list
+        _tp.output_list = output_list
+
+        if _info.shader_sub_platform != "spirv":
+            # copy glsl shader to data
+            shader_file = open(output_file_and_path, "w")
+            shader_file.write(shader_source)
+            shader_file.close()
 
     return error_code
 
@@ -2364,7 +2393,7 @@ def compile_single_shader(_tp):
         elif _info.shader_platform == "metal":
             compile_metal(_info, _tp.pmfx_name, _tp, s)
         else:
-            print("error: invalid shader platform " + _info.shader_platform)
+            print("error: invalid shader platform " + _info.shader_platform, flush=True)
 
 
 # parse a pmfx file which is a collection of techniques and permutations, made up of vs, ps, cs combinations
@@ -2389,10 +2418,10 @@ def parse_pmfx(file, root):
     force = False
     up_to_date = check_dependencies(file_and_path, included_files)
     if up_to_date and not force:
-        print(file + " file up to date")
+        print(file + " file up to date", flush=True)
         return
 
-    print(file)
+    print(file, flush=True)
     c_code = ""
 
     pmfx_name = os.path.basename(file).replace(".pmfx", "")
@@ -2446,7 +2475,7 @@ def parse_pmfx(file, root):
                 p = shader_sub_platform()
                 sp = _tp.technique["supported_platforms"]
                 if p not in sp:
-                    print(_tp.technique_name + " not supported on " + p)
+                    print(_tp.technique_name + " not supported on " + p, flush=True)
                     valid = False
                 else:
                     sv = sp[p]
@@ -2456,7 +2485,7 @@ def parse_pmfx(file, root):
                         valid = False
                         print(_tp.technique_name + " not supported on " +
                               p + " " + _info.shader_version +
-                              ", forcing to version " + sv[0])
+                              ", forcing to version " + sv[0], flush=True)
                         # force shader version to specified
                         _tp.shader_version = sv[0]
 
@@ -2552,14 +2581,14 @@ def parse_pmfx(file, root):
             str_id = "__" + str(c.id) + "__"
         output_name = c.pmfx_name + "::" + c.technique_name + str_id
         if c.error_code == 0:
-            print(output_name)
+            print(output_name, flush=True)
         else:
-            print(output_name + " failed to compile")
+            print(output_name + " failed to compile", flush=True)
             pmfx_output_info["failures"][c.pmfx_name] = True
         for out in c.output_list:
-            print(out)
+            print(out, flush=True)
         for err in c.error_list:
-            print(err)
+            print(err, flush=True)
         pmfx_output_info["techniques"].append(generate_technique_permutation_info(compile_jobs[i]))
 
     # write a shader info file with timestamp for dependencies
@@ -2599,17 +2628,19 @@ def configure_sub_platforms():
         _info.shader_platform = "glsl"
         _info.shader_version = "450"
         _info.shader_sub_platform = "spirv"
-
-    if _info.shader_platform == "gles":
+    elif _info.shader_platform == "gles":
         _info.shader_platform = "glsl"
         _info.shader_sub_platform = "gles"
+    elif _info.shader_platform == "nvn":
+        _info.shader_platform = "glsl"
+        _info.shader_sub_platform = "nvn"
 
 
 # main function to avoid shadowing
 def main():
-    print("--------------------------------------------------------------------------------")
-    print("pmfx shader (v3) ---------------------------------------------------------------")
-    print("--------------------------------------------------------------------------------")
+    print("--------------------------------------------------------------------------------", flush=True)
+    print("pmfx shader (v3) ---------------------------------------------------------------", flush=True)
+    print("--------------------------------------------------------------------------------", flush=True)
 
     global _info
     _info = BuildInfo()
@@ -2643,7 +2674,7 @@ def main():
                         try:
                             parse_pmfx(file, root)
                         except Exception as e:
-                            print("ERROR: while processing", os.path.join(root, file))
+                            print("ERROR: while processing", os.path.join(root, file), flush=True)
                             raise e
         else:
             parse_pmfx(source, "")
