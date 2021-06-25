@@ -22,6 +22,15 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 ## Dependencies
 Windows users need [vcredist 2013](https://www.microsoft.com/en-us/download/confirmation.aspx?id=40784) for the glsl/spirv validator.
 
+### Console Platforms
+
+Compilation for Orbis and Nvn is possible but you will need the SDK's installed and the environment variables set and added in your path:
+
+```
+SCE_ORBIS_SDK_DIR 
+NINTENDO_SDK_ROOT
+```
+
 ## Usage
 
 ```
@@ -53,7 +62,6 @@ commandline arguments:
     -texture_offset (optional) [vulkan only] (default 32) 
         specifies an offset applied to texture locations to avoid collisions with buffers
     -v_flip (optional) (inserts glsl uniform to flip verts in the y axis)
-
 ```
 
 ## Compiling Examples
@@ -86,15 +94,6 @@ python3 build_pmfx.py -shader_platform hlsl -shader_version 4_0 -i examples -o o
 
 ```
 python3 build_pmfx.py -shader_platform glsl -shader_version 330 -i examples -o output/bin -h output/structs -t output/temp
-```
-
-## Console Platforms
-
-Compilation for Orbis and Nvn is possible but you will need the SDK's installed and the environment variables set in your path:
-
-```
-SCE_ORBIS_SDK_DIR 
-NINTENDO_SDK_ROOT
 ```
 
 ## Usage
