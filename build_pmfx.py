@@ -1420,7 +1420,7 @@ def generate_input_assignment(io_elements, decl, local_var, suffix):
 
 
 # assign vs or ps outputs from the global struct to the output locations
-def generate_output_assignment(_info, io_elements, local_var, suffix):
+def generate_output_assignment(_info, io_elements, local_var, suffix, gles2=False):
     assign_source = "\n//assign glsl global outputs from structs\n"
     for element in io_elements:
         var_name = element.split()[1]
@@ -1431,7 +1431,11 @@ def generate_output_assignment(_info, io_elements, local_var, suffix):
             if _info.shader_sub_platform == "spirv":
                 assign_source += "gl_Position.y *= -1.0;\n"
         else:
-            assign_source += var_name + suffix + " = " + local_var + "." + var_name + ";\n"
+            if gles2:
+                if suffix == "_ps_output":
+                    assign_source += "gl_FragColor" + " = " + local_var + "." + var_name + ";\n"
+            else:
+                assign_source += var_name + suffix + " = " + local_var + "." + var_name + ";\n"
     return assign_source
 
 
@@ -1486,6 +1490,14 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     binding_points = int(_tp.shader_version) >= 420
     texture_cube_array = int(_tp.shader_version) >= 400
     texture_arrays = True
+    attribute_stage_in = False
+    varying_in = False
+    gl_frag_color = False
+    if _info.shader_sub_platform == "gles":
+        if shader_version_float("gles", _tp.shader_version) <= 200: 
+            attribute_stage_in = True
+            varying_in = True
+            gl_frag_color = True
 
     uniform_buffers = ""
     for cbuf in _shader.cbuffers:
@@ -1511,7 +1523,11 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     # header and macros
     shader_source = ""
     if _info.shader_sub_platform == "gles":
-        shader_source += "#version " + _tp.shader_version + " es\n"
+        if shader_version_float("gles", _tp.shader_version) >= 300: 
+            shader_source += "#version " + _tp.shader_version + " es\n"
+            shader_source += "#define GLES3\n"
+        else:
+            shader_source += "#define GLES2\n"
         shader_source += "#define GLSL\n"
         shader_source += "#define GLES\n"
         if texture_arrays:
@@ -1539,11 +1555,17 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     index_counter = 0
     for input in inputs:
         if _shader.shader_type == "vs":
-            shader_source += "layout(location = " + str(index_counter) + ") in " + input + "_vs_input;\n"
+            if attribute_stage_in:
+                shader_source += "attribute " + input + "_vs_input;\n"
+            else:
+                shader_source += "layout(location = " + str(index_counter) + ") in " + input + "_vs_input;\n"
         elif _shader.shader_type == "ps":
             if index_counter != 0 or not skip_0:
-                shader_source += insert_layout_location(index_counter)
-                shader_source += "in " + input + "_vs_output;\n"
+                if varying_in:
+                    shader_source += "varying " + input + "_vs_output;\n"
+                else:
+                    shader_source += insert_layout_location(index_counter)
+                    shader_source += "in " + input + "_vs_output;\n"
         index_counter += 1
     for instance_input in instance_inputs:
         shader_source += insert_layout_location(index_counter)
@@ -1563,12 +1585,13 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             if "SV_Depth" in output_semantics[p]:
                 continue
             else:
-                output_index = output_semantics[p].replace("SV_Target", "")
-                if output_index != "":
-                    shader_source += "layout(location = " + output_index + ") "
-                else:
-                    shader_source += insert_layout_location(0)
-                shader_source += "out " + outputs[p] + "_ps_output;\n"
+                if not gl_frag_color:
+                    output_index = output_semantics[p].replace("SV_Target", "")
+                    if output_index != "":
+                        shader_source += "layout(location = " + output_index + ") "
+                    else:
+                        shader_source += insert_layout_location(0)
+                    shader_source += "out " + outputs[p] + "_ps_output;\n"
 
     if _info.v_flip:
         shader_source += "uniform float v_flip;\n"
@@ -1620,7 +1643,8 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             if len(instance_inputs) > 0:
                 pre_assign += generate_input_assignment(instance_inputs,
                                                         _shader.instance_input_struct_name, "instance_input", "_instance_input")
-        post_assign = generate_output_assignment(_info, outputs, "_output", output_name[_shader.shader_type])
+
+        post_assign = generate_output_assignment(_info, outputs, "_output", output_name[_shader.shader_type], gl_frag_color)
 
         shader_source += "void main()\n{\n"
         shader_source += "\n" + pre_assign + "\n"
