@@ -6,7 +6,6 @@ precision highp sampler2DArrayShadow;
 precision highp sampler2DShadow;
 precision highp sampler3D;
 precision highp samplerCube;
-precision highp samplerCubeArrayShadow;
 #endif
 
 // defs
@@ -59,17 +58,18 @@ precision highp samplerCubeArrayShadow;
 #define depth_2d( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DShadow sampler_name
 #define depth_2d_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DArrayShadow sampler_name
 #define depth_cube( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCubeShadow sampler_name
-#define depth_cube_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCubeArrayShadow sampler_name
 
 // multisample texture
 #ifdef GLES
 #define sample_texture_2dms( sampler_name, x, y, fragment ) texture( sampler_name, vec2(0.0, 0.0) )
 #define texture_2dms( type, samples, sampler_name, sampler_index ) uniform sampler2D sampler_name
 #define texture_cube_array( sampler_name, sampler_index ) uniform int sampler_name
+#define depth_cube_array( sampler_name, sampler_index ) uniform int sampler_name
 #else
 #define sample_texture_2dms( sampler_name, x, y, fragment ) texelFetch( sampler_name, ivec2( x, y ), fragment )
 #define texture_2dms( type, samples, sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DMS sampler_name
 #define texture_cube_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCubeArray sampler_name
+#define depth_cube_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCubeArrayShadow sampler_name
 #endif
 
 // compute
