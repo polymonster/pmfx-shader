@@ -123,6 +123,14 @@ precision highp sampler3D;
 #define sample_depth_compare_cube_array( name, V, a, compare_value ) vec4(0.0, 0.0, 0.0, 0.0)
 #endif
 
+// glsl 200 / gles 1.0 texture sample macros
+#define sample_texture_2d( sampler_name, V ) texture2D( sampler_name, V )
+#define sample_texture_level_2d( sampler_name, V, l ) texture2DLod( sampler_name, V, l )
+#define sample_texture_grad_2d( sampler_name, V, vddx, vddy ) texture2DLod( sampler_name, V, 0.0 )
+#define sample_texture_cube( sampler_name, V ) textureCube( sampler_name, V )
+#define sample_texture_level_cube( sampler_name, V, l ) textureCubeLod( sampler_name, V, l )
+#define sample_texture_grad_cube( sampler_name, V, vddx, vddy ) textureCubeLod( sampler_name, V, 0.0 )
+
 // matrix
 #define to_3x3( M4 ) float3x3(M4)
 #define from_columns_3x3(A, B, C) (transpose(float3x3(A, B, C)))

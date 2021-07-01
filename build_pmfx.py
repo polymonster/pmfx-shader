@@ -1434,8 +1434,8 @@ def generate_output_assignment(_info, io_elements, local_var, suffix, gles2=Fals
             if gles2:
                 if suffix == "_ps_output":
                     assign_source += "gl_FragColor" + " = " + local_var + "." + var_name + ";\n"
-            else:
-                assign_source += var_name + suffix + " = " + local_var + "." + var_name + ";\n"
+                    continue
+            assign_source += var_name + suffix + " = " + local_var + "." + var_name + ";\n"
     return assign_source
 
 
@@ -1474,6 +1474,48 @@ def get_structured_buffers(shader):
     return sb
 
 
+# extracts the texture types into dictionary from resource decl to replace sample calls
+def texture_types_from_resource_decl(resource_decl):
+    tex_dict = dict()
+    resource_list = resource_decl.split(";")
+    for resource in resource_list:
+        start = resource.find("(") + 1
+        end = resource.find(")") - 1
+        args = resource[start:end].split(",")
+        name_positions = [0, 2]  # 0 = single sample texture, 2 = msaa texture
+        # texture or msaa texture sampled with sample_texture...
+        name = ""
+        for p in name_positions:
+            if len(args) > p:
+                name = args[p].strip(" ")
+        tex_type = resource[:start-1]
+        if len(name) > 0:
+            tex_dict[name] = tex_type.strip()
+    return tex_dict
+
+
+# locates pmfx sample_texture calls and replaces with non-polymorphic function calls
+def replace_texture_samples(shader, texture_types_dict):
+    sampler_tokens = ["sample_texture", "sample_texture_level", "sample_texture_grad"]
+    pos = 0
+    while True:
+        sample, tok = cgu.find_first(shader, sampler_tokens, pos)
+        if sample == sys.maxsize:
+            break;
+        name_start = sample + shader[sample:].find("(") + 1
+        name_end = name_start+ shader[name_start:].find(",")
+        name_str = shader[name_start:name_end].strip()
+        if name_str in texture_types_dict:
+            tex_type = texture_types_dict[name_str]
+            tex_type = tex_type.replace("texture_", "")
+            insert = shader[:sample+len("sample_texture")] + "_" + tex_type
+            insert += shader[sample+len("sample_texture"):]
+            shader = insert
+        end = shader[sample:].find(")")
+        pos = sample+end+1
+    return shader
+
+
 # compile glsl
 def compile_glsl(_info, pmfx_name, _tp, _shader):
     # parse inputs and outputs into semantics
@@ -1493,11 +1535,13 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     attribute_stage_in = False
     varying_in = False
     gl_frag_color = False
+    explicit_texture_sampling = False
     if _info.shader_sub_platform == "gles":
         if shader_version_float("gles", _tp.shader_version) <= 200: 
             attribute_stage_in = True
             varying_in = True
             gl_frag_color = True
+            explicit_texture_sampling = True
 
     uniform_buffers = ""
     for cbuf in _shader.cbuffers:
@@ -1577,8 +1621,11 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     if _shader.shader_type == "vs":
         for output in outputs:
             if output.split()[1] != "position":
-                shader_source += insert_layout_location(index_counter)
-                shader_source += "out " + output + "_" + _shader.shader_type + "_output;\n"
+                if varying_in:
+                    shader_source += "varying " + output + "_" + _shader.shader_type + "_output;\n"
+                else:
+                    shader_source += insert_layout_location(index_counter)
+                    shader_source += "out " + output + "_" + _shader.shader_type + "_output;\n"
             index_counter += 1
     elif _shader.shader_type == "ps":
         for p in range(0, len(outputs)):
@@ -1604,6 +1651,12 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
                 shader_source += generate_global_io_struct(instance_inputs, "struct " + _shader.instance_input_struct_name)
         if len(outputs) > 0:
             shader_source += generate_global_io_struct(outputs, "struct " + _shader.output_struct_name)
+
+    # convert sample_texture to sample_texture_2d etc
+    if explicit_texture_sampling:
+        texture_types = texture_types_from_resource_decl(_shader.resource_decl)
+        _shader.functions_source = replace_texture_samples(_shader.functions_source, texture_types)
+        _shader.main_func_source = replace_texture_samples(_shader.main_func_source, texture_types)
 
     shader_source += _tp.struct_decls
     shader_source += uniform_buffers
