@@ -45,7 +45,7 @@ commandline arguments:
     -shader_version (optional) <shader version unless overridden in technique>
         hlsl: 3_0, 4_0 (default), 5_0
         glsl: 330 (default), 420, 450
-        gles: 100, 200, 300, 310, 350
+        gles: 100, 300, 310, 350
         spirv: 420 (default), 450
         metal: 2.0 (default)
         nvn: (glsl)
