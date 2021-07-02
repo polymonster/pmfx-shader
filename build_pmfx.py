@@ -150,6 +150,7 @@ def display_help():
     print("    -shader_version (optional) <shader version unless overridden in technique>")
     print("        hlsl: 3_0, 4_0 (default), 5_0")
     print("        glsl: 200, 330 (default), 420, 450")
+    print("        gles: 100, 300, 310, 350")
     print("        spirv: 420 (default), 450")
     print("        metal: 2.0 (default)")
     print("        nvn: (glsl)")
