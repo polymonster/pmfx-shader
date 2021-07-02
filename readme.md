@@ -41,12 +41,14 @@ python3 build_pmfx.py -help
 pmfx shader (v3) ---------------------------------------------------------------
 --------------------------------------------------------------------------------
 commandline arguments:
-    -shader_platform <hlsl, glsl, gles, spirv, metal>
-    -shader_version (optional) <shader version unless overriden in technique>
+    -shader_platform <hlsl, glsl, gles, spirv, metal, pssl, nvn>
+    -shader_version (optional) <shader version unless overridden in technique>
         hlsl: 3_0, 4_0 (default), 5_0
         glsl: 330 (default), 420, 450
+        gles: 100, 200, 300, 310, 350
         spirv: 420 (default), 450
         metal: 2.0 (default)
+        nvn: (glsl)
     -metal_sdk [metal only] <iphoneos, macosx, appletvos>
     -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>
     -i <list of input files or directories separated by spaces>
@@ -62,7 +64,8 @@ commandline arguments:
         specifies an offset applied to cbuffer locations to avoid collisions with vertex buffers
     -texture_offset (optional) [vulkan only] (default 32) 
         specifies an offset applied to texture locations to avoid collisions with buffers
-    -v_flip (optional) (inserts glsl uniform to flip verts in the y axis)
+    -v_flip (optional) (inserts glsl uniform to conditionally flip verts in the y axis)
+--------------------------------------------------------------------------------
 ```
 
 ## Compiling Examples
