@@ -65,9 +65,9 @@ precision highp sampler3D;
 #define texture_3d( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler3D sampler_name
 #define depth_2d_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DArrayShadow sampler_name
 #else
-#define texture_2d_array( sampler_name, sampler_index )
-#define texture_3d( sampler_name, sampler_index )
-#define depth_2d_array( sampler_name, sampler_index )
+#define texture_2d_array( sampler_name, sampler_index ) uniform sampler2D sampler_name
+#define texture_3d( sampler_name, sampler_index ) uniform sampler2D sampler_name
+#define depth_2d_array( sampler_name, sampler_index ) uniform sampler2D sampler_name
 #endif
 
 // multisample texture
@@ -125,6 +125,7 @@ precision highp sampler3D;
 
 // glsl 200 / gles 1.0 texture sample macros
 #define sample_texture_2d( sampler_name, V ) texture2D( sampler_name, V )
+#define sample_texture_array_2d( sampler_name, V, a ) texture2D( sampler_name, V ) // not supported
 #define sample_texture_level_2d( sampler_name, V, l ) texture2DLod( sampler_name, V, l )
 #define sample_texture_grad_2d( sampler_name, V, vddx, vddy ) texture2DLod( sampler_name, V, 0.0 )
 #define sample_texture_cube( sampler_name, V ) textureCube( sampler_name, V )

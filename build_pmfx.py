@@ -146,12 +146,13 @@ def parse_args():
 # display help for args
 def display_help():
     print("commandline arguments:")
-    print("    -shader_platform <hlsl, glsl, gles, spirv, metal, nvn>")
-    print("    -shader_version (optional) <shader version unless overriden in technique>")
+    print("    -shader_platform <hlsl, glsl, gles, spirv, metal, pssl, nvn>")
+    print("    -shader_version (optional) <shader version unless overridden in technique>")
     print("        hlsl: 3_0, 4_0 (default), 5_0")
-    print("        glsl: 330 (default), 420, 450")
+    print("        glsl: 200, 330 (default), 420, 450")
     print("        spirv: 420 (default), 450")
     print("        metal: 2.0 (default)")
+    print("        nvn: (glsl)")
     print("    -metal_sdk [metal only] <iphoneos, macosx, appletvos>")
     print("    -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>")
     print("    -i <list of input files or directories separated by spaces>")
@@ -167,7 +168,7 @@ def display_help():
     print("        specifies an offset applied to cbuffer locations to avoid collisions with vertex buffers")
     print("    -texture_offset (optional) [vulkan only] (default 32) ")
     print("        specifies an offset applied to texture locations to avoid collisions with buffers")
-    print("    -v_flip (optional) (inserts glsl uniform to control geometry flipping)") 
+    print("    -v_flip (optional) (inserts glsl uniform to conditionally flip verts in the y axis)") 
     sys.stdout.flush()
     sys.exit(0)
 
@@ -1496,24 +1497,87 @@ def texture_types_from_resource_decl(resource_decl):
 
 # locates pmfx sample_texture calls and replaces with non-polymorphic function calls
 def replace_texture_samples(shader, texture_types_dict):
-    sampler_tokens = ["sample_texture", "sample_texture_level", "sample_texture_grad"]
+    sampler_tokens = ["sample_texture", "sample_texture_level", "sample_texture_grad", "sample_texture_array"]
     pos = 0
     while True:
-        sample, tok = cgu.find_first(shader, sampler_tokens, pos)
+        sample, tok = cgu.find_first_token(shader, sampler_tokens, pos)
         if sample == sys.maxsize:
-            break;
+            break
         name_start = sample + shader[sample:].find("(") + 1
         name_end = name_start+ shader[name_start:].find(",")
         name_str = shader[name_start:name_end].strip()
         if name_str in texture_types_dict:
             tex_type = texture_types_dict[name_str]
             tex_type = tex_type.replace("texture_", "")
-            insert = shader[:sample+len("sample_texture")] + "_" + tex_type
-            insert += shader[sample+len("sample_texture"):]
+            tex_type = tex_type.replace("_array", "")
+            insert = shader[:sample+len(tok)] + "_" + tex_type
+            insert += shader[sample+len(tok):]
             shader = insert
         end = shader[sample:].find(")")
         pos = sample+end+1
     return shader
+
+
+# generates gles 2 compatible uniforms packed into glUniformMatrixfv
+def generate_uniform_pack(cbuffer_name, cbuffer_body):
+    v4_type = {
+        "float4": 1,
+        "float4x4": 4
+    }
+    output = dict()
+    cbuffer_body = cbuffer_body.strip("{")
+    cbuffer_body = cbuffer_body.strip("};").strip()
+    cbuffer_name = cbuffer_name.strip()
+    members = cbuffer_body.split(";")
+    v4_counter = 0
+    member_pairs = []
+    for member in members:
+        member = member.strip()
+        if len(member) <= 0:
+            continue
+        pair = member.split(" ")
+        type = pair[0]
+        name = pair[1]
+        member_pairs.append((type, name))
+        if type not in v4_type.keys():
+            print("cannot pack type into float4 array: " + type)
+            exit(1)
+        v4_counter += v4_type[type]
+    output["decl"] = "uniform float4 " + cbuffer_name + "[" + str(v4_counter) + "];\n"
+    v4_pos = 0
+    assign = ""
+    for member in member_pairs:
+        if member[0] == "float4x4":
+            assign += (member[0] + " " + member[1] + ";\n")
+            assign += (member[1] + "[0] = " + cbuffer_name + "[" + str(v4_pos) + "];\n")
+            assign += (member[1] + "[1] = " + cbuffer_name + "[" + str(v4_pos+1) + "];\n")
+            assign += (member[1] + "[2] = " + cbuffer_name + "[" + str(v4_pos+2) + "];\n")
+            assign += (member[1] + "[3] = " + cbuffer_name + "[" + str(v4_pos+3) + "];\n")
+        else:
+            assign += (member[0] + " " + member[1] + " = " + cbuffer_name + "[" + str(v4_pos) + "];\n")
+        v4_pos += v4_type[member[0]]
+    output["assign"] = assign
+    return output
+
+
+# unpacks a uniform pack into variables of the correct type, this is relying on the optimiser to rip out the reduant assigns
+def insert_uniform_unpack_assignment(functions_source, uniform_pack):
+    pos = 0
+    inserted_source = ""
+    while True:
+        bp = functions_source[pos:].find("{")
+        if bp == -1:
+            break
+        bp = pos + bp
+        ep = enclose_brackets(functions_source[bp:])
+        if ep == -1:
+            break
+        ep = bp + ep
+        pos = ep + 1
+        inserted_source += functions_source[:bp+1]
+        inserted_source += "\n" + uniform_pack["assign"] + "\n"
+        inserted_source += functions_source[bp+1:ep]
+    return inserted_source
 
 
 # compile glsl
@@ -1536,13 +1600,17 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     varying_in = False
     gl_frag_color = False
     explicit_texture_sampling = False
+    use_uniform_pack = False
     if _info.shader_sub_platform == "gles":
         if shader_version_float("gles", _tp.shader_version) <= 200: 
             attribute_stage_in = True
             varying_in = True
             gl_frag_color = True
             explicit_texture_sampling = True
+            use_uniform_pack = True
 
+    # uniform buffers
+    uniform_pack = None
     uniform_buffers = ""
     for cbuf in _shader.cbuffers:
         name_start = cbuf.find(" ")
@@ -1557,12 +1625,18 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             uniform_buf = "layout (binding=" + reg + ",std140) uniform"
         else:
             uniform_buf = "layout (std140) uniform"
-        uniform_buf += cbuf[name_start:name_end]
         body_start = cbuf.find("{")
         body_end = cbuf.find("};") + 2
-        uniform_buf += "\n"
-        uniform_buf += cbuf[body_start:body_end] + "\n"
-        uniform_buffers += uniform_buf + "\n"
+        cbuffer_body = cbuf[body_start:body_end]
+        cbuffer_name = cbuf[name_start:name_end]
+        if not use_uniform_pack:
+            uniform_buf += cbuf[name_start:name_end]
+            uniform_buf += "\n"
+            uniform_buf += cbuf[body_start:body_end] + "\n"
+            uniform_buffers += uniform_buf + "\n"
+        else:
+            uniform_pack = generate_uniform_pack(cbuffer_name, cbuffer_body)
+            uniform_buffers += uniform_pack["decl"]
 
     # header and macros
     shader_source = ""
@@ -1657,6 +1731,9 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         texture_types = texture_types_from_resource_decl(_shader.resource_decl)
         _shader.functions_source = replace_texture_samples(_shader.functions_source, texture_types)
         _shader.main_func_source = replace_texture_samples(_shader.main_func_source, texture_types)
+        if uniform_pack:
+            _shader.functions_source = insert_uniform_unpack_assignment(_shader.functions_source, uniform_pack)
+            _shader.main_func_source = insert_uniform_unpack_assignment(_shader.main_func_source, uniform_pack)
 
     shader_source += _tp.struct_decls
     shader_source += uniform_buffers
