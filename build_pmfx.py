@@ -1602,6 +1602,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     gl_frag_color = False
     explicit_texture_sampling = False
     use_uniform_pack = False
+    uniform_pack = None
     if _info.shader_sub_platform == "gles":
         if shader_version_float("gles", _tp.shader_version) <= 200: 
             attribute_stage_in = True
@@ -1609,9 +1610,11 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             gl_frag_color = True
             explicit_texture_sampling = True
             use_uniform_pack = True
+            uniform_pack = dict()
+            uniform_pack["decl"] = ""
+            uniform_pack["assign"] = ""
 
     # uniform buffers
-    uniform_pack = None
     uniform_buffers = ""
     for cbuf in _shader.cbuffers:
         name_start = cbuf.find(" ")
@@ -1636,8 +1639,10 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             uniform_buf += cbuf[body_start:body_end] + "\n"
             uniform_buffers += uniform_buf + "\n"
         else:
-            uniform_pack = generate_uniform_pack(cbuffer_name, cbuffer_body)
-            uniform_buffers += uniform_pack["decl"]
+            uniform_pack_cbuf = generate_uniform_pack(cbuffer_name, cbuffer_body)
+            uniform_pack["decl"] += uniform_pack_cbuf["decl"]
+            uniform_pack["assign"] += uniform_pack_cbuf["assign"]
+            uniform_buffers += uniform_pack_cbuf["decl"]
 
     # header and macros
     shader_source = ""
