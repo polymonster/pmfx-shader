@@ -3,9 +3,7 @@
 
 A cross platform shader language with multi-threaded offline compilation or platform shader source code generation. Output json reflection info and c++ header with your shaders structs, fx-like techniques and compile time branch evaluation via (uber-shader) "permutations".
 
-A single file does all the shader parsing and code generation. Simple syntax changes are handled through macros and defines found in [platform](https://github.com/polymonster/pmfx-shader/tree/master/platform), so it is simple to add new features or change things to behave how you like. More complex differences between shader languages (such as Metals lack of global textures / buffers) are handled through code-generation. 
-
-pmfx currently supports a subset of shader functionality with features added on an as-needed basis, it has been used in a number of personal projects as well as some upcoming commercial projects so the feature set is fairly compehensive but by no-means complete.
+A single file does all the shader parsing and code generation. Simple syntax changes are handled through macros and defines found in [platform](https://github.com/polymonster/pmfx-shader/tree/master/platform), so it is simple to add new features or change things to behave how you like. More complex differences between shader languages are handled through code-generation. 
 
 This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/wiki/Pmfx) system found in [pmtech](https://github.com/polymonster/pmtech), it has been moved into a separate repository to be used with other projects, if you are interested to see how pmfx shaders are integrated please take a look [here](https://github.com/polymonster/pmtech).
 
