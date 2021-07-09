@@ -23,12 +23,7 @@ Windows users need [vcredist 2013](https://www.microsoft.com/en-us/download/conf
 
 ### Console Platforms
 
-Compilation for Orbis and Nvn is possible but you will need the SDK's installed and the environment variables set and added in your path:
-
-```
-SCE_ORBIS_SDK_DIR 
-NINTENDO_SDK_ROOT
-```
+Compilation for Orbis and Nvn is possible but you will need the SDK's installed and the environment variables set.
 
 ## Usage
 
