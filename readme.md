@@ -305,7 +305,7 @@ HLSL/Direct3D requires cbuffers to be padded to 16 bytes alignment, pmfx allows 
 
 Single .pmfx file can contain multiple shader functions so you can share functionality, you can define a block of [jsn](https://github.com/polymonster/jsn) in the shader to configure techniques. (jsn is a more lenient and user friendly data format similar to json).
 
-Simply specify vs, ps or cs to select which function in the source to use for that shader stage. If no pmfx: json block is found you can still supply vs_main and ps_main which will be output as a technique named "default".
+Simply specify `vs`, `ps` or `cs` to select which function in the source to use for that shader stage. If no pmfx: json block is found you can still supply `vs_main` and `ps_main` which will be output as a technique named "default".
 
 ```c
 pmfx:
