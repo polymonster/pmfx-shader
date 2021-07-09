@@ -14,9 +14,9 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 - GLES (WebGL 1.0)
 - GLES 300+ (WebGL 2.0)
 - SPIR-V. (Vulkan, OpenGL)
-- Metal 1.0+ (macOS, iOS, tvOS) 
+- Metal 1.0+ (macOS, iOS, tvOS)
+- PSSL
 - NVN (Nintendo Switch)
-- PSSL (Orbis)
 
 ## Dependencies
 Windows users need [vcredist 2013](https://www.microsoft.com/en-us/download/confirmation.aspx?id=40784) for the glsl/spirv validator.
