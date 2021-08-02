@@ -33,6 +33,7 @@ class BuildInfo:
     platform_macros_file = ""                                           # glsl.h, hlsl.h, metal.h
     macros_source = ""                                                  # source code inside _shader_macros.h
     error_code = 0                                                      # non-zero if any shaders failed to build
+    nvn_exe = ""                                                        # optional executable path for nvn
     cmdline_string = ""                                                 # stores the full cmdline passed
 
 
@@ -141,6 +142,8 @@ def parse_args():
             _info.metal_min_os = sys.argv[i+1]
         if sys.argv[i] == "-metal_sdk":
             _info.metal_sdk = sys.argv[i+1]
+        if sys.argv[i] == "-nvn_exe":
+            _info.nvn_exe = sys.argv[i+1]
 
 
 # display help for args
@@ -154,6 +157,7 @@ def display_help():
     print("        metal: 2.0 (default)")
     print("    -metal_sdk [metal only] <iphoneos, macosx, appletvos>")
     print("    -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>")
+    print("    -nvn_exe [nvn only] <path to execulatble that can compile glsl to nvn glslc>")
     print("    -i <list of input files or directories separated by spaces>")
     print("    -o <output dir for shaders>")
     print("    -t <output dir for temp files>")
@@ -1674,20 +1678,16 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
                 "'NINTENDO_SDK_ROOT' environment variable is set and is added to your PATH.", flush=True)
             sys.exit(1)
 
-        exe = os.path.join(nvn_sdk, "Tools", "Graphics", "GraphicsTools", "ShaderConverter.exe")
-
-        const_args = "--api-type nvn --code-type Binary_Ir --source-format glsl"
+        exe = _info.nvn_exe
 
         nvn_type = {
-            "vs": "--vertex-shader",
-            "ps": "--pixel-shader",
-            "cs": "--compute-shader"
+            "vs": "-stage vertex",
+            "ps": "-stage fragment",
+            "cs": "-stage compute"
         }
-
-        cmd = nvn_type[_shader.shader_type] + " " + sanitize_file_path(temp_file_and_path) + " "
-        cmd += const_args + " "
-        cmd += "--output-path " + sanitize_file_path(output_file_and_path) + " "
-        cmd += "--output-name " + _tp.name + " "
+        cmd = "-input " + sanitize_file_path(temp_file_and_path) + " "
+        cmd += nvn_type[_shader.shader_type] + " " + sanitize_file_path(temp_file_and_path) + " "
+        cmd += "-output " + sanitize_file_path(output_file_and_path) + " "
 
         error_code, error_list, output_list = call_wait_subprocess(exe + " " + cmd)
         _tp.error_code = error_code
