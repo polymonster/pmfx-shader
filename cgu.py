@@ -467,12 +467,24 @@ def next_token(source, start):
     return None
 
 
-# find first token
+# find first string
 def find_first(source, tokens, start):
     first = sys.maxsize
     first_token = ""
     for t in tokens:
         i = source.find(t, start)
+        if first > i > -1:
+            first = i
+            first_token = t
+    return first, first_token
+
+
+# find first token
+def find_first_token(source, tokens, start):
+    first = sys.maxsize
+    first_token = ""
+    for t in tokens:
+        i = find_token(t, source)
         if first > i > -1:
             first = i
             first_token = t

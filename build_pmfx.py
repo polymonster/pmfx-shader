@@ -149,12 +149,14 @@ def parse_args():
 # display help for args
 def display_help():
     print("commandline arguments:")
-    print("    -shader_platform <hlsl, glsl, gles, spirv, metal, nvn>")
-    print("    -shader_version (optional) <shader version unless overriden in technique>")
+    print("    -shader_platform <hlsl, glsl, gles, spirv, metal, pssl, nvn>")
+    print("    -shader_version (optional) <shader version unless overridden in technique>")
     print("        hlsl: 3_0, 4_0 (default), 5_0")
-    print("        glsl: 330 (default), 420, 450")
+    print("        glsl: 200, 330 (default), 420, 450")
+    print("        gles: 100, 300, 310, 350")
     print("        spirv: 420 (default), 450")
     print("        metal: 2.0 (default)")
+    print("        nvn: (glsl)")
     print("    -metal_sdk [metal only] <iphoneos, macosx, appletvos>")
     print("    -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>")
     print("    -nvn_exe [nvn only] <path to execulatble that can compile glsl to nvn glslc>")
@@ -171,7 +173,7 @@ def display_help():
     print("        specifies an offset applied to cbuffer locations to avoid collisions with vertex buffers")
     print("    -texture_offset (optional) [vulkan only] (default 32) ")
     print("        specifies an offset applied to texture locations to avoid collisions with buffers")
-    print("    -v_flip (optional) (inserts glsl uniform to control geometry flipping)") 
+    print("    -v_flip (optional) (inserts glsl uniform to conditionally flip verts in the y axis)") 
     sys.stdout.flush()
     sys.exit(0)
 
@@ -1424,7 +1426,7 @@ def generate_input_assignment(io_elements, decl, local_var, suffix):
 
 
 # assign vs or ps outputs from the global struct to the output locations
-def generate_output_assignment(_info, io_elements, local_var, suffix):
+def generate_output_assignment(_info, io_elements, local_var, suffix, gles2=False):
     assign_source = "\n//assign glsl global outputs from structs\n"
     for element in io_elements:
         var_name = element.split()[1]
@@ -1435,6 +1437,10 @@ def generate_output_assignment(_info, io_elements, local_var, suffix):
             if _info.shader_sub_platform == "spirv":
                 assign_source += "gl_Position.y *= -1.0;\n"
         else:
+            if gles2:
+                if suffix == "_ps_output":
+                    assign_source += "gl_FragColor" + " = " + local_var + "." + var_name + ";\n"
+                    continue
             assign_source += var_name + suffix + " = " + local_var + "." + var_name + ";\n"
     return assign_source
 
@@ -1474,6 +1480,111 @@ def get_structured_buffers(shader):
     return sb
 
 
+# extracts the texture types into dictionary from resource decl to replace sample calls
+def texture_types_from_resource_decl(resource_decl):
+    tex_dict = dict()
+    resource_list = resource_decl.split(";")
+    for resource in resource_list:
+        start = resource.find("(") + 1
+        end = resource.find(")") - 1
+        args = resource[start:end].split(",")
+        name_positions = [0, 2]  # 0 = single sample texture, 2 = msaa texture
+        # texture or msaa texture sampled with sample_texture...
+        name = ""
+        for p in name_positions:
+            if len(args) > p:
+                name = args[p].strip(" ")
+        tex_type = resource[:start-1]
+        if len(name) > 0:
+            tex_dict[name] = tex_type.strip()
+    return tex_dict
+
+
+# locates pmfx sample_texture calls and replaces with non-polymorphic function calls
+def replace_texture_samples(shader, texture_types_dict):
+    sampler_tokens = ["sample_texture", "sample_texture_level", "sample_texture_grad", "sample_texture_array"]
+    pos = 0
+    while True:
+        sample, tok = cgu.find_first_token(shader, sampler_tokens, pos)
+        if sample == sys.maxsize:
+            break
+        name_start = sample + shader[sample:].find("(") + 1
+        name_end = name_start+ shader[name_start:].find(",")
+        name_str = shader[name_start:name_end].strip()
+        if name_str in texture_types_dict:
+            tex_type = texture_types_dict[name_str]
+            tex_type = tex_type.replace("texture_", "")
+            tex_type = tex_type.replace("_array", "")
+            insert = shader[:sample+len(tok)] + "_" + tex_type
+            insert += shader[sample+len(tok):]
+            shader = insert
+        end = shader[sample:].find(")")
+        pos = sample+end+1
+    return shader
+
+
+# generates gles 2 compatible uniforms packed into glUniformMatrixfv
+def generate_uniform_pack(cbuffer_name, cbuffer_body):
+    v4_type = {
+        "float4": 1,
+        "float4x4": 4
+    }
+    output = dict()
+    cbuffer_body = cbuffer_body.strip("{")
+    cbuffer_body = cbuffer_body.strip("};").strip()
+    cbuffer_name = cbuffer_name.strip()
+    members = cbuffer_body.split(";")
+    v4_counter = 0
+    member_pairs = []
+    for member in members:
+        member = member.strip()
+        if len(member) <= 0:
+            continue
+        pair = member.split(" ")
+        type = pair[0]
+        name = pair[1]
+        member_pairs.append((type, name))
+        if type not in v4_type.keys():
+            print("cannot pack type into float4 array: " + type)
+            exit(1)
+        v4_counter += v4_type[type]
+    output["decl"] = "uniform float4 " + cbuffer_name + "[" + str(v4_counter) + "];\n"
+    v4_pos = 0
+    assign = ""
+    for member in member_pairs:
+        if member[0] == "float4x4":
+            assign += (member[0] + " " + member[1] + ";\n")
+            assign += (member[1] + "[0] = " + cbuffer_name + "[" + str(v4_pos) + "];\n")
+            assign += (member[1] + "[1] = " + cbuffer_name + "[" + str(v4_pos+1) + "];\n")
+            assign += (member[1] + "[2] = " + cbuffer_name + "[" + str(v4_pos+2) + "];\n")
+            assign += (member[1] + "[3] = " + cbuffer_name + "[" + str(v4_pos+3) + "];\n")
+        else:
+            assign += (member[0] + " " + member[1] + " = " + cbuffer_name + "[" + str(v4_pos) + "];\n")
+        v4_pos += v4_type[member[0]]
+    output["assign"] = assign
+    return output
+
+
+# unpacks a uniform pack into variables of the correct type, this is relying on the optimiser to rip out the reduant assigns
+def insert_uniform_unpack_assignment(functions_source, uniform_pack):
+    pos = 0
+    inserted_source = ""
+    while True:
+        bp = functions_source[pos:].find("{")
+        if bp == -1:
+            break
+        bp = pos + bp
+        ep = enclose_brackets(functions_source[bp:])
+        if ep == -1:
+            break
+        ep = bp + ep
+        pos = ep + 1
+        inserted_source += functions_source[:bp+1]
+        inserted_source += "\n" + uniform_pack["assign"] + "\n"
+        inserted_source += functions_source[bp+1:ep]
+    return inserted_source
+
+
 # compile glsl
 def compile_glsl(_info, pmfx_name, _tp, _shader):
     # parse inputs and outputs into semantics
@@ -1490,7 +1601,24 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     binding_points = int(_tp.shader_version) >= 420
     texture_cube_array = int(_tp.shader_version) >= 400
     texture_arrays = True
+    attribute_stage_in = False
+    varying_in = False
+    gl_frag_color = False
+    explicit_texture_sampling = False
+    use_uniform_pack = False
+    uniform_pack = None
+    if _info.shader_sub_platform == "gles":
+        if shader_version_float("gles", _tp.shader_version) <= 200: 
+            attribute_stage_in = True
+            varying_in = True
+            gl_frag_color = True
+            explicit_texture_sampling = True
+            use_uniform_pack = True
+            uniform_pack = dict()
+            uniform_pack["decl"] = ""
+            uniform_pack["assign"] = ""
 
+    # uniform buffers
     uniform_buffers = ""
     for cbuf in _shader.cbuffers:
         name_start = cbuf.find(" ")
@@ -1505,17 +1633,29 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             uniform_buf = "layout (binding=" + reg + ",std140) uniform"
         else:
             uniform_buf = "layout (std140) uniform"
-        uniform_buf += cbuf[name_start:name_end]
         body_start = cbuf.find("{")
         body_end = cbuf.find("};") + 2
-        uniform_buf += "\n"
-        uniform_buf += cbuf[body_start:body_end] + "\n"
-        uniform_buffers += uniform_buf + "\n"
+        cbuffer_body = cbuf[body_start:body_end]
+        cbuffer_name = cbuf[name_start:name_end]
+        if not use_uniform_pack:
+            uniform_buf += cbuf[name_start:name_end]
+            uniform_buf += "\n"
+            uniform_buf += cbuf[body_start:body_end] + "\n"
+            uniform_buffers += uniform_buf + "\n"
+        else:
+            uniform_pack_cbuf = generate_uniform_pack(cbuffer_name, cbuffer_body)
+            uniform_pack["decl"] += uniform_pack_cbuf["decl"]
+            uniform_pack["assign"] += uniform_pack_cbuf["assign"]
+            uniform_buffers += uniform_pack_cbuf["decl"]
 
     # header and macros
     shader_source = ""
     if _info.shader_sub_platform == "gles":
-        shader_source += "#version " + _tp.shader_version + " es\n"
+        if shader_version_float("gles", _tp.shader_version) >= 300: 
+            shader_source += "#version " + _tp.shader_version + " es\n"
+            shader_source += "#define GLES3\n"
+        else:
+            shader_source += "#define GLES2\n"
         shader_source += "#define GLSL\n"
         shader_source += "#define GLES\n"
         if texture_arrays:
@@ -1543,11 +1683,17 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     index_counter = 0
     for input in inputs:
         if _shader.shader_type == "vs":
-            shader_source += "layout(location = " + str(index_counter) + ") in " + input + "_vs_input;\n"
+            if attribute_stage_in:
+                shader_source += "attribute " + input + "_vs_input;\n"
+            else:
+                shader_source += "layout(location = " + str(index_counter) + ") in " + input + "_vs_input;\n"
         elif _shader.shader_type == "ps":
             if index_counter != 0 or not skip_0:
-                shader_source += insert_layout_location(index_counter)
-                shader_source += "in " + input + "_vs_output;\n"
+                if varying_in:
+                    shader_source += "varying " + input + "_vs_output;\n"
+                else:
+                    shader_source += insert_layout_location(index_counter)
+                    shader_source += "in " + input + "_vs_output;\n"
         index_counter += 1
     for instance_input in instance_inputs:
         shader_source += insert_layout_location(index_counter)
@@ -1559,20 +1705,24 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     if _shader.shader_type == "vs":
         for output in outputs:
             if output.split()[1] != "position":
-                shader_source += insert_layout_location(index_counter)
-                shader_source += "out " + output + "_" + _shader.shader_type + "_output;\n"
+                if varying_in:
+                    shader_source += "varying " + output + "_" + _shader.shader_type + "_output;\n"
+                else:
+                    shader_source += insert_layout_location(index_counter)
+                    shader_source += "out " + output + "_" + _shader.shader_type + "_output;\n"
             index_counter += 1
     elif _shader.shader_type == "ps":
         for p in range(0, len(outputs)):
             if "SV_Depth" in output_semantics[p]:
                 continue
             else:
-                output_index = output_semantics[p].replace("SV_Target", "")
-                if output_index != "":
-                    shader_source += "layout(location = " + output_index + ") "
-                else:
-                    shader_source += insert_layout_location(0)
-                shader_source += "out " + outputs[p] + "_ps_output;\n"
+                if not gl_frag_color:
+                    output_index = output_semantics[p].replace("SV_Target", "")
+                    if output_index != "":
+                        shader_source += "layout(location = " + output_index + ") "
+                    else:
+                        shader_source += insert_layout_location(0)
+                    shader_source += "out " + outputs[p] + "_ps_output;\n"
 
     if _info.v_flip:
         shader_source += "uniform float v_flip;\n"
@@ -1585,6 +1735,15 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
                 shader_source += generate_global_io_struct(instance_inputs, "struct " + _shader.instance_input_struct_name)
         if len(outputs) > 0:
             shader_source += generate_global_io_struct(outputs, "struct " + _shader.output_struct_name)
+
+    # convert sample_texture to sample_texture_2d etc
+    if explicit_texture_sampling:
+        texture_types = texture_types_from_resource_decl(_shader.resource_decl)
+        _shader.functions_source = replace_texture_samples(_shader.functions_source, texture_types)
+        _shader.main_func_source = replace_texture_samples(_shader.main_func_source, texture_types)
+        if uniform_pack:
+            _shader.functions_source = insert_uniform_unpack_assignment(_shader.functions_source, uniform_pack)
+            _shader.main_func_source = insert_uniform_unpack_assignment(_shader.main_func_source, uniform_pack)
 
     shader_source += _tp.struct_decls
     shader_source += uniform_buffers
@@ -1624,7 +1783,8 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             if len(instance_inputs) > 0:
                 pre_assign += generate_input_assignment(instance_inputs,
                                                         _shader.instance_input_struct_name, "instance_input", "_instance_input")
-        post_assign = generate_output_assignment(_info, outputs, "_output", output_name[_shader.shader_type])
+
+        post_assign = generate_output_assignment(_info, outputs, "_output", output_name[_shader.shader_type], gl_frag_color)
 
         shader_source += "void main()\n{\n"
         shader_source += "\n" + pre_assign + "\n"

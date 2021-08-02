@@ -1,12 +1,14 @@
 // precision qualifiers
 #ifdef GLES
 precision highp float;
+precision highp samplerCube;
+#endif
+
+#ifdef GLES3
+precision highp sampler2DShadow;
 precision highp sampler2DArray;
 precision highp sampler2DArrayShadow;
-precision highp sampler2DShadow;
 precision highp sampler3D;
-precision highp samplerCube;
-precision highp samplerCubeArrayShadow;
 #endif
 
 // defs
@@ -51,25 +53,34 @@ precision highp samplerCubeArrayShadow;
 
 // textures
 #define texture_2d( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2D sampler_name
-#define texture_3d( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler3D sampler_name
 #define texture_cube( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCube sampler_name
-#define texture_2d_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DArray sampler_name
 
 // depth text formats for compare samples
 #define depth_2d( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DShadow sampler_name
-#define depth_2d_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DArrayShadow sampler_name
 #define depth_cube( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCubeShadow sampler_name
-#define depth_cube_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCubeArrayShadow sampler_name
+
+// non gles2 textures
+#ifndef GLES2
+#define texture_2d_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DArray sampler_name
+#define texture_3d( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler3D sampler_name
+#define depth_2d_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DArrayShadow sampler_name
+#else
+#define texture_2d_array( sampler_name, sampler_index ) uniform sampler2D sampler_name
+#define texture_3d( sampler_name, sampler_index ) uniform sampler2D sampler_name
+#define depth_2d_array( sampler_name, sampler_index ) uniform sampler2D sampler_name
+#endif
 
 // multisample texture
 #ifdef GLES
 #define sample_texture_2dms( sampler_name, x, y, fragment ) texture( sampler_name, vec2(0.0, 0.0) )
 #define texture_2dms( type, samples, sampler_name, sampler_index ) uniform sampler2D sampler_name
 #define texture_cube_array( sampler_name, sampler_index ) uniform int sampler_name
+#define depth_cube_array( sampler_name, sampler_index ) uniform int sampler_name
 #else
 #define sample_texture_2dms( sampler_name, x, y, fragment ) texelFetch( sampler_name, ivec2( x, y ), fragment )
 #define texture_2dms( type, samples, sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DMS sampler_name
 #define texture_cube_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCubeArray sampler_name
+#define depth_cube_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCubeArrayShadow sampler_name
 #endif
 
 // compute
@@ -111,6 +122,15 @@ precision highp samplerCubeArrayShadow;
 #define sample_texture_cube_array( sampler_name, V, a ) vec4(0.0, 0.0, 0.0, 0.0)
 #define sample_depth_compare_cube_array( name, V, a, compare_value ) vec4(0.0, 0.0, 0.0, 0.0)
 #endif
+
+// glsl 200 / gles 1.0 texture sample macros
+#define sample_texture_2d( sampler_name, V ) texture2D( sampler_name, V )
+#define sample_texture_array_2d( sampler_name, V, a ) texture2D( sampler_name, V ) // not supported
+#define sample_texture_level_2d( sampler_name, V, l ) texture2DLod( sampler_name, V, l )
+#define sample_texture_grad_2d( sampler_name, V, vddx, vddy ) texture2DLod( sampler_name, V, 0.0 )
+#define sample_texture_cube( sampler_name, V ) textureCube( sampler_name, V )
+#define sample_texture_level_cube( sampler_name, V, l ) textureCubeLod( sampler_name, V, l )
+#define sample_texture_grad_cube( sampler_name, V, vddx, vddy ) textureCubeLod( sampler_name, V, 0.0 )
 
 // matrix
 #define to_3x3( M4 ) float3x3(M4)

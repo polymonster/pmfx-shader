@@ -3,9 +3,7 @@
 
 A cross platform shader language with multi-threaded offline compilation or platform shader source code generation. Output json reflection info and c++ header with your shaders structs, fx-like techniques and compile time branch evaluation via (uber-shader) "permutations".
 
-A single file does all the shader parsing and code generation. Simple syntax changes are handled through macros and defines found in [platform](https://github.com/polymonster/pmfx-shader/tree/master/platform), so it is simple to add new features or change things to behave how you like. More complex differences between shader languages (such as Metals lack of global textures / buffers) are handled through code-generation. 
-
-pmfx currently supports a subset of shader functionality with features added on an as-needed basis, it has been used in a number of personal projects as well as some upcoming commercial projects so the feature set is fairly compehensive but by no-means complete.
+A single file does all the shader parsing and code generation. Simple syntax changes are handled through macros and defines found in [platform](https://github.com/polymonster/pmfx-shader/tree/master/platform), so it is simple to add new features or change things to behave how you like. More complex differences between shader languages are handled through code-generation. 
 
 This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/wiki/Pmfx) system found in [pmtech](https://github.com/polymonster/pmtech), it has been moved into a separate repository to be used with other projects, if you are interested to see how pmfx shaders are integrated please take a look [here](https://github.com/polymonster/pmtech).
 
@@ -13,13 +11,19 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 
 - HLSL Shader Model 3+
 - GLSL 330+
-- GLES 310+ (WebGL 2.0)
+- GLES (WebGL 1.0)
+- GLES 300+ (WebGL 2.0)
 - SPIR-V. (Vulkan, OpenGL)
-- Metal 1.0+ (macOS, iOS, tvOS) 
-- PSSL (wip)
+- Metal 1.0+ (macOS, iOS, tvOS)
+- PSSL
+- NVN (Nintendo Switch)
 
 ## Dependencies
 Windows users need [vcredist 2013](https://www.microsoft.com/en-us/download/confirmation.aspx?id=40784) for the glsl/spirv validator.
+
+### Console Platforms
+
+Compilation for Orbis and Nvn is possible but you will need the SDK's installed and the environment variables set.
 
 ## Usage
 
@@ -30,12 +34,14 @@ python3 build_pmfx.py -help
 pmfx shader (v3) ---------------------------------------------------------------
 --------------------------------------------------------------------------------
 commandline arguments:
-    -shader_platform <hlsl, glsl, gles, spirv, metal>
-    -shader_version (optional) <shader version unless overriden in technique>
+    -shader_platform <hlsl, glsl, gles, spirv, metal, pssl, nvn>
+    -shader_version (optional) <shader version unless overridden in technique>
         hlsl: 3_0, 4_0 (default), 5_0
         glsl: 330 (default), 420, 450
+        gles: 100, 300, 310, 350
         spirv: 420 (default), 450
         metal: 2.0 (default)
+        nvn: (glsl)
     -metal_sdk [metal only] <iphoneos, macosx, appletvos>
     -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>
     -i <list of input files or directories separated by spaces>
@@ -51,8 +57,8 @@ commandline arguments:
         specifies an offset applied to cbuffer locations to avoid collisions with vertex buffers
     -texture_offset (optional) [vulkan only] (default 32) 
         specifies an offset applied to texture locations to avoid collisions with buffers
-    -v_flip (optional) (inserts glsl uniform to flip verts in the y axis)
-
+    -v_flip (optional) (inserts glsl uniform to conditionally flip verts in the y axis)
+--------------------------------------------------------------------------------
 ```
 
 ## Compiling Examples
@@ -299,7 +305,7 @@ HLSL/Direct3D requires cbuffers to be padded to 16 bytes alignment, pmfx allows 
 
 Single .pmfx file can contain multiple shader functions so you can share functionality, you can define a block of [jsn](https://github.com/polymonster/jsn) in the shader to configure techniques. (jsn is a more lenient and user friendly data format similar to json).
 
-Simply specify vs, ps or cs to select which function in the source to use for that shader stage. If no pmfx: json block is found you can still supply vs_main and ps_main which will be output as a technique named "default".
+Simply specify `vs`, `ps` or `cs` to select which function in the source to use for that shader stage. If no pmfx: json block is found you can still supply `vs_main` and `ps_main` which will be output as a technique named "default".
 
 ```c
 pmfx:
