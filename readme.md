@@ -158,6 +158,7 @@ texture_2d_array( sampler_name, layout_index );
 texture_cube( sampler_name, layout_index );
 texture_cube_array( sampler_name, layout_index ); // requires sm 4+, gles 400+
 texture_3d( sampler_name, layout_index );
+texture_2d_external( sampler_name, layout_index ); // gles specific extension
 
 // depth formats are required for sampler compare ops
 depth_2d( sampler_name, layout_index ); 
