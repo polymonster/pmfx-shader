@@ -37,13 +37,15 @@ commandline arguments:
     -shader_platform <hlsl, glsl, gles, spirv, metal, pssl, nvn>
     -shader_version (optional) <shader version unless overridden in technique>
         hlsl: 3_0, 4_0 (default), 5_0
-        glsl: 330 (default), 420, 450
+        glsl: 200, 330 (default), 420, 450
         gles: 100, 300, 310, 350
         spirv: 420 (default), 450
         metal: 2.0 (default)
         nvn: (glsl)
     -metal_sdk [metal only] <iphoneos, macosx, appletvos>
     -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>
+    -nvn_exe [nvn only] <path to execulatble that can compile glsl to nvn glslc>
+    -extensions <list of glsl extension strings separated by spaces>
     -i <list of input files or directories separated by spaces>
     -o <output dir for shaders>
     -t <output dir for temp files>
@@ -58,6 +60,7 @@ commandline arguments:
     -texture_offset (optional) [vulkan only] (default 32) 
         specifies an offset applied to texture locations to avoid collisions with buffers
     -v_flip (optional) (inserts glsl uniform to conditionally flip verts in the y axis)
+
 --------------------------------------------------------------------------------
 ```
 
@@ -277,6 +280,14 @@ Include files are supported even though some shader platforms or versions may no
 #include "libs/globals.pmfx"
 #include "libs/sdf.pmfx"
 #include "libs/area_lights.pmfx"
+```
+
+#### Extensions
+
+To enable glsl extensions you can pass a list of strings to the `-extensions` commandline argument. The glsl extension will be inserted to the top of the generated code with `: enabled` set:
+
+```
+-extensions GL_OES_EGL_image_external GL_OES_get_program_binary
 ```
 
 ## Unique pmfx features

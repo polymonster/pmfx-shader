@@ -21,6 +21,7 @@ class BuildInfo:
     metal_min_os = ""                                                   # iOS (9.0 - 13.0), macOS (10.11 - 10.15)
     debug = False                                                       # generate shader with debug info
     inputs = []                                                         # array of input files or directories
+    extensions = []                                                     # array of shader extension currently for glsl
     root_dir = ""                                                       # cwd dir to run from
     build_config = ""                                                   # json contents of build_config.json
     pmfx_dir = ""                                                       # location of pmfx
@@ -144,6 +145,12 @@ def parse_args():
             _info.metal_sdk = sys.argv[i+1]
         if sys.argv[i] == "-nvn_exe":
             _info.nvn_exe = sys.argv[i+1]
+        if sys.argv[i] == "-extensions":
+            j = i + 1
+            while j < len(sys.argv) and sys.argv[j][0] != '-':
+                _info.extensions.append(sys.argv[j])
+                j = j + 1
+            i = j
 
 
 # display help for args
@@ -160,6 +167,7 @@ def display_help():
     print("    -metal_sdk [metal only] <iphoneos, macosx, appletvos>")
     print("    -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>")
     print("    -nvn_exe [nvn only] <path to execulatble that can compile glsl to nvn glslc>")
+    print("    -extensions <list of glsl extension strings separated by spaces>")
     print("    -i <list of input files or directories separated by spaces>")
     print("    -o <output dir for shaders>")
     print("    -t <output dir for temp files>")
@@ -1653,6 +1661,10 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     if _info.shader_sub_platform == "gles":
         if shader_version_float("gles", _tp.shader_version) >= 300: 
             shader_source += "#version " + _tp.shader_version + " es\n"
+            # extensions
+            for ext in _info.extensions:
+                shader_source += "#extension " + ext + " : require\n"
+                shader_source += "#define PMFX_" + ext + " 1\n"
             shader_source += "#define GLES3\n"
         else:
             shader_source += "#define GLES2\n"
@@ -1669,6 +1681,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             shader_source += "#define PMFX_TEXTURE_CUBE_ARRAY\n"
         if texture_arrays:
             shader_source += "#define PMFX_TEXTURE_ARRAYS\n"
+
 
     # texture offset is to avoid collisions on descriptor set slots in vulkan
     if _info.shader_sub_platform == "spirv":

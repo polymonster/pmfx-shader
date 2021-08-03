@@ -11,6 +11,10 @@ precision highp sampler2DArrayShadow;
 precision highp sampler3D;
 #endif
 
+#ifdef PMFX_GL_OES_EGL_image_external
+precision highp samplerExternalOES;
+#endif
+
 // defs
 #define float4x4 mat4
 #define float3x3 mat3
@@ -36,7 +40,6 @@ precision highp sampler3D;
 #define ddy dFdy
 #define _pmfx_unroll
 #define _pmfx_loop
-
     
 // texture location binding is not supported on all glsl version's
 #ifdef PMFX_BINDING_POINTS
@@ -81,6 +84,13 @@ precision highp sampler3D;
 #define texture_2dms( type, samples, sampler_name, sampler_index ) _tex_binding(sampler_index) uniform sampler2DMS sampler_name
 #define texture_cube_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCubeArray sampler_name
 #define depth_cube_array( sampler_name, sampler_index ) _tex_binding(sampler_index) uniform samplerCubeArrayShadow sampler_name
+#endif
+
+// extension textures
+#ifdef PMFX_GL_OES_EGL_image_external
+#define texture_2d_external(name, sampler_index) uniform samplerExternalOES name
+#else
+#define texture_2d_external(name, sampler_index) texture_2d(name, sampler_index)
 #endif
 
 // compute
