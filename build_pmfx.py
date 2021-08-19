@@ -1851,7 +1851,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
                 "'NINTENDO_SDK_ROOT' environment variable is set and is added to your PATH.", flush=True)
             sys.exit(1)
 
-        exe = _info.nvn_exe
+        exe = os.path.normpath(_info.nvn_exe)
 
         nvn_type = {
             "vs": "-stage vertex",
