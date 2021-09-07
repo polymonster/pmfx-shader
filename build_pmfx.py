@@ -1592,7 +1592,36 @@ def insert_uniform_unpack_assignment(functions_source, uniform_pack):
         inserted_source += functions_source[bp+1:ep]
     return inserted_source
 
-
+# replace token pasting, since gles does not support it by default
+def replace_token_pasting(shader):
+    tokens = ["structured_buffer", "structured_buffer_rw"]
+    pos = 0
+    
+    new_shader = ""
+    decls = shader.split(";")
+    for decl in decls:
+        if decl.strip() == "":
+            continue
+        contains_token = False
+        for token in tokens:
+            if token in decl:
+                contains_token = True
+        if not contains_token:
+            new_shader += decl.strip() + ";\n"
+            continue
+        decl_start = decl.find("(") + 1
+        decl_end = decl.find(")")
+        decl_str = decl[decl_start:decl_end].strip()
+        decl_params = decl_str.split(",")
+        new_decl_str = decl_str + ", " + decl_params[1].strip() + "_buffer"
+        new_decl_str = decl.replace(decl_str, new_decl_str).strip()
+        
+        # replace atomic uint with uint while we're at it
+        new_decl_str = new_decl_str.replace("atomic_uint", "uint")
+        new_shader += new_decl_str + ";\n"
+        
+    return new_shader
+    
 # compile glsl
 def compile_glsl(_info, pmfx_name, _tp, _shader):
     # parse inputs and outputs into semantics
@@ -1672,6 +1701,12 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         shader_source += "#define GLES\n"
         if texture_arrays:
             shader_source += "#define PMFX_TEXTURE_ARRAYS\n"
+        if shader_version_float("gles", _tp.shader_version) >= 320:
+            binding_points = True
+        if binding_points:
+            shader_source += "#define PMFX_BINDING_POINTS\n"
+        if shader_version_float("gles", _tp.shader_version) >= 320:
+            shader_source += "#define PMFX_GLES_COMPUTE\n"
     else:
         shader_source += "#version " + _tp.shader_version + " core\n"
         shader_source += "#define GLSL\n"
@@ -1758,14 +1793,18 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             _shader.functions_source = insert_uniform_unpack_assignment(_shader.functions_source, uniform_pack)
             _shader.main_func_source = insert_uniform_unpack_assignment(_shader.main_func_source, uniform_pack)
 
+    resource_decl = _shader.resource_decl
+    if _info.shader_sub_platform == "gles":
+        resource_decl = replace_token_pasting(resource_decl)
+    
     shader_source += _tp.struct_decls
     shader_source += uniform_buffers
-    shader_source += _shader.resource_decl
+    shader_source += resource_decl
     shader_source += _shader.functions_source
 
     glsl_main = _shader.main_func_source
     skip_function_start = glsl_main.find("{") + 1
-    skip_function_end = glsl_main.find("return")
+    skip_function_end = glsl_main.rfind("return")
     glsl_main = glsl_main[skip_function_start:skip_function_end].strip()
 
     input_name = {
@@ -1789,6 +1828,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         shader_source += "void main()\n{\n"
         shader_source += "ivec3 gid = ivec3(gl_GlobalInvocationID);\n"
         shader_source += glsl_main
+        shader_source += "\n}\n"
     else:
         # vs and ps need to assign in / out attributes to structs
         pre_assign = generate_input_assignment(inputs, _shader.input_struct_name, "_input", input_name[_shader.shader_type])

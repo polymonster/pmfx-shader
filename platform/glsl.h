@@ -11,6 +11,10 @@ precision highp sampler2DArrayShadow;
 precision highp sampler3D;
 #endif
 
+#ifdef PMFX_GLES_COMPUTE
+precision highp image2D;
+#endif
+
 #ifdef PMFX_GL_OES_EGL_image_external
 precision highp samplerExternalOES;
 #endif
@@ -112,6 +116,16 @@ precision highp samplerExternalOES;
 #define structured_buffer_rw(type, name, index) layout(std430, binding=index) buffer name##_buffer { type name[]; }
 #endif
 
+#ifdef PMFX_GLES_COMPUTE
+#define texture_2d_rw( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform image2D image_name
+#define texture_2d_r( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform readonly image2D image_name
+#define texture_2d_w( image_name, layout_index ) texture2d_rw(image_name, layout_index)
+#define read_texture( image_name, coord ) imageLoad(image_name, coord)
+#define write_texture( image_name, value, coord ) imageStore(image_name, coord, value)
+#define structured_buffer(type, name, index, buffer_name) layout(std430, binding=index) buffer buffer_name { type name[]; }
+#define structured_buffer_rw(type, name, index, buffer_name) layout(std430, binding=index) buffer buffer_name { type name[]; }
+#endif
+
 // sampler
 #define sample_texture( sampler_name, V ) texture( sampler_name, V )
 #define sample_texture_level( sampler_name, V, l ) textureLod( sampler_name, V, l )
@@ -156,6 +170,7 @@ precision highp samplerExternalOES;
 #define depth_ps_output gl_FragDepth
 
 // atomics
+#ifndef GLES
 #define atomic_counter(name, index) layout(binding=index, offset=0) uniform atomic_uint[1] name
 #define atomic_load(atomic, original) original = atomicCounter(atomic)
 #define atomic_store(atomic, value) atomicCounterExchange(atomic, value)
@@ -171,3 +186,9 @@ precision highp samplerExternalOES;
 #define atomic_exchange(atomic, value, original) original = atomicCounterExchange(atomic, value)
 #define threadgroup_barrier() barrier()
 #define device_barrier() barrier()
+#endif
+
+#ifdef PMFX_GLES_COMPUTE
+#define atomic_increment(atomic, original) original = atomicAdd(atomic, 1u)
+#define atomic_store(atomic, value) atomicExchange(atomic, value)
+#endif
