@@ -98,7 +98,7 @@ precision highp samplerExternalOES;
 #endif
 
 // compute
-#ifndef GLES
+#if !defined(GLES) || defined(PMFX_GLES_COMPUTE)
 #define texture_2d_rw( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform image2D image_name
 #define texture_2d_r( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform readonly image2D image_name
 #define texture_2d_w( image_name, layout_index ) texture2d_rw(image_name, layout_index)
@@ -112,18 +112,16 @@ precision highp samplerExternalOES;
 #define write_texture( image_name, value, coord ) imageStore(image_name, coord, value)
 #define read_texture_array( image_name, coord, slice ) imageLoad(image_name, ivec3(coord.xy, slice))
 #define write_texture_array( image_name, value, coord, slice ) imageStore(image_name, ivec3(coord.xy, slice), value)
-#define structured_buffer(type, name, index) layout(std430, binding=index) buffer name##_buffer { type name[]; }
-#define structured_buffer_rw(type, name, index) layout(std430, binding=index) buffer name##_buffer { type name[]; }
 #endif
 
+#ifndef GLES
+#define structured_buffer(type, name, index) layout(std430, binding=index) buffer name##_buffer { type name[]; }
+#define structured_buffer_rw(type, name, index) layout(std430, binding=index) buffer name##_buffer { type name[]; }
+#else
 #ifdef PMFX_GLES_COMPUTE
-#define texture_2d_rw( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform image2D image_name
-#define texture_2d_r( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform readonly image2D image_name
-#define texture_2d_w( image_name, layout_index ) texture2d_rw(image_name, layout_index)
-#define read_texture( image_name, coord ) imageLoad(image_name, coord)
-#define write_texture( image_name, value, coord ) imageStore(image_name, coord, value)
 #define structured_buffer(type, name, index, buffer_name) layout(std430, binding=index) buffer buffer_name { type name[]; }
 #define structured_buffer_rw(type, name, index, buffer_name) layout(std430, binding=index) buffer buffer_name { type name[]; }
+#endif
 #endif
 
 // sampler
@@ -189,6 +187,17 @@ precision highp samplerExternalOES;
 #endif
 
 #ifdef PMFX_GLES_COMPUTE
-#define atomic_increment(atomic, original) original = atomicAdd(atomic, 1u)
 #define atomic_store(atomic, value) atomicExchange(atomic, value)
+#define atomic_increment(atomic, original) original = atomicAdd(atomic, 1u)
+#define atomic_decrement(atomic, original) original = atomicExchange(atomic, atomic - 1u)
+#define atomic_add(atomic, value, original) original = atomicAdd(atomic, value)
+#define atomic_subtract(atomic, value, original) original = atomicExchange(atomic, atomic - value)
+#define atomic_min(atomic, value, original) original = atomicMin(atomic, value)
+#define atomic_max(atomic, value, original) original = atomicMax(atomic, value)
+#define atomic_and(atomic, value, original) original = atomicAnd(atomic, value)
+#define atomic_or(atomic, value, original) original = atomicOr(atomic, value)
+#define atomic_xor(atomic, value, original) original = atomicXor(atomic, value)
+#define atomic_exchange(atomic, value, original) original = atomicExchange(atomic, value)
+#define threadgroup_barrier() barrier()
+#define device_barrier() barrier()
 #endif
