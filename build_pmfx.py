@@ -1592,7 +1592,7 @@ def insert_uniform_unpack_assignment(functions_source, uniform_pack):
         inserted_source += functions_source[bp+1:ep]
     return inserted_source
 
-# replace token pasting, since gles does not support it by default
+# replace token pasting in structured buffer definitions, since gles does not support it by default
 def replace_token_pasting(shader):
     tokens = ["structured_buffer", "structured_buffer_rw"]
     pos = 0
@@ -1616,7 +1616,7 @@ def replace_token_pasting(shader):
         new_decl_str = decl_str + ", " + decl_params[1].strip() + "_buffer"
         new_decl_str = decl.replace(decl_str, new_decl_str).strip()
         
-        # replace atomic uint with uint while we're at it
+        # replace atomic uint with uint as a uint in a gles ssbo is atomic by default
         new_decl_str = new_decl_str.replace("atomic_uint", "uint")
         new_shader += new_decl_str + ";\n"
         
@@ -1654,6 +1654,9 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             uniform_pack = dict()
             uniform_pack["decl"] = ""
             uniform_pack["assign"] = ""
+        if shader_version_float("gles", _tp.shader_version) >= 320:
+            binding_points = True
+        
 
     # uniform buffers
     uniform_buffers = ""
@@ -1701,8 +1704,6 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         shader_source += "#define GLES\n"
         if texture_arrays:
             shader_source += "#define PMFX_TEXTURE_ARRAYS\n"
-        if shader_version_float("gles", _tp.shader_version) >= 320:
-            binding_points = True
         if binding_points:
             shader_source += "#define PMFX_BINDING_POINTS\n"
         if shader_version_float("gles", _tp.shader_version) >= 320:
