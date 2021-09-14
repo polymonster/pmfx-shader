@@ -1081,10 +1081,16 @@ def find_used_resources(shader_source, resource_decl):
                     used_resource_decl = used_resource_decl.strip(" ")
                     used_resource_decl += resource + ";\n"
         # structured buffer with [] operator access
-        if resource_decl.find("structured_buffer") != -1:
+        if resource.find("structured_buffer") != -1:
             if len(args) > 1:
                 name = args[1].strip(" ")
                 if shader_source.find(name + "[") != -1:
+                    used_resource_decl = used_resource_decl.strip(" ")
+                    used_resource_decl += resource + ";\n"
+        if resource.find("atomic_counter") != -1:
+            if len(args) > 1:
+                name = args[0].strip(" ")
+                if shader_source.find(name) != -1:
                     used_resource_decl = used_resource_decl.strip(" ")
                     used_resource_decl += resource + ";\n"
     return used_resource_decl
@@ -1594,7 +1600,7 @@ def insert_uniform_unpack_assignment(functions_source, uniform_pack):
 
 # replace token pasting in structured buffer definitions, since gles does not support it by default
 def replace_token_pasting(shader):
-    tokens = ["structured_buffer", "structured_buffer_rw"]
+    tokens = ["structured_buffer", "structured_buffer_rw", "atomic_counter"]
     pos = 0
     
     new_shader = ""
@@ -1613,7 +1619,10 @@ def replace_token_pasting(shader):
         decl_end = decl.find(")")
         decl_str = decl[decl_start:decl_end].strip()
         decl_params = decl_str.split(",")
-        new_decl_str = decl_str + ", " + decl_params[1].strip() + "_buffer"
+        name_param = decl_params[1].strip()
+        if decl.find("atomic_counter") != -1:
+            name_param = decl_params[0].strip()
+        new_decl_str = decl_str + ", " + name_param + "_buffer"
         new_decl_str = decl.replace(decl_str, new_decl_str).strip()
         
         # replace atomic uint with uint as a uint in a gles ssbo is atomic by default

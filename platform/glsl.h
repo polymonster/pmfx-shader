@@ -168,25 +168,8 @@ precision highp samplerExternalOES;
 #define depth_ps_output gl_FragDepth
 
 // atomics
-#ifndef GLES
-#define atomic_counter(name, index) layout(binding=index, offset=0) uniform atomic_uint[1] name
-#define atomic_load(atomic, original) original = atomicCounter(atomic)
-#define atomic_store(atomic, value) atomicCounterExchange(atomic, value)
-#define atomic_increment(atomic, original) original = atomicCounterIncrement(atomic)
-#define atomic_decrement(atomic, original) original = atomicCounterDecrement(atomic)
-#define atomic_add(atomic, value, original) original = atomicCounterAdd(atomic, value)
-#define atomic_subtract(atomic, value, original) original = atomicCounterSubtract(atomic, value)
-#define atomic_min(atomic, value, original) original = atomicCounterMin(atomic, value)
-#define atomic_max(atomic, value, original) original = atomicCounterMax(atomic, value)
-#define atomic_and(atomic, value, original) original = atomicCounterAnd(atomic, value)
-#define atomic_or(atomic, value, original) original = atomicCounterOr(atomic, value)
-#define atomic_xor(atomic, value, original) original = atomicCounterXor(atomic, value)
-#define atomic_exchange(atomic, value, original) original = atomicCounterExchange(atomic, value)
-#define threadgroup_barrier() barrier()
-#define device_barrier() barrier()
-#endif
-
-#ifdef PMFX_GLES_COMPUTE
+#if !defined(GLES) || defined(PMFX_GLES_COMPUTE)
+#define atomic_counter(name, index, buffer_name) structured_buffer_rw(uint, name, index, buffer_name)
 #define atomic_store(atomic, value) atomicExchange(atomic, value)
 #define atomic_increment(atomic, original) original = atomicAdd(atomic, 1u)
 #define atomic_decrement(atomic, original) original = atomicExchange(atomic, atomic - 1u)
