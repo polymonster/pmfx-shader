@@ -1081,16 +1081,13 @@ def find_used_resources(shader_source, resource_decl):
                     used_resource_decl = used_resource_decl.strip(" ")
                     used_resource_decl += resource + ";\n"
         # structured buffer with [] operator access
-        if resource.find("structured_buffer") != -1:
+        if resource.find("structured_buffer") != -1 or resource.find("atomic_counter") != -1:
+            name_index = 1
+            if resource.find("atomic_counter") != -1:
+                name_index = 0
             if len(args) > 1:
-                name = args[1].strip(" ")
+                name = args[name_index].strip(" ")
                 if shader_source.find(name + "[") != -1:
-                    used_resource_decl = used_resource_decl.strip(" ")
-                    used_resource_decl += resource + ";\n"
-        if resource.find("atomic_counter") != -1:
-            if len(args) > 1:
-                name = args[0].strip(" ")
-                if shader_source.find(name) != -1:
                     used_resource_decl = used_resource_decl.strip(" ")
                     used_resource_decl += resource + ";\n"
     return used_resource_decl
