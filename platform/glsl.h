@@ -117,10 +117,12 @@ precision highp samplerExternalOES;
 #ifndef GLES
 #define structured_buffer(type, name, index) layout(std430, binding=index) buffer name##_buffer { type name[]; }
 #define structured_buffer_rw(type, name, index) layout(std430, binding=index) buffer name##_buffer { type name[]; }
+#define atomic_counter(name, index) structured_buffer_rw(uint, name, index)
 #else
 #ifdef PMFX_GLES_COMPUTE
 #define structured_buffer(type, name, index, buffer_name) layout(std430, binding=index) buffer buffer_name { type name[]; }
 #define structured_buffer_rw(type, name, index, buffer_name) layout(std430, binding=index) buffer buffer_name { type name[]; }
+#define atomic_counter(name, index, buffer_name) structured_buffer_rw(uint, name, index, buffer_name)
 #endif
 #endif
 
@@ -169,7 +171,6 @@ precision highp samplerExternalOES;
 
 // atomics
 #if !defined(GLES) || defined(PMFX_GLES_COMPUTE)
-#define atomic_counter(name, index, buffer_name) structured_buffer_rw(uint, name, index, buffer_name)
 #define atomic_store(atomic, value) atomicExchange(atomic, value)
 #define atomic_increment(atomic, original) original = atomicAdd(atomic, 1u)
 #define atomic_decrement(atomic, original) original = atomicExchange(atomic, atomic - 1u)
