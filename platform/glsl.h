@@ -158,8 +158,12 @@ precision highp samplerExternalOES;
 
 // matrix
 #define to_3x3( M4 ) float3x3(M4)
+#define from_columns_2x2(A, B, C) (transpose(float2x2(A, B, C)))
+#define from_rows_2x2(A, B, C) (float2x2(A, B, C))
 #define from_columns_3x3(A, B, C) (transpose(float3x3(A, B, C)))
 #define from_rows_3x3(A, B, C) (float3x3(A, B, C))
+#define from_columns_4x4(A, B, C) (transpose(float4x4(A, B, C)))
+#define from_rows_4x4(A, B, C) (float4x4(A, B, C))
 #define unpack_vb_instance_mat( mat, r0, r1, r2, r3 ) mat[0] = r0; mat[1] = r1; mat[2] = r2; mat[3] = r3;
 #define to_data_matrix(mat) mat
 

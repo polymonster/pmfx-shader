@@ -24,9 +24,13 @@
 #define sample_texture_array_level( name, V, a, l ) name.SampleLevel(sampler_##name, float3(V.xy, a), l)
 
 // matrix
-#define to_3x3( M4 ) (float3x3)M4
+#define to_3x3( M4 ) ((float3x3)M4)
+#define from_columns_2x2(A, B) (float2x2(A, B))
+#define from_rows_2x2(A, B) (transpose(float2x2(A, B)))
 #define from_columns_3x3(A, B, C) (float3x3(A, B, C))
 #define from_rows_3x3(A, B, C) (transpose(float3x3(A, B, C)))
+#define from_columns_4x4(A, B, C, D) (float4x4(A, B, C, D))
+#define from_rows_4x4(A, B, C, D) (transpose(float4x4(A, B, C, D)))
 #define mul_tbn( A, B ) mul(A, B)
 #define unpack_vb_instance_mat( mat, r0, r1, r2, r3 ) mat[0] = r0; mat[1] = r1; mat[2] = r2; mat[3] = r3; mat = transpose(mat)
 #define to_data_matrix(mat) transpose(mat)
