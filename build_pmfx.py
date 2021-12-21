@@ -1534,7 +1534,7 @@ def replace_texture_samples(shader, texture_types_dict):
     return shader
 
 
-# generates gles 2 compatible uniforms packed into glUniformMatrixfv
+# generates gles 2 compatible uniforms packed into glUniform4fv
 def generate_uniform_pack(cbuffer_name, cbuffer_body):
     v4_type = {
         "float4": 1,

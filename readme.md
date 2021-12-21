@@ -1,5 +1,5 @@
 # pmfx-shader
-[![Build Status](https://travis-ci.org/polymonster/pmfx-shader.svg?branch=master)](https://travis-ci.org/polymonster/pmfx-shader) [![Build status](https://ci.appveyor.com/api/projects/status/wohe0i5v0hvnjnfb?svg=true)](https://ci.appveyor.com/project/polymonster/pmfx-shader)
+[![Build Status](https://app.travis-ci.com/polymonster/pmfx-shader.svg?branch=master)](https://travis-ci.org/polymonster/pmfx-shader) [![Build status](https://ci.appveyor.com/api/projects/status/wohe0i5v0hvnjnfb?svg=true)](https://ci.appveyor.com/project/polymonster/pmfx-shader)
 
 A cross platform shader language with multi-threaded offline compilation or platform shader source code generation. Output json reflection info and c++ header with your shaders structs, fx-like techniques and compile time branch evaluation via (uber-shader) "permutations".
 
@@ -234,6 +234,10 @@ vs_output vs_main( vs_input input )
     return output;
 }
 ```
+
+### GLES 2.0 / GLSL 2.0 cbuffers
+
+cbuffers are emulated for older glsl versions, a cbuffer is packed into a single float4 array. The uniform float4 array (`glUniform4fv`) is named after the cbuffer, you can find the uniform location from this name using `glUniformLocation`. The count of the float4 array is the number of members the cbuffer where float4 and float4x4 are supported and float4x4 count for 4 array elements. You can use the generated c++ structs from pmfx to create a coherent copy of the uniform data on the cpu.
 
 ### Atomic Operations
 
