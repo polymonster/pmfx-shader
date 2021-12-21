@@ -1595,11 +1595,11 @@ def insert_uniform_unpack_assignment(functions_source, uniform_pack):
         inserted_source += functions_source[bp+1:ep]
     return inserted_source
 
+
 # replace token pasting in structured buffer definitions, since gles does not support it by default
 def replace_token_pasting(shader):
     tokens = ["structured_buffer", "structured_buffer_rw", "atomic_counter"]
     pos = 0
-    
     new_shader = ""
     decls = shader.split(";")
     for decl in decls:
@@ -1621,13 +1621,12 @@ def replace_token_pasting(shader):
             name_param = decl_params[0].strip()
         new_decl_str = decl_str + ", " + name_param + "_buffer"
         new_decl_str = decl.replace(decl_str, new_decl_str).strip()
-        
         # replace atomic uint with uint as a uint in a gles ssbo is atomic by default
         new_decl_str = new_decl_str.replace("atomic_uint", "uint")
         new_shader += new_decl_str + ";\n"
-        
     return new_shader
     
+
 # compile glsl
 def compile_glsl(_info, pmfx_name, _tp, _shader):
     # parse inputs and outputs into semantics
@@ -1662,7 +1661,6 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             uniform_pack["assign"] = ""
         if shader_version_float("gles", _tp.shader_version) >= 320:
             binding_points = True
-        
 
     # uniform buffers
     uniform_buffers = ""
@@ -1724,7 +1722,6 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         if texture_arrays:
             shader_source += "#define PMFX_TEXTURE_ARRAYS\n"
 
-
     # texture offset is to avoid collisions on descriptor set slots in vulkan
     if _info.shader_sub_platform == "spirv":
         shader_source += "#define PMFX_TEXTURE_OFFSET " + str(_info.texture_offset) + "\n"
@@ -1779,6 +1776,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
                         shader_source += insert_layout_location(0)
                     shader_source += "out " + outputs[p] + "_ps_output;\n"
 
+    # insert vflip uniform for correcting texture and viewport y coords
     if _info.v_flip:
         shader_source += "uniform float v_flip;\n"
         
