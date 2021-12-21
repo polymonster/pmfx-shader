@@ -19,7 +19,7 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 - PSSL
 - NVN (Nintendo Switch)
 
-(compatibility) platforms for older hardware might not support all the pmfx features and may have missing legacy features of there own.
+(compatibility) platforms for older hardware might not support all pmfx features and may have missing legacy features.
 
 ## Dependencies
 Windows users need [vcredist 2013](https://www.microsoft.com/en-us/download/confirmation.aspx?id=40784) for the glsl/spirv validator.
