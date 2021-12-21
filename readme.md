@@ -11,12 +11,15 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 
 - HLSL Shader Model 3+
 - GLSL 330+
-- GLES (WebGL 1.0)
 - GLES 300+ (WebGL 2.0)
+- GLSL 200 (compatibility)
+- GLES (WebGL 1.0) (compatibility)
 - SPIR-V. (Vulkan, OpenGL)
 - Metal 1.0+ (macOS, iOS, tvOS)
 - PSSL
 - NVN (Nintendo Switch)
+
+(compatibility) platforms for older hardware might not support all the pmfx features and may have missing legacy features of there own.
 
 ## Dependencies
 Windows users need [vcredist 2013](https://www.microsoft.com/en-us/download/confirmation.aspx?id=40784) for the glsl/spirv validator.
