@@ -24,7 +24,7 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 ## Dependencies
 Windows users need [vcredist 2013](https://www.microsoft.com/en-us/download/confirmation.aspx?id=40784) for the glsl/spirv validator.
 
-### Console Platforms
+## Console Platforms
 
 Compilation for Orbis and Nvn is possible but you will need the SDK's installed and the environment variables set.
 
