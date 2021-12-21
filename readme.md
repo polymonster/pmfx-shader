@@ -209,7 +209,7 @@ struct val = structured_buffer[gid]; // read
 structured_buffer[gid] = val;        // write
 ```
 
-#### cbuffers
+### cbuffers
 
 cbuffers are a unique kind of resource, this is just because they are so in HLSL. you can use cbuffers as you normally do in HLSL.
 
@@ -235,7 +235,7 @@ vs_output vs_main( vs_input input )
 }
 ```
 
-### GLES 2.0 / GLSL 2.0 cbuffers
+#### GLES 2.0 / GLSL 2.0 cbuffers
 
 cbuffers are emulated for older glsl versions, a cbuffer is packed into a single float4 array. The uniform float4 array (`glUniform4fv`) is named after the cbuffer, you can find the uniform location from this name using `glUniformLocation`. The count of the float4 array is the number of members the cbuffer where float4 and float4x4 are supported and float4x4 count for 4 array elements. You can use the generated c++ structs from pmfx to create a coherent copy of the uniform data on the cpu.
 
