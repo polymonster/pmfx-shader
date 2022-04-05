@@ -2370,6 +2370,12 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
         "ps": "_ps.metal",
         "cs": "_cs.metal"
     }
+    
+    intermdiate_extension = {
+        "vs": "_vs.air",
+        "ps": "_ps.air",
+        "cs": "_cs.air"
+    }
 
     output_extension = {
         "vs": ".vsc",
@@ -2425,9 +2431,8 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
         temp_shader_source.write(shader_source)
         temp_shader_source.close()
 
-        intermediate_file_and_path = temp_file_and_path.replace(".frag", "_frag.air")
-        intermediate_file_and_path = intermediate_file_and_path.replace(".vert", "_vert.air")
-
+        intermediate_file_and_path = temp_file_and_path.replace(extension[_shader.shader_type], intermdiate_extension[_shader.shader_type])
+        
         # compile .air
         cmdline = "xcrun -sdk " + metal_sdk + " metal " + metal_min_os + " " + metal_version + " -c "
         cmdline += temp_file_and_path + " "

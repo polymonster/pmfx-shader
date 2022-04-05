@@ -30,6 +30,7 @@
 
 // _arg macros are used to pass textures through functions from main
 #define texture_2d_arg( name ) thread texture2d<float>& name, thread sampler& sampler_##name
+#define texture_2d_external_arg( name ) texture_2d_arg(name)
 #define texture_3d_arg( name ) thread texture3d<float>& name, thread sampler& sampler_##name
 #define texture_2dms_arg( name ) thread texture2d_ms<float>& name, thread sampler& sampler_##name
 #define texture_cube_arg( name ) thread texturecube<float>& name, thread sampler& sampler_##name
