@@ -16,7 +16,7 @@ jobs:
         run: "pip install PyInstaller"
       - name: build
         run: |
-          "py -3 -c "import build_pmfx; build_pmfx.build_executable()"
+          "py -3 -c \"import build_pmfx; build_pmfx.build_executable()\""
       - name: create
         id: create_release
         uses: actions/create-release@v1
