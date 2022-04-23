@@ -20,6 +20,8 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
   windows:
     needs: setup
     name: windows
@@ -31,23 +33,13 @@ jobs:
         run: "pip install PyInstaller"
       - name: build
         run: py -3 -c "import build_pmfx; build_pmfx.build_executable()"
-      - name: draft_release
-        id: draft_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: true
-          prerelease: false
       - name: upload
         id: upload-release-asset 
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ setup.steps.create_release.outputs.upload_url }}
+          upload_url: ${{ needs.setup.outputs.upload_url }}
           asset_path: ./dist/Windows-x64.zip
           asset_name: Windows-x64.zip
           asset_content_type: application/zip
@@ -62,23 +54,13 @@ jobs:
         run: "pip3 install PyInstaller"
       - name: build
         run: python3 -c "import build_pmfx; build_pmfx.build_executable()"
-      - name: draft_release
-        id: draft_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: true
-          prerelease: false
       - name: upload
         id: upload-release-asset 
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ setup.steps.create_release.outputs.upload_url }}
+          upload_url: ${{ needs.setup.outputs.upload_url }}
           asset_path: ./dist/macOS-x64.zip
           asset_name: macOS-x64.zip
           asset_content_type: application/zip
