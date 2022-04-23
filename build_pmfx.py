@@ -2869,12 +2869,22 @@ def main():
     _info = BuildInfo()
     _info.error_code = 0
 
-    parse_args()
-    configure_sub_platforms()
-
     # get dirs for build output
     _info.root_dir = os.getcwd()
     _info.this_file = os.path.realpath(__file__)
+
+    parse_args()
+    configure_sub_platforms()
+
+    # configure for running via script or via exe
+    if getattr(sys, 'frozen', False):
+        # exe location with bin/ and platform/ same dir
+        _info.pmfx_dir = os.path.dirname(sys.executable)
+        _info.this_file = _info.this_file.replace(".py", ".exe")
+    else:
+        # script location with bin/ and platform/ in same dir
+        _info.pmfx_dir = os.path.dirname(_info.this_file)
+
     _info.pmfx_dir = os.path.dirname(_info.this_file)
     _info.macros_file = os.path.join(_info.pmfx_dir, "platform", "pmfx.h")
     _info.platform_macros_file = os.path.join(_info.pmfx_dir, "platform", _info.shader_platform + ".h")
@@ -2909,3 +2919,37 @@ def main():
 # entry
 if __name__ == "__main__":
     main()
+
+
+# builds self into an exe
+def build_executable():
+    # dist dir based on platform
+    platform = get_platform_name()
+
+    # requires pyinstaller
+    p = subprocess.Popen(
+        "pyinstaller build_pmfx.py -i NONE --onefile --distpath dist/{} --workpath dist/build/{}".format(platform, platform))
+    p.wait()
+
+    # copy relevant files
+    import shutil
+
+    # shader source
+    shutil.copytree("platform", "dist/{}/platform".format(platform), dirs_exist_ok=True)
+
+    # platform binaries
+    if platform == "win64":
+        shutil.copytree("bin/fxc", "dist/win64/bin/fxc", dirs_exist_ok=True)
+        shutil.copytree("bin/glsl/win64", "dist/win64/bin/glsl/win64", dirs_exist_ok=True)
+    elif platform == "osx":
+        shutil.copytree("bin/glsl/osx", "dist/osx/bin/glsl/osx", dirs_exist_ok=True)
+    elif platform == "linux":
+        shutil.copytree("bin/glsl/linux", "dist/linux/bin/glsl/linux", dirs_exist_ok=True)
+
+    # zip
+    exe_names = {
+        "win64": "Windows-x64",
+        "osx": "macOS-x64",
+        "linux": "Linux-x64"
+    }
+    shutil.make_archive("dist/" + exe_names[platform], 'zip', "dist/{}".format(platform))
