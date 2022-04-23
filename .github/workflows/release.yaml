@@ -6,7 +6,7 @@ on:
 name: build-release
 
 jobs:
-  build:
+  windows:
     name: build-release
     runs-on: windows-latest
     steps:
@@ -35,4 +35,34 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/Windows-x64.zip
           asset_name: Windows-x64.zip
+          asset_content_type: application/zip
+  macos:
+    name: build-release
+    runs-on: macos-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: pyinstaller
+        run: "pip install PyInstaller"
+      - name: build
+        run: python3 -c "import build_pmfx; build_pmfx.build_executable()"
+      - name: create
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: upload
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/macOS-x64.zip
+          asset_name: macOS-x64.zip
           asset_content_type: application/zip
