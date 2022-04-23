@@ -82,6 +82,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.setup.outputs.upload_url }}
-          asset_path: ./dist/linux-x64.zip
-          asset_name: linux-x64.zip
+          asset_path: ./dist/Linux-x64.zip
+          asset_name: Linux-x64.zip
           asset_content_type: application/zip
