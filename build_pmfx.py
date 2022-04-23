@@ -2926,9 +2926,15 @@ def build_executable():
     # dist dir based on platform
     platform = get_platform_name()
 
+    pyinstaller = {
+        "win64": "pyintsaller",
+        "osx": "python3 -m PyInstaller",
+        "linux": "python3 -m PyInstaller"
+    }
+
     # requires pyinstaller
     p = subprocess.Popen(
-        "PyInstaller build_pmfx.py -i NONE --onefile --distpath dist/{} --workpath dist/build/{}".format(platform, platform))
+        "{} build_pmfx.py -i NONE --onefile --distpath dist/{} --workpath dist/build/{}".format(pyinstaller[platform], platform, platform))
     p.wait()
 
     # copy relevant files
