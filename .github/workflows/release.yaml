@@ -37,9 +37,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/macOS-x64.zip
-          asset_name: macOS-x64.zip
+          upload_url: ${{ setup.steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/Windows-x64.zip
+          asset_name: Windows-x64.zip
           asset_content_type: application/zip
   macos:
     needs: setup
@@ -58,7 +58,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ setup.steps.create_release.outputs.upload_url }}
           asset_path: ./dist/macOS-x64.zip
           asset_name: macOS-x64.zip
           asset_content_type: application/zip
