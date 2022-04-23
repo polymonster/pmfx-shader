@@ -12,8 +12,9 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v2
-      - name: build
+      - name: pyinstaller
         uses: JackMcKew/pyinstaller-action-windows@main
+      - name: build
         run: |
           "py -3 -c "import build_pmfx; build_pmfx.build_executable()"
       - name: create
