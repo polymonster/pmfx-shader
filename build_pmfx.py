@@ -2934,7 +2934,7 @@ def build_executable():
 
     # requires pyinstaller
     p = subprocess.Popen(
-        "{} build_pmfx.py -i NONE --onefile --distpath dist/{} --workpath dist/build/{}".format(pyinstaller[platform], platform, platform))
+        "{} build_pmfx.py -i NONE --onefile --distpath dist/{} --workpath dist/build/{}".format(pyinstaller[platform], platform, platform), shell=True)
     p.wait()
 
     # copy relevant files
