@@ -101,7 +101,7 @@ precision highp samplerExternalOES;
 #if !defined(GLES) || defined(PMFX_GLES_COMPUTE)
 #define texture_2d_rw( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform image2D image_name
 #define texture_2d_r( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform readonly image2D image_name
-#define texture_2d_w( image_name, layout_index ) texture2d_rw(image_name, layout_index)
+#define texture_2d_w( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform image2D image_name
 #define texture_3d_rw( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform image3D image_name
 #define texture_3d_r( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform readonly image3D image_name
 #define texture_3d_w( image_name, layout_index ) texture3d_rw(image_name, layout_index)

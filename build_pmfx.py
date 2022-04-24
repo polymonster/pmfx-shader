@@ -1809,8 +1809,14 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
 
     glsl_main = _shader.main_func_source
     skip_function_start = glsl_main.find("{") + 1
-    skip_function_end = glsl_main.rfind("return")
-    glsl_main = glsl_main[skip_function_start:skip_function_end].strip()
+    if _shader.shader_type != "cs":
+        # this doesnt handle multiple return statements very well
+        skip_function_end = glsl_main.rfind("return")
+        glsl_main = glsl_main[skip_function_start:skip_function_end].strip()
+    else:
+        # cs shaders do not return, so we need to strip off the '}'
+        glsl_main = glsl_main[skip_function_start:].strip()
+        glsl_main = glsl_main.strip("}")
 
     input_name = {
         "vs": "_vs_input",
