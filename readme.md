@@ -32,6 +32,8 @@ Compilation for Orbis and Nvn is possible but you will need the SDK's installed 
 
 ## Usage
 
+You can use from scource by cloning this repository, or install the latest packaged [release](https://github.com/polymonster/pmfx-shader/releases) if you do not need access to the source code.
+
 ```
 python3 build_pmfx.py -help
 
@@ -101,7 +103,7 @@ python3 build_pmfx.py -shader_platform hlsl -shader_version 4_0 -i examples -o o
 python3 build_pmfx.py -shader_platform glsl -shader_version 330 -i examples -o output/bin -h output/structs -t output/temp
 ```
 
-## Usage
+## Shader Language
 
 Use mostly HLSL syntax for shaders, with some small differences:
 
