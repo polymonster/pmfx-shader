@@ -32,7 +32,7 @@ Compilation for Orbis and Nvn is possible but you will need the SDK's installed 
 
 ## Usage
 
-You can use from scource by cloning this repository, or install the latest packaged [release](https://github.com/polymonster/pmfx-shader/releases) if you do not need access to the source code.
+You can use from source by cloning this repository and build `build_pmfx.py`, or install the latest packaged [release](https://github.com/polymonster/pmfx-shader/releases) if you do not need access to the source code.
 
 ```
 python3 build_pmfx.py -help
