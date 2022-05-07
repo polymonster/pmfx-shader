@@ -2933,7 +2933,7 @@ def build_executable():
     platform = get_platform_name()
 
     pyinstaller = {
-        "win64": "pyintsaller",
+        "win64": "pyinstaller",
         "osx": "python3 -m PyInstaller",
         "linux": "python3 -m PyInstaller"
     }
