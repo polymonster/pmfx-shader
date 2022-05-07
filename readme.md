@@ -214,6 +214,12 @@ write_texture(rwtex, val, gid);
 // compute structured buffer
 struct val = structured_buffer[gid]; // read
 structured_buffer[gid] = val;        // write
+
+// read type!
+// glsl expects ivec (int) to be pass to imageLoad, hlsl and metal require uint... 
+// there is a `read` type you can use to be platform safe
+read3 read_coord = read3(x, y, z);
+read_texture( tex_rw, read_coord );
 ```
 
 ### cbuffers
