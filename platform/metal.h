@@ -90,6 +90,8 @@
 #define mod(x, y) (x - y * floor(x/y))
 #define _pmfx_unroll
 #define _pmfx_loop
+#define	read3 uint3
+#define read2 uint2
 
 // atomics
 #define atomic_counter(name, index) structured_buffer_rw(atomic_uint, name, index)

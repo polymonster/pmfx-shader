@@ -32,6 +32,8 @@ precision highp samplerExternalOES;
 #define int4 ivec4
 #define int3 ivec3
 #define int2 ivec2
+#define	read3 ivec3
+#define read2 ivec2
 #define modf mod
 #define fmod mod
 #define frac fract

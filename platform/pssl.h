@@ -44,5 +44,7 @@
 #define mod(x, y) (x - y * floor(x/y))
 #define fract frac
 #define _pmfx_unroll [unroll]
+#define	read3 uint3
+#define read2 uint2
 
 

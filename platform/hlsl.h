@@ -71,6 +71,8 @@
 #define mix lerp
 #pragma warning( disable : 3078) // 'i': loop control variable conflicts with a previous declaration
 #pragma warning( disable : 4000) // use of potentially uninitialized variable (from function return)
+#define	read3 uint3
+#define read2 uint2
 
 // atomics
 #define atomic_uint uint
