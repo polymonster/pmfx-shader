@@ -35,10 +35,11 @@ Compilation for Orbis and Nvn is possible but you will need the SDK's installed 
 You can use from source by cloning this repository and build `build_pmfx.py`, or install the latest packaged [release](https://github.com/polymonster/pmfx-shader/releases) if you do not need access to the source code.
 
 ```
-python3 build_pmfx.py -help
+py -3 build_pmfx.py -help (windows)
+python3 build_pmfx.py -help (macos/linux)
 
 --------------------------------------------------------------------------------
-pmfx shader (v3) ---------------------------------------------------------------
+pmfx shader (v1.06) ------------------------------------------------------------
 --------------------------------------------------------------------------------
 commandline arguments:
     -shader_platform <hlsl, glsl, gles, spirv, metal, pssl, nvn>
@@ -52,22 +53,21 @@ commandline arguments:
     -metal_sdk [metal only] <iphoneos, macosx, appletvos>
     -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>
     -nvn_exe [nvn only] <path to execulatble that can compile glsl to nvn glslc>
-    -extensions <list of glsl extension strings separated by spaces>
+    -extensions (optional) <list of glsl extension strings separated by spaces>
     -i <list of input files or directories separated by spaces>
     -o <output dir for shaders>
     -t <output dir for temp files>
-    -h <output dir header file with shader structs>
+    -h (optional) <output dir header file with shader structs>
     -d (optional) generate debuggable shader
-    -root_dir <directory> sets working directory here
+    -root_dir (optional) <directory> sets working directory here
     -source (optional) (generates platform source into -o no compilation)
-    -stage_in <0, 1> (optional) [metal only] (default 1) 
+    -stage_in <0, 1> (optional) [metal only] (default 1)
         uses stage_in for metal vertex buffers, 0 uses raw buffers
-    -cbuffer_offset (optional) [metal only] (default 4) 
+    -cbuffer_offset (optional) [metal only] (default 4)
         specifies an offset applied to cbuffer locations to avoid collisions with vertex buffers
-    -texture_offset (optional) [vulkan only] (default 32) 
+    -texture_offset (optional) [vulkan only] (default 32)
         specifies an offset applied to texture locations to avoid collisions with buffers
     -v_flip (optional) (inserts glsl uniform to conditionally flip verts in the y axis)
-
 --------------------------------------------------------------------------------
 ```
 
