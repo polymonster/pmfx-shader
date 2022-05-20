@@ -302,7 +302,7 @@ Include files are supported even though some shader platforms or versions may no
 
 #### Extensions
 
-To enable glsl extensions you can pass a list of strings to the `-extensions` commandline argument. The glsl extension will be inserted to the top of the generated code with `: enabled` set:
+To enable glsl extensions you can pass a list of strings to the `-extensions` commandline argument. The glsl extension will be inserted to the top of the generated code with `: require` set:
 
 ```
 -extensions GL_OES_EGL_image_external GL_OES_get_program_binary

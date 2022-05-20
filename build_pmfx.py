@@ -126,7 +126,6 @@ def parse_args():
             _info.struct_dir = sys.argv[i + 1]
         if sys.argv[i] == "-t":
             _info.temp_dir = sys.argv[i + 1]
-            pass
         if sys.argv[i] == "-source":
             _info.compiled = False
         if sys.argv[i] == "-cbuffer_offset":
@@ -151,6 +150,24 @@ def parse_args():
                 _info.extensions.append(sys.argv[j])
                 j = j + 1
             i = j
+    required = [
+        "-shader_platform",
+        "-i",
+        "-o",
+        "-t"
+    ]
+    if _info.shader_platform == "metal":
+        required.append("-metal_sdk")
+    if _info.shader_platform == "nvm":
+        required.append("-nvn_exe")
+    missing = False
+    for r in required:
+        if r not in sys.argv:
+            print("error: missing rquired argument {}".format(r))
+            missing = True
+    if missing:
+        print("exit")
+        sys.exit(1) 
 
 
 # display help for args
@@ -167,13 +184,13 @@ def display_help():
     print("    -metal_sdk [metal only] <iphoneos, macosx, appletvos>")
     print("    -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>")
     print("    -nvn_exe [nvn only] <path to execulatble that can compile glsl to nvn glslc>")
-    print("    -extensions <list of glsl extension strings separated by spaces>")
+    print("    -extensions (optional) <list of glsl extension strings separated by spaces>")
     print("    -i <list of input files or directories separated by spaces>")
     print("    -o <output dir for shaders>")
     print("    -t <output dir for temp files>")
-    print("    -h <output dir header file with shader structs>")
+    print("    -h (optional) <output dir header file with shader structs>")
     print("    -d (optional) generate debuggable shader")
-    print("    -root_dir <directory> sets working directory here")
+    print("    -root_dir (optional) <directory> sets working directory here")
     print("    -source (optional) (generates platform source into -o no compilation)")
     print("    -stage_in <0, 1> (optional) [metal only] (default 1) ")
     print("        uses stage_in for metal vertex buffers, 0 uses raw buffers")
@@ -2824,30 +2841,31 @@ def parse_pmfx(file, root):
     generate_shader_info(file_and_path, included_files, pmfx_output_info)
 
     # write out a c header for accessing materials in code
-    if c_code != "":
-        c_code += "}\n"
-        fmt = ""
-        lines = c_code.split("\n")
-        if len(lines) > 3:
-            indents = 0
-            for l in lines:
-                if l == "":
-                    continue
-                if l.find("}") != -1:
-                    indents -= 1
-                for i in range(0, indents):
-                    fmt += "    "
-                fmt += l.strip() + "\n"
-                if l.find("{") != -1:
-                    indents += 1
-            h_filename = file.replace(".pmfx", ".h")
-            h_filename = os.path.basename(h_filename)
-            if not os.path.exists(_info.struct_dir):
-                os.mkdir(_info.struct_dir)
-            h_filename = os.path.join(_info.struct_dir, h_filename)
-            h_file = open(h_filename, "w+")
-            h_file.write(fmt)
-            h_file.close()
+    if len(_info.struct_dir) > 0:
+        if c_code != "":
+            c_code += "}\n"
+            fmt = ""
+            lines = c_code.split("\n")
+            if len(lines) > 3:
+                indents = 0
+                for l in lines:
+                    if l == "":
+                        continue
+                    if l.find("}") != -1:
+                        indents -= 1
+                    for i in range(0, indents):
+                        fmt += "    "
+                    fmt += l.strip() + "\n"
+                    if l.find("{") != -1:
+                        indents += 1
+                h_filename = file.replace(".pmfx", ".h")
+                h_filename = os.path.basename(h_filename)
+                if not os.path.exists(_info.struct_dir):
+                    os.mkdir(_info.struct_dir)
+                h_filename = os.path.join(_info.struct_dir, h_filename)
+                h_file = open(h_filename, "w+")
+                h_file.write(fmt)
+                h_file.close()
 
 
 # handles some hardcoded cases of platform varitions
@@ -2868,7 +2886,7 @@ def configure_sub_platforms():
 # main function to avoid shadowing
 def main():
     print("--------------------------------------------------------------------------------", flush=True)
-    print("pmfx shader (v1.06) ------------------------------------------------------------", flush=True)
+    print("pmfx shader (v1.07) ------------------------------------------------------------", flush=True)
     print("--------------------------------------------------------------------------------", flush=True)
 
     global _info
@@ -2886,7 +2904,7 @@ def main():
     if getattr(sys, 'frozen', False):
         # exe location with bin/ and platform/ same dir
         _info.pmfx_dir = os.path.dirname(sys.executable)
-        _info.this_file = _info.this_file.replace(".py", ".exe")
+        _info.this_file = sys.executable
     else:
         # script location with bin/ and platform/ in same dir
         _info.pmfx_dir = os.path.dirname(_info.this_file)
@@ -2913,7 +2931,7 @@ def main():
                         try:
                             parse_pmfx(file, root)
                         except Exception as e:
-                            print("ERROR: while processing", os.path.join(root, file), flush=True)
+                            print("error: while processing", os.path.join(root, file), flush=True)
                             raise e
         else:
             parse_pmfx(source, "")
