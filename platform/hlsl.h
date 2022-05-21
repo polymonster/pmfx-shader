@@ -20,6 +20,15 @@
 #define texture_cube_array( name, sampler_index ) TextureCubeArray name : register(t##sampler_index); ; SamplerState sampler_##name : register(s##sampler_index)
 #define texture_2d_external( name, sampler_index ) texture_2d( name, sampler_index )
 
+// sampler
+#define sampler_state(name, sampler_index) SamplerState name : register(s##sampler_index)
+#define sampler_state_table(name, dimension, sampler_index) SamplerState name##dimension : register(s##sampler_index)
+
+// bindless resources
+#define texture2d_table(name, type, dimension, register_index, space_index) Texture2D name##dimension : register(t##register_index, space##space_index)
+#define texture2d_rw_table(name, type, dimension, register_index, space_index) RWTexture2D<type> name##dimension : register(t##register_index, space##space_index)
+#define cbuffer_table(name, type, dimension, register_index, space_index) ConstantBuffer<type> name##dimension : register(b##register_index, space##space_index)
+
 // depth texture (required for gl and metal)
 #define depth_2d( name, sampler_index ) Texture2D name : register(t##sampler_index); ; SamplerComparisonState sampler_##name : register(s##sampler_index)
 #define depth_2d_array( name, sampler_index ) Texture2DArray name : register(t##sampler_index); ; SamplerComparisonState sampler_##name : register(s##sampler_index)
@@ -30,7 +39,7 @@
 #define structured_buffer_rw( type, name, index ) RWStructuredBuffer<type> name : register(u##index)
 #define structured_buffer( type, name, index ) StructuredBuffer<type> name : register(t##index)
 
-// sampler
+// combined texture samplers
 #define sample_texture_2dms( name, x, y, fragment ) name.Load( int2(x, y), int(fragment) )
 #define sample_texture( name, V ) name.Sample(sampler_##name, V)
 #define sample_texture_level( name, V, l ) name.SampleLevel(sampler_##name, V, l)
@@ -39,6 +48,9 @@
 #define sample_texture_array_level( name, V, a, l ) name.SampleLevel(sampler_##name, float3(V.xy, a), l)
 #define sample_texture_cube_array( name, V, a ) name.Sample(sampler_##name, float4(V.xyz, a) )
 #define sample_texture_cube_array_level( name, V, a, l ) name.SampleLevel(sampler_##name, float4(V.xyz, a), l)
+
+// separate sampler / textures
+#define sample_texture_s(texture, sampler, coord) texture.Sample(sampler, coord)
 
 // gather / compare
 #define sample_depth_compare( name, tc, compare_value ) saturate(name.SampleCmp(sampler_##name, tc, compare_value))

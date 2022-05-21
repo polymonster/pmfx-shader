@@ -525,9 +525,10 @@ def find_constant_buffers(shader_text):
     cbuffer_list = []
     start = 0
     while start != -1:
-        start = shader_text.find("cbuffer", start)
-        if start == -1:
+        pos = find_token("cbuffer", shader_text[start:])
+        if pos == -1:
             break
+        start += pos
         end = shader_text.find("};", start)
         if end != -1:
             end += 2
@@ -2562,11 +2563,13 @@ def generate_technique_permutation_info(_tp):
     i = 0
     _tp.technique["texture_sampler_bindings"] = []
     _tp.technique["structured_buffers"] = []
+    _tp.technique["descriptor_tables"] = []
+    _tp.technique["samplers"] = []
     while i < len(shader_resources_split):
         offset = i
-        tex_type = shader_resources_split[i+0]
+        res_type = shader_resources_split[i+0]
         # structured buffers
-        if tex_type.find("structured_buffer") != -1:
+        if res_type.find("structured_buffer") != -1:
             offset = i+1
             buffer_desc = {
                 "type": shader_resources_split[i+1],
@@ -2574,9 +2577,26 @@ def generate_technique_permutation_info(_tp):
                 "location": shader_resources_split[i+3]
             }
             _tp.technique["structured_buffers"].append(buffer_desc)
+        elif res_type.find("_table") != -1:
+            table_type = res_type.strip("_table")
+            table_desc = {
+                "name": shader_resources_split[offset+1],
+                "data_type": shader_resources_split[offset+2],
+                "dimension": shader_resources_split[offset+3],
+                "type": table_type,
+                "unit": int(shader_resources_split[offset+4]),
+                "space": int(shader_resources_split[offset+5])
+            }
+            _tp.technique["descriptor_tables"].append(table_desc)
+        elif res_type.find("sampler_state") != -1:
+            sampler_desc: {
+                "name": shader_resources_split[offset+1],
+                "unit": shader_resources_split[offset+2]
+            }
+            _tp.technique["samplers"].append(sampler_desc)
         else:
             # textures
-            if tex_type == "texture_2dms":
+            if res_type == "texture_2dms":
                 data_type = shader_resources_split[i+1]
                 fragments = shader_resources_split[i+2]
                 offset = i+2
@@ -2587,7 +2607,7 @@ def generate_technique_permutation_info(_tp):
                 "name": shader_resources_split[offset+1],
                 "data_type": data_type,
                 "fragments": fragments,
-                "type": tex_type,
+                "type": res_type,
                 "unit": int(shader_resources_split[offset+2])
             }
             _tp.technique["texture_sampler_bindings"].append(sampler_desc)
@@ -2605,7 +2625,12 @@ def generate_technique_permutation_info(_tp):
         buffer_loc_end = buffer_decl_split[1].find(")", buffer_loc_start)
         buffer_reg = buffer_decl_split[1][buffer_loc_start:buffer_loc_end]
         buffer_reg = buffer_reg.strip('b')
-        buffer_desc = {"name": buffer_name, "location": int(buffer_reg)}
+        space = -1
+        cpos = buffer_reg.find(",")
+        if cpos != -1:
+            space = buffer_reg[cpos+1:].strip().strip('space')
+            buffer_reg = buffer_reg[:cpos]
+        buffer_desc = {"name": buffer_name, "location": int(buffer_reg), "space": int(space)}
         _tp.technique["cbuffers"].append(buffer_desc)
     # io structs from vs.. vs input, instance input, vs output (ps input)
     _tp.technique["vs_inputs"] = generate_input_info(_tp.shader[0].input_decl)
