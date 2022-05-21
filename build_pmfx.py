@@ -2589,9 +2589,9 @@ def generate_technique_permutation_info(_tp):
             }
             _tp.technique["descriptor_tables"].append(table_desc)
         elif res_type.find("sampler_state") != -1:
-            sampler_desc: {
+            sampler_desc = {
                 "name": shader_resources_split[offset+1],
-                "unit": shader_resources_split[offset+2]
+                "unit": int(shader_resources_split[offset+2])
             }
             _tp.technique["samplers"].append(sampler_desc)
         else:
