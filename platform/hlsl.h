@@ -25,7 +25,7 @@
 #define sampler_state_table(name, dimension, sampler_index) SamplerState name##dimension : register(s##sampler_index)
 
 // bindless resources
-#define texture2d_table(name, type, dimension, register_index, space_index) Texture2D name##dimension : register(t##register_index, space##space_index)
+#define texture2d_table(name, type, dimension, register_index, space_index) Texture2D<type> name##dimension : register(t##register_index, space##space_index)
 #define texture2d_rw_table(name, type, dimension, register_index, space_index) RWTexture2D<type> name##dimension : register(t##register_index, space##space_index)
 #define cbuffer_table(name, type, dimension, register_index, space_index) ConstantBuffer<type> name##dimension : register(b##register_index, space##space_index)
 

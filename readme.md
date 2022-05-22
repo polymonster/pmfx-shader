@@ -188,9 +188,20 @@ texture_2d_array_rw( image_name, layout_index );
 structured_buffer( type, name, index );
 structured_buffer_rw( type, name, index );
 atomic_counter(name, index);
+
+// bindless resouce tables
+// name, type, dimension, register, space
+texture2d_table(texture0, float4, [], 0, 0);
+cbuffer_table(constant_buffer0, data, [], 1, 0);
+sampler_state_table(sampler0, [], 0);
+
+// smapler type
+sampler_state(sampler0, 0);
 ```
 
 #### Accessing resources
+
+Textures and samplers are combined when using a binding renderer model. a `texture_2d` declares a texture and a sampler on the corresponding texture and sampler register index which is passed into the macro. The `sample_texture` can be used to sample textures of varying dimensions.
 
 ```c
 // sample texture
@@ -220,6 +231,45 @@ structured_buffer[gid] = val;        // write
 // there is a `read` type you can use to be platform safe
 read3 read_coord = read3(x, y, z);
 read_texture( tex_rw, read_coord );
+```
+
+### Bindless resources
+
+Initial implementation of bindless resources is implemented and tested with HLSL, more platforms will follow. This is still work in progress. 
+
+Define resource tables types with `[]` dimensions (you could use multi-dimensional resources `[10][5][2]` for instance). Use `[]` empty square brackets for unbounded sizes. The resources are called `tables` due to ambiguity with using `array` due to `texture_2d_array` and other dimensional array types. With bindless, resources textures and samplers are decoupled so to sample a texture you supply both a `texture` and a `sampler` to the `texture_sample` macro, which can be used on textures and tables of varying dimensitonality. Constant buffer tables can be accessed through raw `[]` operator access. Smplers can also be a `table` type.
+
+Reflection info for creating descriptor sets from these resource tables will be generated and output into the `.json` file after compilation.
+
+```hlsl
+shader_resources
+{
+    // resource table types
+    texture2d_table(texture0, float4, [6], 0, 0);
+    cbuffer_table(constant_buffer0, data, [6], 1, 0);
+    sampler_state_table(sampler_table0, [], 0);
+
+    // separate sampler
+    sampler_state(sampler0, 0);
+};
+
+ps_output ps_main(ps_input input)
+{
+    ps_output output;
+
+    float4 final = float4(0.0, 0.0, 0.0, 0.0);
+    float2 uv = input.colour.rg * float2(1.0, -1.0);
+
+    float4 r0 = texture_sample(texture0[0], sampler0, uv * 2.0);
+    float4 r1 = texture_sample(texture0[1], sampler0, (uv * 2.0) + float2(0.0, 1.0));
+    float4 r2 = texture_sample(texture0[2], sampler0, (uv * 2.0) + float2(1.0, 1.0));
+    float4 r3 = texture_sample(texture0[5], sampler0, (input.colour.rg * 2.0) + float2(1.0, 0.0));
+    r3 += texture_sample(texture0[6], sampler0, (input.colour.rg * 2.0) + float2(1.0, 0.0));
+
+    // ..
+
+    final *= constant_buffer0[4].rgba;
+}
 ```
 
 ### cbuffers
