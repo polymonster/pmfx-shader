@@ -405,12 +405,18 @@ pmfx:
 
 You can also use json to specify technique constants with range and ui type.. so you can later hook them into a gui:
 
-```c
+```yaml
 constants:
 {
-    albedo      : { type: float4, widget: colour, default: [1.0, 1.0, 1.0, 1.0] },
-    roughness   : { type: float, widget: slider, min: 0, max: 1, default: 0.5 },
-    reflectivity: { type: float, widget: slider, min: 0, max: 1, default: 0.3 },
+    albedo: { 
+        type: float4, widget: colour, default: [1.0, 1.0, 1.0, 1.0]
+    }
+    roughness: { 
+        type: float, widget: slider, min: 0, max: 1, default: 0.5
+    }
+    reflectivity: { 
+        type: float, widget: slider, min: 0, max: 1, default: 0.3
+    }
 }
 ```
 
