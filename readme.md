@@ -237,7 +237,9 @@ read_texture( tex_rw, read_coord );
 
 Initial implementation of bindless resources is implemented and tested with HLSL, more platforms will follow. This is still work in progress. 
 
-Define resource tables types with `[]` dimensions (you could use multi-dimensional resources `[10][5][2]` for instance). Use `[]` empty square brackets for unbounded sizes. The resources are called `tables` due to ambiguity with using `array` due to `texture_2d_array` and other dimensional array types. With bindless, resources textures and samplers are decoupled so to sample a texture you supply both a `texture` and a `sampler` to the `texture_sample` macro, which can be used on textures and tables of varying dimensitonality. Constant buffer tables can be accessed through raw `[]` operator access. Smplers can also be a `table` type.
+Define resource tables types with `[]` dimensions (you could use multi-dimensional resources `[10][5][2]` for instance). Use `[]` empty square brackets for unbounded sizes. The resources are called `tables` due to ambiguity with using `array` due to `texture_2d_array` and other dimensional array types. 
+
+With bindless, resources textures and samplers are decoupled so to sample a texture you supply both a `texture` and a `sampler` to the `texture_sample` macro, which can be used on textures and tables of varying dimensitonality. Constant buffer tables can be accessed through raw `[]` operator access. Smplers can also be a `table` type.
 
 Reflection info for creating descriptor sets from these resource tables will be generated and output into the `.json` file after compilation.
 
@@ -386,20 +388,18 @@ Single .pmfx file can contain multiple shader functions so you can share functio
 
 Simply specify `vs`, `ps` or `cs` to select which function in the source to use for that shader stage. If no pmfx: json block is found you can still supply `vs_main` and `ps_main` which will be output as a technique named "default".
 
-```c
+```yaml
 pmfx:
 {    
-    gbuffer:
-    {
-        vs: vs_main,
+    gbuffer: {
+        vs: vs_main
         ps: ps_gbuffer
-    },
+    }
         
-    zonly:
-    {
-        vs: vs_main_zonly,
+    zonly: {
+        vs: vs_main_zonly
         ps: ps_null
-    },
+    }
 }
 ```
 
@@ -429,19 +429,19 @@ ps_output ps_main(vs_output input)
 
 You can inherit techniques by using jsn inherit feature.
 
-```c
+```yaml
 gbuffer(forward_lit):
 {
-    vs: vs_main,
-    ps: ps_gbuffer,
+    vs: vs_main
+    ps: ps_gbuffer
 
     permutations:
     {
-        SKINNED: [31, [0,1]],
-        INSTANCED: [30, [0,1]],
+        SKINNED: [31, [0,1]]
+        INSTANCED: [30, [0,1]]
         UV_SCALE: [1, [0,1]]
     }
-},
+}
 ```
 
 gbuffer inherits from forward lit, by putting the base clase inside brackets.
@@ -450,11 +450,11 @@ gbuffer inherits from forward lit, by putting the base clase inside brackets.
 
 Permutations provide an uber shader style compile time branch evaluation to generate optimal shaders but allowing for flexibility to share code as much as possible. The pmfx block is used here again, you can specify permutations inside a technique.
 
-```c
+```yaml
 permutations:
 {
-    SKINNED: [31, [0,1]],
-    INSTANCED: [30, [0,1]],
+    SKINNED: [31, [0,1]]
+    INSTANCED: [30, [0,1]]
     UV_SCALE: [1, [0,1]]
 }
 ```
