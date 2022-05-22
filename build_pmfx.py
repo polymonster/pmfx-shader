@@ -1063,30 +1063,61 @@ def find_pmfx_json(shader_file_text):
     return None
 
 
+# strips array [] from a resource access
+def strip_array_access(resource):
+    bp = resource.find("[")
+    if bp != -1:
+        resource = resource[:bp]
+    return resource
+
+
+# checks for a raw access type
+def get_raw_access_type(resource):
+    accesses = ["structured_buffer", "atomic_counter", "cbuffer_table"]
+    # index of resource decl arg that is the name of the resource
+    name_pos = {
+        "structured_buffer": 1,
+        "atomic_counter": 0,
+        "cbuffer_table": 0
+    }
+    for a in accesses:
+        if resource.find(a) != -1:
+            return a, name_pos[a]
+    return None, None
+
+
 # find only used shader resources
 def find_used_resources(shader_source, resource_decl):
     if not resource_decl:
         return
     # find resource uses
-    uses = ["sample_texture", "read_texture", "write_texture", "sample_depth"]
+    uses = ["sample_texture", "read_texture", "write_texture", "sample_depth", "texture_sample"]
     resource_uses = []
     pos = 0
     while True:
-        sampler, tok = cgu.find_first(shader_source, uses, pos)
-        if sampler == sys.maxsize:
-            break;
-        start = shader_source.find("(", sampler)
-        end = shader_source.find(";", sampler)
-        if us(sampler) < us(start) < us(end):
+        access, tok = cgu.find_first(shader_source, uses, pos)
+        if access == sys.maxsize:
+            break
+        start = shader_source.find("(", access)
+        use = shader_source[access:start]
+        end = shader_source.find(";", access)
+        if us(access) < us(start) < us(end):
             args = shader_source[start+1:end-1].split(",")
             if len(args) > 0:
-                name = args[0].strip(" ")
+                # every resource access should have the resource as first arg
+                name = strip_array_access(args[0].strip(" "))
                 if name not in resource_uses:
                     resource_uses.append(name)
+                if use == "texture_sample":
+                    # texture sample also has 'sampler'
+                    sampler_name = strip_array_access(args[1].strip(" "))
+                    if sampler_name not in resource_uses:
+                        resource_uses.append(sampler_name)
         pos = end
     used_resource_decl = ""
     resource_list = resource_decl.split(";")
     for resource in resource_list:
+        resource = resource.strip()
         start = resource.find("(") + 1
         end = resource.find(")") - 1
         args = resource[start:end].split(",")
@@ -1098,12 +1129,10 @@ def find_used_resources(shader_source, resource_decl):
                 if name in resource_uses:
                     used_resource_decl = used_resource_decl.strip(" ")
                     used_resource_decl += resource + ";\n"
-        # structured buffer with [] operator access
-        if resource.find("structured_buffer") != -1 or resource.find("atomic_counter") != -1:
-            name_index = 1
-            if resource.find("atomic_counter") != -1:
-                name_index = 0
-            if len(args) > 1:
+        # structured buffer / cbuffer / atomic counter with [] operator access
+        type, name_index = get_raw_access_type(resource)
+        if type:
+            if len(args) >= name_index:
                 name = args[name_index].strip(" ")
                 if shader_source.find(name + "[") != -1:
                     used_resource_decl = used_resource_decl.strip(" ")
@@ -2578,16 +2607,16 @@ def generate_technique_permutation_info(_tp):
             }
             _tp.technique["structured_buffers"].append(buffer_desc)
         elif res_type.find("_table") != -1:
-            table_type = res_type.strip("_table")
             table_desc = {
                 "name": shader_resources_split[offset+1],
                 "data_type": shader_resources_split[offset+2],
                 "dimension": shader_resources_split[offset+3],
-                "type": table_type,
+                "type": res_type,
                 "unit": int(shader_resources_split[offset+4]),
                 "space": int(shader_resources_split[offset+5])
             }
             _tp.technique["descriptor_tables"].append(table_desc)
+            offset = i+3
         elif res_type.find("sampler_state") != -1:
             sampler_desc = {
                 "name": shader_resources_split[offset+1],

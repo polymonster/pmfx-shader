@@ -50,7 +50,7 @@
 #define sample_texture_cube_array_level( name, V, a, l ) name.SampleLevel(sampler_##name, float4(V.xyz, a), l)
 
 // separate sampler / textures
-#define sample_texture_s(texture, sampler, coord) texture.Sample(sampler, coord)
+#define texture_sample(texture, sampler, coord) texture.Sample(sampler, coord)
 
 // gather / compare
 #define sample_depth_compare( name, tc, compare_value ) saturate(name.SampleCmp(sampler_##name, tc, compare_value))
