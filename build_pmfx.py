@@ -21,7 +21,8 @@ class BuildInfo:
     metal_min_os = ""                                                   # iOS (9.0 - 13.0), macOS (10.11 - 10.15)
     debug = False                                                       # generate shader with debug info
     inputs = []                                                         # array of input files or directories
-    extensions = []                                                     # array of shader extension currently for glsl
+    extensions = []                                                     # array of shader extension currently for glsl/gles
+    nvn_extensions = []                                                 # array of shader extensions for nvn/glsl
     root_dir = ""                                                       # cwd dir to run from
     build_config = ""                                                   # json contents of build_config.json
     pmfx_dir = ""                                                       # location of pmfx
@@ -151,6 +152,30 @@ def parse_args():
                 _info.extensions.append(sys.argv[j])
                 j = j + 1
             i = j
+        if sys.argv[i] == "-nvn_extensions":
+            j = i + 1
+            while j < len(sys.argv) and sys.argv[j][0] != '-':
+                _info.nvn_extensions.append(sys.argv[j])
+                j = j + 1
+            i = j
+    required = [
+        "-shader_platform",
+        "-i",
+        "-o",
+        "-t"
+    ]
+    if _info.shader_platform == "metal":
+        required.append("-metal_sdk")
+    if _info.shader_platform == "nvm":
+        required.append("-nvn_exe")
+    missing = False
+    for r in required:
+        if r not in sys.argv:
+            print("error: missing rquired argument {}".format(r))
+            missing = True
+    if missing:
+        print("exit")
+        sys.exit(1)
 
 
 # display help for args
@@ -165,9 +190,10 @@ def display_help():
     print("        metal: 2.0 (default)")
     print("        nvn: (glsl)")
     print("    -metal_sdk [metal only] <iphoneos, macosx, appletvos>")
-    print("    -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>")
+    print("    -metal_min_os (optional) [metal only] <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>")
     print("    -nvn_exe [nvn only] <path to execulatble that can compile glsl to nvn glslc>")
-    print("    -extensions <list of glsl extension strings separated by spaces>")
+    print("    -extensions (optional) [glsl/gles only] <list of glsl extension strings separated by spaces>")
+    print("    -nvn_extensions (optional) [nvn only] <list of nvn glsl extension strings separated by spaces>")
     print("    -i <list of input files or directories separated by spaces>")
     print("    -o <output dir for shaders>")
     print("    -t <output dir for temp files>")
@@ -1674,6 +1700,13 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             shader_source += "#define PMFX_TEXTURE_ARRAYS\n"
     else:
         shader_source += "#version " + _tp.shader_version + " core\n"
+        # extensions
+        for ext in _info.extensions:
+            shader_source += "#extension " + ext + " : require\n"
+            shader_source += "#define PMFX_" + ext + " 1\n"
+        for ext in _info.nvn_extensions:
+            shader_source += "#extension " + ext + " : enable\n"
+            shader_source += "#define PMFX_" + ext + " 1\n"
         shader_source += "#define GLSL\n"
         if binding_points:
             shader_source += "#define PMFX_BINDING_POINTS\n"
