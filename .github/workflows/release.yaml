@@ -1,0 +1,87 @@
+on:
+  push:
+    tags:
+    - 'v*'
+
+name: build-release
+
+jobs:
+  setup:
+    name: create release
+    runs-on: ubuntu-latest
+    steps:
+      - name: create_release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+  windows:
+    needs: setup
+    name: windows
+    runs-on: windows-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: pyinstaller
+        run: "pip install PyInstaller"
+      - name: build
+        run: py -3 -c "import build_pmfx; build_pmfx.build_executable()"
+      - name: upload
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.setup.outputs.upload_url }}
+          asset_path: ./dist/Windows-x64.zip
+          asset_name: Windows-x64.zip
+          asset_content_type: application/zip
+  macos:
+    needs: setup
+    name: macos
+    runs-on: macos-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: pyinstaller
+        run: "pip3 install PyInstaller"
+      - name: build
+        run: python3 -c "import build_pmfx; build_pmfx.build_executable()"
+      - name: upload
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.setup.outputs.upload_url }}
+          asset_path: ./dist/macOS-universal.zip
+          asset_name: macOS-universal.zip
+          asset_content_type: application/zip
+  linux:
+    needs: setup
+    name: linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: pyinstaller
+        run: "pip3 install PyInstaller"
+      - name: build
+        run: python3 -c "import build_pmfx; build_pmfx.build_executable()"
+      - name: upload
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.setup.outputs.upload_url }}
+          asset_path: ./dist/Linux-aarch64.zip
+          asset_name: Linux-aarch64.zip
+          asset_content_type: application/zip

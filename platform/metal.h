@@ -30,6 +30,7 @@
 
 // _arg macros are used to pass textures through functions from main
 #define texture_2d_arg( name ) thread texture2d<float>& name, thread sampler& sampler_##name
+#define texture_2d_external_arg( name ) texture_2d_arg(name)
 #define texture_3d_arg( name ) thread texture3d<float>& name, thread sampler& sampler_##name
 #define texture_2dms_arg( name ) thread texture2d_ms<float>& name, thread sampler& sampler_##name
 #define texture_cube_arg( name ) thread texturecube<float>& name, thread sampler& sampler_##name
@@ -64,8 +65,12 @@
 
 // matrix
 #define to_3x3( M4 ) float3x3(M4[0].xyz, M4[1].xyz, M4[2].xyz)
+#define from_columns_2x2(A, B) (transpose(float2x2(A, B)))
+#define from_rows_2x2(A, B) (float2x2(A, B))
 #define from_columns_3x3(A, B, C) (transpose(float3x3(A, B, C)))
 #define from_rows_3x3(A, B, C) (float3x3(A, B, C))
+#define from_columns_4x4(A, B, C, D) (transpose(float4x4(A, B, C, D)))
+#define from_rows_4x4(A, B, C, D) (float4x4(A, B, C, D))
 #define mul( A, B ) ((A) * (B))
 #define mul_tbn( A, B ) ((B) * (A))
 #define unpack_vb_instance_mat( mat, r0, r1, r2, r3 ) mat[0] = r0; mat[1] = r1; mat[2] = r2; mat[3] = r3;
@@ -85,6 +90,8 @@
 #define mod(x, y) (x - y * floor(x/y))
 #define _pmfx_unroll
 #define _pmfx_loop
+#define	read3 uint3
+#define read2 uint2
 
 // atomics
 #define atomic_counter(name, index) structured_buffer_rw(atomic_uint, name, index)

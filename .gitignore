@@ -16,6 +16,7 @@ $RECYCLE.BIN/
 **.idea/
 ._*
 build/
+dist/
 
 # Files that might appear in the root of a volume
 .DocumentRevisions-V100
