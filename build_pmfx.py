@@ -121,37 +121,37 @@ def parse_args():
                 _info.inputs.append(sys.argv[j])
                 j = j + 1
             i = j
-        if sys.argv[i] == "-o":
+        elif sys.argv[i] == "-o":
             _info.output_dir = sys.argv[i + 1]
-        if sys.argv[i] == "-h":
+        elif sys.argv[i] == "-h":
             _info.struct_dir = sys.argv[i + 1]
-        if sys.argv[i] == "-t":
+        elif sys.argv[i] == "-t":
             _info.temp_dir = sys.argv[i + 1]
-        if sys.argv[i] == "-source":
+        elif sys.argv[i] == "-source":
             _info.compiled = False
-        if sys.argv[i] == "-cbuffer_offset":
+        elif sys.argv[i] == "-cbuffer_offset":
             _info.cbuffer_offset = sys.argv[i + 1]
-        if sys.argv[i] == "-texture_offset":
+        elif sys.argv[i] == "-texture_offset":
             _info.cbuffer_offset = sys.argv[i + 1]
-        if sys.argv[i] == "-stage_in":
+        elif sys.argv[i] == "-stage_in":
             _info.stage_in = sys.argv[i + 1]
-        if sys.argv[i] == "-v_flip":
+        elif sys.argv[i] == "-v_flip":
             _info.v_flip = True
-        if sys.argv[i] == "-d":
+        elif sys.argv[i] == "-d":
             _info.debug = False
-        if sys.argv[i] == "-metal_min_os":
+        elif sys.argv[i] == "-metal_min_os":
             _info.metal_min_os = sys.argv[i+1]
-        if sys.argv[i] == "-metal_sdk":
+        elif sys.argv[i] == "-metal_sdk":
             _info.metal_sdk = sys.argv[i+1]
-        if sys.argv[i] == "-nvn_exe":
+        elif sys.argv[i] == "-nvn_exe":
             _info.nvn_exe = sys.argv[i+1]
-        if sys.argv[i] == "-extensions":
+        elif sys.argv[i] == "-extensions":
             j = i + 1
             while j < len(sys.argv) and sys.argv[j][0] != '-':
                 _info.extensions.append(sys.argv[j])
                 j = j + 1
             i = j
-        if sys.argv[i] == "-nvn_extensions":
+        elif sys.argv[i] == "-nvn_extensions":
             j = i + 1
             while j < len(sys.argv) and sys.argv[j][0] != '-':
                 _info.nvn_extensions.append(sys.argv[j])
@@ -163,8 +163,6 @@ def parse_args():
         "-o",
         "-t"
     ]
-    if _info.shader_platform == "metal":
-        required.append("-metal_sdk")
     if _info.shader_platform == "nvm":
         required.append("-nvn_exe")
     missing = False
@@ -207,7 +205,7 @@ def display_help():
     print("        specifies an offset applied to cbuffer locations to avoid collisions with vertex buffers")
     print("    -texture_offset (optional) [vulkan only] (default 32) ")
     print("        specifies an offset applied to texture locations to avoid collisions with buffers")
-    print("    -v_flip (optional) (inserts glsl uniform to conditionally flip verts in the y axis)") 
+    print("    -v_flip (optional) [glsl only] (inserts glsl uniform to conditionally flip verts in the y axis)") 
     sys.stdout.flush()
     sys.exit(0)
 
