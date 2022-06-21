@@ -3047,7 +3047,7 @@ def build_executable():
     # zip
     exe_names = {
         "win64": "Windows-x64",
-        "osx": "macOS-universal",
-        "linux": "Linux-aarch64"
+        "osx": "macOS-x64",
+        "linux": "Linux-x64"
     }
     shutil.make_archive("dist/" + exe_names[platform], 'zip', "dist/{}".format(platform))
