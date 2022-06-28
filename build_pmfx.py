@@ -21,7 +21,8 @@ class BuildInfo:
     metal_min_os = ""                                                   # iOS (9.0 - 13.0), macOS (10.11 - 10.15)
     debug = False                                                       # generate shader with debug info
     inputs = []                                                         # array of input files or directories
-    extensions = []                                                     # array of shader extension currently for glsl
+    extensions = []                                                     # array of shader extension currently for glsl/gles
+    nvn_extensions = []                                                 # array of shader extensions for nvn/glsl
     root_dir = ""                                                       # cwd dir to run from
     build_config = ""                                                   # json contents of build_config.json
     pmfx_dir = ""                                                       # location of pmfx
@@ -120,34 +121,40 @@ def parse_args():
                 _info.inputs.append(sys.argv[j])
                 j = j + 1
             i = j
-        if sys.argv[i] == "-o":
+        elif sys.argv[i] == "-o":
             _info.output_dir = sys.argv[i + 1]
-        if sys.argv[i] == "-h":
+        elif sys.argv[i] == "-h":
             _info.struct_dir = sys.argv[i + 1]
-        if sys.argv[i] == "-t":
+        elif sys.argv[i] == "-t":
             _info.temp_dir = sys.argv[i + 1]
-        if sys.argv[i] == "-source":
+        elif sys.argv[i] == "-source":
             _info.compiled = False
-        if sys.argv[i] == "-cbuffer_offset":
+        elif sys.argv[i] == "-cbuffer_offset":
             _info.cbuffer_offset = sys.argv[i + 1]
-        if sys.argv[i] == "-texture_offset":
+        elif sys.argv[i] == "-texture_offset":
             _info.cbuffer_offset = sys.argv[i + 1]
-        if sys.argv[i] == "-stage_in":
+        elif sys.argv[i] == "-stage_in":
             _info.stage_in = sys.argv[i + 1]
-        if sys.argv[i] == "-v_flip":
+        elif sys.argv[i] == "-v_flip":
             _info.v_flip = True
-        if sys.argv[i] == "-d":
+        elif sys.argv[i] == "-d":
             _info.debug = False
-        if sys.argv[i] == "-metal_min_os":
+        elif sys.argv[i] == "-metal_min_os":
             _info.metal_min_os = sys.argv[i+1]
-        if sys.argv[i] == "-metal_sdk":
+        elif sys.argv[i] == "-metal_sdk":
             _info.metal_sdk = sys.argv[i+1]
-        if sys.argv[i] == "-nvn_exe":
+        elif sys.argv[i] == "-nvn_exe":
             _info.nvn_exe = sys.argv[i+1]
-        if sys.argv[i] == "-extensions":
+        elif sys.argv[i] == "-extensions":
             j = i + 1
             while j < len(sys.argv) and sys.argv[j][0] != '-':
                 _info.extensions.append(sys.argv[j])
+                j = j + 1
+            i = j
+        elif sys.argv[i] == "-nvn_extensions":
+            j = i + 1
+            while j < len(sys.argv) and sys.argv[j][0] != '-':
+                _info.nvn_extensions.append(sys.argv[j])
                 j = j + 1
             i = j
     required = [
@@ -156,8 +163,6 @@ def parse_args():
         "-o",
         "-t"
     ]
-    if _info.shader_platform == "metal":
-        required.append("-metal_sdk")
     if _info.shader_platform == "nvm":
         required.append("-nvn_exe")
     missing = False
@@ -167,7 +172,8 @@ def parse_args():
             missing = True
     if missing:
         print("exit")
-        sys.exit(1) 
+        sys.exit(1)
+
 
 
 # display help for args
@@ -182,9 +188,10 @@ def display_help():
     print("        metal: 2.0 (default)")
     print("        nvn: (glsl)")
     print("    -metal_sdk [metal only] <iphoneos, macosx, appletvos>")
-    print("    -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>")
+    print("    -metal_min_os (optional) [metal only] <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>")
     print("    -nvn_exe [nvn only] <path to execulatble that can compile glsl to nvn glslc>")
-    print("    -extensions (optional) <list of glsl extension strings separated by spaces>")
+    print("    -extensions (optional) [glsl/gles only] <list of glsl extension strings separated by spaces>")
+    print("    -nvn_extensions (optional) [nvn only] <list of nvn glsl extension strings separated by spaces>")
     print("    -i <list of input files or directories separated by spaces>")
     print("    -o <output dir for shaders>")
     print("    -t <output dir for temp files>")
@@ -198,7 +205,7 @@ def display_help():
     print("        specifies an offset applied to cbuffer locations to avoid collisions with vertex buffers")
     print("    -texture_offset (optional) [vulkan only] (default 32) ")
     print("        specifies an offset applied to texture locations to avoid collisions with buffers")
-    print("    -v_flip (optional) (inserts glsl uniform to conditionally flip verts in the y axis)") 
+    print("    -v_flip (optional) [glsl only] (inserts glsl uniform to conditionally flip verts in the y axis)") 
     sys.stdout.flush()
     sys.exit(0)
 
@@ -525,9 +532,10 @@ def find_constant_buffers(shader_text):
     cbuffer_list = []
     start = 0
     while start != -1:
-        start = shader_text.find("cbuffer", start)
-        if start == -1:
+        pos = find_token("cbuffer", shader_text[start:])
+        if pos == -1:
             break
+        start += pos
         end = shader_text.find("};", start)
         if end != -1:
             end += 2
@@ -1062,30 +1070,61 @@ def find_pmfx_json(shader_file_text):
     return None
 
 
+# strips array [] from a resource access
+def strip_array_access(resource):
+    bp = resource.find("[")
+    if bp != -1:
+        resource = resource[:bp]
+    return resource
+
+
+# checks for a raw access type
+def get_raw_access_type(resource):
+    accesses = ["structured_buffer", "atomic_counter", "cbuffer_table"]
+    # index of resource decl arg that is the name of the resource
+    name_pos = {
+        "structured_buffer": 1,
+        "atomic_counter": 0,
+        "cbuffer_table": 0
+    }
+    for a in accesses:
+        if resource.find(a) != -1:
+            return a, name_pos[a]
+    return None, None
+
+
 # find only used shader resources
 def find_used_resources(shader_source, resource_decl):
     if not resource_decl:
         return
     # find resource uses
-    uses = ["sample_texture", "read_texture", "write_texture", "sample_depth"]
+    uses = ["sample_texture", "read_texture", "write_texture", "sample_depth", "texture_sample"]
     resource_uses = []
     pos = 0
     while True:
-        sampler, tok = cgu.find_first(shader_source, uses, pos)
-        if sampler == sys.maxsize:
-            break;
-        start = shader_source.find("(", sampler)
-        end = shader_source.find(";", sampler)
-        if us(sampler) < us(start) < us(end):
+        access, tok = cgu.find_first(shader_source, uses, pos)
+        if access == sys.maxsize:
+            break
+        start = shader_source.find("(", access)
+        use = shader_source[access:start]
+        end = shader_source.find(";", access)
+        if us(access) < us(start) < us(end):
             args = shader_source[start+1:end-1].split(",")
             if len(args) > 0:
-                name = args[0].strip(" ")
+                # every resource access should have the resource as first arg
+                name = strip_array_access(args[0].strip(" "))
                 if name not in resource_uses:
                     resource_uses.append(name)
+                if use == "texture_sample":
+                    # texture sample also has 'sampler'
+                    sampler_name = strip_array_access(args[1].strip(" "))
+                    if sampler_name not in resource_uses:
+                        resource_uses.append(sampler_name)
         pos = end
     used_resource_decl = ""
     resource_list = resource_decl.split(";")
     for resource in resource_list:
+        resource = resource.strip()
         start = resource.find("(") + 1
         end = resource.find(")") - 1
         args = resource[start:end].split(",")
@@ -1097,12 +1136,10 @@ def find_used_resources(shader_source, resource_decl):
                 if name in resource_uses:
                     used_resource_decl = used_resource_decl.strip(" ")
                     used_resource_decl += resource + ";\n"
-        # structured buffer with [] operator access
-        if resource.find("structured_buffer") != -1 or resource.find("atomic_counter") != -1:
-            name_index = 1
-            if resource.find("atomic_counter") != -1:
-                name_index = 0
-            if len(args) > 1:
+        # structured buffer / cbuffer / atomic counter with [] operator access
+        type, name_index = get_raw_access_type(resource)
+        if type:
+            if len(args) >= name_index:
                 name = args[name_index].strip(" ")
                 if shader_source.find(name + "[") != -1:
                     used_resource_decl = used_resource_decl.strip(" ")
@@ -1731,6 +1768,13 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             shader_source += "#define PMFX_GLES_COMPUTE\n"
     else:
         shader_source += "#version " + _tp.shader_version + " core\n"
+        # extensions
+        for ext in _info.extensions:
+            shader_source += "#extension " + ext + " : require\n"
+            shader_source += "#define PMFX_" + ext + " 1\n"
+        for ext in _info.nvn_extensions:
+            shader_source += "#extension " + ext + " : enable\n"
+            shader_source += "#define PMFX_" + ext + " 1\n"
         shader_source += "#define GLSL\n"
         if binding_points:
             shader_source += "#define PMFX_BINDING_POINTS\n"
@@ -2562,11 +2606,13 @@ def generate_technique_permutation_info(_tp):
     i = 0
     _tp.technique["texture_sampler_bindings"] = []
     _tp.technique["structured_buffers"] = []
+    _tp.technique["descriptor_tables"] = []
+    _tp.technique["samplers"] = []
     while i < len(shader_resources_split):
         offset = i
-        tex_type = shader_resources_split[i+0]
+        res_type = shader_resources_split[i+0]
         # structured buffers
-        if tex_type.find("structured_buffer") != -1:
+        if res_type.find("structured_buffer") != -1:
             offset = i+1
             buffer_desc = {
                 "type": shader_resources_split[i+1],
@@ -2574,9 +2620,26 @@ def generate_technique_permutation_info(_tp):
                 "location": shader_resources_split[i+3]
             }
             _tp.technique["structured_buffers"].append(buffer_desc)
+        elif res_type.find("_table") != -1:
+            table_desc = {
+                "name": shader_resources_split[offset+1],
+                "data_type": shader_resources_split[offset+2],
+                "dimension": shader_resources_split[offset+3],
+                "type": res_type,
+                "unit": int(shader_resources_split[offset+4]),
+                "space": int(shader_resources_split[offset+5])
+            }
+            _tp.technique["descriptor_tables"].append(table_desc)
+            offset = i+3
+        elif res_type.find("sampler_state") != -1:
+            sampler_desc = {
+                "name": shader_resources_split[offset+1],
+                "unit": int(shader_resources_split[offset+2])
+            }
+            _tp.technique["samplers"].append(sampler_desc)
         else:
             # textures
-            if tex_type == "texture_2dms":
+            if res_type == "texture_2dms":
                 data_type = shader_resources_split[i+1]
                 fragments = shader_resources_split[i+2]
                 offset = i+2
@@ -2587,7 +2650,7 @@ def generate_technique_permutation_info(_tp):
                 "name": shader_resources_split[offset+1],
                 "data_type": data_type,
                 "fragments": fragments,
-                "type": tex_type,
+                "type": res_type,
                 "unit": int(shader_resources_split[offset+2])
             }
             _tp.technique["texture_sampler_bindings"].append(sampler_desc)
@@ -2605,7 +2668,12 @@ def generate_technique_permutation_info(_tp):
         buffer_loc_end = buffer_decl_split[1].find(")", buffer_loc_start)
         buffer_reg = buffer_decl_split[1][buffer_loc_start:buffer_loc_end]
         buffer_reg = buffer_reg.strip('b')
-        buffer_desc = {"name": buffer_name, "location": int(buffer_reg)}
+        space = -1
+        cpos = buffer_reg.find(",")
+        if cpos != -1:
+            space = buffer_reg[cpos+1:].strip().strip('space')
+            buffer_reg = buffer_reg[:cpos]
+        buffer_desc = {"name": buffer_name, "location": int(buffer_reg), "space": int(space)}
         _tp.technique["cbuffers"].append(buffer_desc)
     # io structs from vs.. vs input, instance input, vs output (ps input)
     _tp.technique["vs_inputs"] = generate_input_info(_tp.shader[0].input_decl)
@@ -2886,7 +2954,7 @@ def configure_sub_platforms():
 # main function to avoid shadowing
 def main():
     print("--------------------------------------------------------------------------------", flush=True)
-    print("pmfx shader (v1.07) ------------------------------------------------------------", flush=True)
+    print("pmfx shader (v1.1) -------------------------------------------------------------", flush=True)
     print("--------------------------------------------------------------------------------", flush=True)
 
     global _info
