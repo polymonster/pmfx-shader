@@ -2899,6 +2899,7 @@ def parse_pmfx(file, root):
         else:
             print(output_name + " failed to compile", flush=True)
             pmfx_output_info["failures"][c.pmfx_name] = True
+            _info.error_code = 1
         for out in c.output_list:
             print(out, flush=True)
         for err in c.error_list:
