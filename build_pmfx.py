@@ -438,10 +438,10 @@ def check_dependencies(filename, included_files):
                     return False
                 if prev_built_with_file["timestamp"] < os.path.getmtime(sanitized_name):
                     info_file.close()
-                    print(os.path.basename(sanitized_name) + " is out of date", flush=True)
+                    print(os.path.basename(sanitized_name) + ": out-of-date", flush=True)
                     return False
             else:
-                print(sanitized_name + " is not in list", flush=True)
+                print(sanitized_name + ": out-of-date", flush=True)
                 return False
         if "failures" in info.keys():
             if len(info["failures"]) > 0:
@@ -2718,7 +2718,7 @@ def parse_pmfx(file, root):
     force = False
     up_to_date = check_dependencies(file_and_path, included_files)
     if up_to_date and not force:
-        print(file + " file up to date", flush=True)
+        print(file + ": up-to-date", flush=True)
         return
 
     print(file, flush=True)
