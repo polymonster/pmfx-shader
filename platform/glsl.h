@@ -103,7 +103,7 @@ precision highp samplerExternalOES;
 #if !defined(GLES) || defined(PMFX_GLES_COMPUTE)
 #define texture_2d_rw( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform image2D image_name
 #define texture_2d_r( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform readonly image2D image_name
-#define texture_2d_w( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform image2D image_name
+#define texture_2d_w( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform writeonly image2D image_name
 #define texture_3d_rw( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform image3D image_name
 #define texture_3d_r( image_name, layout_index ) layout (_compute_tex_binding(layout_index), rgba8) uniform readonly image3D image_name
 #define texture_3d_w( image_name, layout_index ) texture3d_rw(image_name, layout_index)
@@ -114,6 +114,12 @@ precision highp samplerExternalOES;
 #define write_texture( image_name, value, coord ) imageStore(image_name, coord, value)
 #define read_texture_array( image_name, coord, slice ) imageLoad(image_name, ivec3(coord.xy, slice))
 #define write_texture_array( image_name, value, coord, slice ) imageStore(image_name, ivec3(coord.xy, slice), value)
+
+// bindless
+#define texture2d_table(name, type, dimension, register_index, space_index) _compute_tex_binding(register_index) uniform sampler2D name##dimension
+#define texture2d_rw_table(name, type, dimension, register_index, space_index) layout (_compute_tex_binding(register_index), rgba8) uniform image2D name##dimension
+#define cbuffer_table(name, type, dimension, register_index, space_index) layout(std430, binding=register_index) buffer name##_buffer { type name##dimension; }
+
 #endif
 
 #ifndef GLES

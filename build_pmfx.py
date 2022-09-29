@@ -21,7 +21,8 @@ class BuildInfo:
     metal_min_os = ""                                                   # iOS (9.0 - 13.0), macOS (10.11 - 10.15)
     debug = False                                                       # generate shader with debug info
     inputs = []                                                         # array of input files or directories
-    extensions = []                                                     # array of shader extension currently for glsl
+    extensions = []                                                     # array of shader extension currently for glsl/gles
+    nvn_extensions = []                                                 # array of shader extensions for nvn/glsl
     root_dir = ""                                                       # cwd dir to run from
     build_config = ""                                                   # json contents of build_config.json
     pmfx_dir = ""                                                       # location of pmfx
@@ -120,34 +121,40 @@ def parse_args():
                 _info.inputs.append(sys.argv[j])
                 j = j + 1
             i = j
-        if sys.argv[i] == "-o":
+        elif sys.argv[i] == "-o":
             _info.output_dir = sys.argv[i + 1]
-        if sys.argv[i] == "-h":
+        elif sys.argv[i] == "-h":
             _info.struct_dir = sys.argv[i + 1]
-        if sys.argv[i] == "-t":
+        elif sys.argv[i] == "-t":
             _info.temp_dir = sys.argv[i + 1]
-        if sys.argv[i] == "-source":
+        elif sys.argv[i] == "-source":
             _info.compiled = False
-        if sys.argv[i] == "-cbuffer_offset":
+        elif sys.argv[i] == "-cbuffer_offset":
             _info.cbuffer_offset = sys.argv[i + 1]
-        if sys.argv[i] == "-texture_offset":
+        elif sys.argv[i] == "-texture_offset":
             _info.cbuffer_offset = sys.argv[i + 1]
-        if sys.argv[i] == "-stage_in":
+        elif sys.argv[i] == "-stage_in":
             _info.stage_in = sys.argv[i + 1]
-        if sys.argv[i] == "-v_flip":
+        elif sys.argv[i] == "-v_flip":
             _info.v_flip = True
-        if sys.argv[i] == "-d":
+        elif sys.argv[i] == "-d":
             _info.debug = False
-        if sys.argv[i] == "-metal_min_os":
+        elif sys.argv[i] == "-metal_min_os":
             _info.metal_min_os = sys.argv[i+1]
-        if sys.argv[i] == "-metal_sdk":
+        elif sys.argv[i] == "-metal_sdk":
             _info.metal_sdk = sys.argv[i+1]
-        if sys.argv[i] == "-nvn_exe":
+        elif sys.argv[i] == "-nvn_exe":
             _info.nvn_exe = sys.argv[i+1]
-        if sys.argv[i] == "-extensions":
+        elif sys.argv[i] == "-extensions":
             j = i + 1
             while j < len(sys.argv) and sys.argv[j][0] != '-':
                 _info.extensions.append(sys.argv[j])
+                j = j + 1
+            i = j
+        elif sys.argv[i] == "-nvn_extensions":
+            j = i + 1
+            while j < len(sys.argv) and sys.argv[j][0] != '-':
+                _info.nvn_extensions.append(sys.argv[j])
                 j = j + 1
             i = j
     required = [
@@ -156,8 +163,6 @@ def parse_args():
         "-o",
         "-t"
     ]
-    if _info.shader_platform == "metal":
-        required.append("-metal_sdk")
     if _info.shader_platform == "nvm":
         required.append("-nvn_exe")
     missing = False
@@ -167,7 +172,8 @@ def parse_args():
             missing = True
     if missing:
         print("exit")
-        sys.exit(1) 
+        sys.exit(1)
+
 
 
 # display help for args
@@ -182,9 +188,10 @@ def display_help():
     print("        metal: 2.0 (default)")
     print("        nvn: (glsl)")
     print("    -metal_sdk [metal only] <iphoneos, macosx, appletvos>")
-    print("    -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>")
+    print("    -metal_min_os (optional) [metal only] <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>")
     print("    -nvn_exe [nvn only] <path to execulatble that can compile glsl to nvn glslc>")
-    print("    -extensions (optional) <list of glsl extension strings separated by spaces>")
+    print("    -extensions (optional) [glsl/gles only] <list of glsl extension strings separated by spaces>")
+    print("    -nvn_extensions (optional) [nvn only] <list of nvn glsl extension strings separated by spaces>")
     print("    -i <list of input files or directories separated by spaces>")
     print("    -o <output dir for shaders>")
     print("    -t <output dir for temp files>")
@@ -198,7 +205,7 @@ def display_help():
     print("        specifies an offset applied to cbuffer locations to avoid collisions with vertex buffers")
     print("    -texture_offset (optional) [vulkan only] (default 32) ")
     print("        specifies an offset applied to texture locations to avoid collisions with buffers")
-    print("    -v_flip (optional) (inserts glsl uniform to conditionally flip verts in the y axis)") 
+    print("    -v_flip (optional) [glsl only] (inserts glsl uniform to conditionally flip verts in the y axis)") 
     sys.stdout.flush()
     sys.exit(0)
 
@@ -1761,6 +1768,13 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
             shader_source += "#define PMFX_GLES_COMPUTE\n"
     else:
         shader_source += "#version " + _tp.shader_version + " core\n"
+        # extensions
+        for ext in _info.extensions:
+            shader_source += "#extension " + ext + " : require\n"
+            shader_source += "#define PMFX_" + ext + " 1\n"
+        for ext in _info.nvn_extensions:
+            shader_source += "#extension " + ext + " : enable\n"
+            shader_source += "#define PMFX_" + ext + " 1\n"
         shader_source += "#define GLSL\n"
         if binding_points:
             shader_source += "#define PMFX_BINDING_POINTS\n"
@@ -2885,6 +2899,7 @@ def parse_pmfx(file, root):
         else:
             print(output_name + " failed to compile", flush=True)
             pmfx_output_info["failures"][c.pmfx_name] = True
+            _info.error_code = 1
         for out in c.output_list:
             print(out, flush=True)
         for err in c.error_list:
@@ -3033,7 +3048,7 @@ def build_executable():
     # zip
     exe_names = {
         "win64": "Windows-x64",
-        "osx": "macOS-universal",
-        "linux": "Linux-aarch64"
+        "osx": "macOS-x64",
+        "linux": "Linux-x64"
     }
     shutil.make_archive("dist/" + exe_names[platform], 'zip', "dist/{}".format(platform))

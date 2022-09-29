@@ -61,8 +61,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.setup.outputs.upload_url }}
-          asset_path: ./dist/macOS-universal.zip
-          asset_name: macOS-universal.zip
+          asset_path: ./dist/macOS-x64.zip
+          asset_name: macOS-x64.zip
           asset_content_type: application/zip
   linux:
     needs: setup
@@ -82,6 +82,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.setup.outputs.upload_url }}
-          asset_path: ./dist/Linux-aarch64.zip
-          asset_name: Linux-aarch64.zip
+          asset_path: ./dist/Linux-x64.zip
+          asset_name: Linux-x64.zip
           asset_content_type: application/zip
