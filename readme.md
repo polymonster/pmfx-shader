@@ -132,6 +132,8 @@ vs_output vs_main( vs_input input )
 
 #### Supported semantics and sizes
 
+pmfx will generate an input layout for you in the json reflection info, containing the stride of the vertex layout and the byte offsets to each of the elements. If you choose to use this, pmfx will assume the following sizes for semantics:
+
 ```hlsl
 POSITION     // 32bit float
 TEXCOORD     // 32bit float
