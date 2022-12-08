@@ -73,34 +73,24 @@ commandline arguments:
 
 ## Compiling Examples
 
-#### Metal for macOS
-
 ```
-python3 build_pmfx.py -shader_platform metal -metal_sdk macosx -metal_min_os 10.14 -shader_version 2.2 -i examples -o output/bin -h output/structs -t output/temp
-```
+// metal macos
+python3 build_pmfx.py -shader_platform metal -metal_sdk macosx -metal_min_os 10.14 -shader_version 2.2 -i examples -o output/bin -h output/structs -t
 
-#### Metal for iOS
+// metal ios
+python3 build_pmfx.py -shader_platform metal -metal_sdk iphoneos -metal_min_os 0.9 -shader_version 2.2 -i examples -o output/bin -h output/structs -t 
 
-```
-python3 build_pmfx.py -shader_platform metal -metal_sdk iphoneos -metal_min_os 0.9 -shader_version 2.2 -i examples -o output/bin -h output/structs -t output/temp
-```
-
-#### SPIR-V for Vulkan
-
-```
+// spir-v vulkan
 python3 build_pmfx.py -shader_platform spirv -i examples -o output/bin -h output/structs -t output/temp
-```
 
-#### HLSL for Direct3D11
-
-```
+// hlsl d3d11
 python3 build_pmfx.py -shader_platform hlsl -shader_version 4_0 -i examples -o output/bin -h output/structs -t output/temp
-```
 
-#### GLSL
-
-```
+// glsl
 python3 build_pmfx.py -shader_platform glsl -shader_version 330 -i examples -o output/bin -h output/structs -t output/temp
+
+// gles
+python3 build_pmfx.py -shader_platform gles -shader_version 320 -i examples -o output/bin -h output/structs -t output/temp
 ```
 
 ## Shader Language
@@ -241,7 +231,7 @@ Initial implementation of bindless resources is implemented and tested with HLSL
 
 Define resource tables types with `[]` dimensions (you could use multi-dimensional resources `[10][5][2]` for instance). Use `[]` empty square brackets for unbounded sizes. The resources are called `tables` due to ambiguity with using `array` due to `texture_2d_array` and other dimensional array types. 
 
-With bindless, resources textures and samplers are decoupled so to sample a texture you supply both a `texture` and a `sampler` to the `texture_sample` macro, which can be used on textures and tables of varying dimensitonality. Constant buffer tables can be accessed through raw `[]` operator access. Smplers can also be a `table` type.
+With bindless rendering, textures and samplers need to be decoupled so to sample a texture you supply both a `texture` and a `sampler` to the `texture_sample` macro, which can be used on textures and tables of varying dimensitonality. Constant buffer tables can be accessed through raw `[]` operator access. Smplers can also be a `table` type.
 
 Reflection info for creating descriptor sets from these resource tables will be generated and output into the `.json` file after compilation.
 
