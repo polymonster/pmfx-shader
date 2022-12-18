@@ -83,6 +83,23 @@ def enclose(open_symbol, close_symbol, source, pos):
     return pos
 
 
+# returns the interior range of the string contained within open_symbol and close_symbol
+def enclose_start_end(open_symbol, close_symbol, source, pos):
+    pos = source.find(open_symbol, pos)
+    if pos == -1:
+        return (-1, -1)
+    start_pos = pos+1
+    stack = [open_symbol]
+    pos += 1
+    while len(stack) > 0 and pos < len(source):
+        if source[pos] == open_symbol:
+            stack.append(open_symbol)
+        if source[pos] == close_symbol:
+            stack.pop()
+        pos += 1
+    return (start_pos, pos-1)
+
+
 # parse a string and return the end position in source, taking into account escaped \" quotes
 def enclose_string(start, source):
     pos = start+1
@@ -134,6 +151,20 @@ def type_name(type_declaration):
     pos = type_declaration.find("{")
     name = type_declaration[:pos].strip().split()[1]
     return name
+
+
+# get the typename stripping resource_array[21] arrays and return (resource_array, 21)
+def type_name_array(type_declaration):
+    pos = type_declaration.find("[")
+    if pos != -1:
+        start, end = enclose_start_end("[", "]", type_declaration, 0)
+        array_size_str = type_declaration[start:end]
+        if len(array_size_str) == 0:
+            array_size = -1
+        else:
+            array_size = int(array_size_str)
+        return (type_declaration[:pos], array_size)
+    return (type_declaration, None)
 
 
 # tidy source with consistent spaces, remove tabs and comments to make subsequent operations easier
@@ -289,7 +320,7 @@ def get_struct_members(declaration):
             break
         bracket_pos = declaration.find("{", pos)
         start_pos = pos
-        if bracket_pos < end_pos:
+        if us(bracket_pos) < end_pos:
             end_pos = enclose("{", "}", declaration, start_pos)
         statement = declaration[start_pos:end_pos]
         member_type = "variable"
@@ -300,9 +331,14 @@ def get_struct_members(declaration):
         if attr_start != -1:
             attr_end = statement.find("]]")
             attrubutes = statement[attr_start+2:attr_end]
+        decl = statement.strip()
+        type_decl = breakdown_type_decl(decl)
         members.append({
-            "type": member_type,
-            "declaration": statement,
+            "member_type": member_type,
+            "data_type": type_decl["type"],
+            "name": type_decl["name"],
+            "default": type_decl["default"],
+            "declaration": decl,
             "attributes": attrubutes
         })
         pos = end_pos + 1
@@ -312,7 +348,8 @@ def get_struct_members(declaration):
 def get_members(type_specifier, declaration):
     lookup = {
         "enum": get_enum_members,
-        "struct": get_struct_members
+        "struct": get_struct_members,
+        "cbuffer": get_struct_members
     }
     if type_specifier in lookup:
         return lookup[type_specifier](declaration)
@@ -391,6 +428,14 @@ def find_type_attributes(source, type_pos):
     return None
 
 
+# extract the type of the template parameter ie. StructuredBuffer<float4> (template_type = float4)
+def get_template_type(type_decl):
+    start, end = enclose_start_end("<", ">", type_decl, 0)
+    if start != -1 and end != -1:
+        return type_decl[start:end]
+    return None
+    
+
 # finds all type declarations.. ie struct, enum. returning them in dict with name, and code
 def find_type_declarations(type_specifier, source):
     results = []
@@ -414,6 +459,7 @@ def find_type_declarations(type_specifier, source):
                 members = get_members(type_specifier, declaration)
             scope = get_type_declaration_scope(source, start_pos)
             name = type_name(declaration)
+            name, array_size = type_name_array(name)
             qualified_name = ""
             for s in scope:
                 if s["type"] == "namespace":
@@ -421,17 +467,20 @@ def find_type_declarations(type_specifier, source):
             qualified_name += name
             typedefs, typedef_names = find_typedefs(qualified_name, source)
             attributes = find_type_attributes(source, start_pos)
+            decl = declaration.strip()
             results.append({
                 "type": type_specifier,
                 "name": name,
                 "qualified_name": qualified_name,
-                "declaration": declaration,
+                "declaration": declaration.strip(),
                 "members": members,
                 "scope": scope,
                 "typedefs": typedefs,
                 "typedef_names": typedef_names,
                 "attributes": attributes,
-                "forward_declaration": forward
+                "forward_declaration": forward,
+                "template_type": get_template_type(decl),
+                "array_size": array_size
             })
             pos = end_pos+1
         else:
@@ -529,6 +578,24 @@ def arg_list(args):
     return a
 
 
+# breakdown a type decl ie. StructName variable_name = {}, into data_type: StructName, name: variable_name, default = {}
+def breakdown_type_decl(a):
+    # any other args
+    dp = a.find("=")
+    default = None
+    decl = a
+    if dp != -1:
+        # extract default
+        default = a[dp + 1:].strip()
+        decl = a[:dp - 1]
+    name_pos = decl.rfind(" ")
+    return {
+        "type": decl[:name_pos],
+        "name": decl[name_pos:],
+        "default": default
+    }
+
+
 # break down arg decl (int a, int b, int c = 0) into contextual info
 def breakdown_function_args(args):
     args = arg_list(args)
@@ -592,8 +659,10 @@ def find_functions(source):
         if statement_end == -1:
             break
         statement = source[pos:statement_end]
+        src_start = pos
         pp = statement.find("(")
         ep = statement.find("=")
+        skip = statement_end+1
         if pp != -1:
             next = next_token(statement, pp)
             if (ep == -1 or pp < ep) and next != "*":
@@ -603,6 +672,7 @@ def find_functions(source):
                     body_end = enclose("{", "}", source, statement_end-1)
                     body = source[statement_end-1:body_end]
                     statement_end = body_end+1
+                    skip = body_end
                 args_end = enclose("(", ")", statement, pp)-1
                 name_pos = statement[:pp].rfind(" ")
                 name = statement[name_pos+1:pp]
@@ -622,10 +692,11 @@ def find_functions(source):
                     "scope": scope,
                     "body": body,
                     "template": template,
-                    "inline": inline
+                    "inline": inline,
+                    "source": source[src_start:body_end].strip()
                 })
                 function_names.append(name)
-        pos = statement_end + 1
+        pos = skip
         if pos > len(source):
             break
     return functions, function_names

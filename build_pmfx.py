@@ -1060,7 +1060,8 @@ def find_pmfx_json(shader_file_text):
         json_loc = shader_file_text.find("{", pmfx_loc)
         pmfx_end = enclose_brackets(shader_file_text[pmfx_loc:])
         pmfx_json = jsn.loads(shader_file_text[json_loc:pmfx_end + json_loc])
-        return pmfx_json
+        shader_text_removed = shader_file_text[:pmfx_loc] + shader_file_text[pmfx_loc + pmfx_end:].strip()
+        return pmfx_json, shader_text_removed
     else:
         # shader can have no pmfx, provided it supplies vs_main and ps_main
         if find_function(shader_file_text, "vs_main") and find_function(shader_file_text, "ps_main"):
@@ -2710,6 +2711,113 @@ def compile_single_shader(_tp):
             print("error: invalid shader platform " + _info.shader_platform, flush=True)
 
 
+# parses the register for the resource unit, ie. : register(t0)
+def parse_register(type_dict):
+    rp = cgu.find_token("register", type_dict["declaration"])
+    if rp != -1:
+        start, end = cgu.enclose_start_end("(", ")", type_dict["declaration"], rp)
+        type_dict["register_index"] = type_dict["declaration"][start:end]
+        return
+    type_dict["register"] = None
+
+
+# new generation of pmfx
+def parse_pmfx_2(file, root):
+    file_and_path = os.path.join(root, file)
+    shader_file_text_full, included_files = create_shader_set(file_and_path, root)
+    pmfx_json, shader_source = find_pmfx_json(shader_file_text_full)
+
+    # pmfx dictionary
+    pmfx = dict()
+    pmfx["pmfx"] = pmfx_json
+    pmfx["source"] = cgu.format_source(shader_source, 4)
+    
+    # functions
+    pmfx["functions"] = dict()
+    functions, function_names = cgu.find_functions(pmfx["source"])
+    for function in functions:
+        if function["name"] != "register":
+            pmfx["functions"][function["name"]] = function
+
+    # type mappings
+    mapping = [
+        {"category": "structs", "identifier": "struct"},
+        {"category": "cbuffers", "identifier": "cbuffer"},
+        {"category": "cbuffers", "identifier": "ConstantBuffer"},
+        {"category": "structured_buffers", "identifier": "StructuredBuffer"},
+        {"category": "samplers", "identifier": "SamplerState"},
+        {"category": "textures", "identifier": "Texture1D"},
+        {"category": "textures", "identifier": "Texture2D"},
+        {"category": "textures", "identifier": "Texture3D"}
+    ]
+
+    # find types
+    pmfx["resources"] = dict()
+    for map in mapping:
+        decls, names = cgu.find_type_declarations(map["identifier"], pmfx["source"])
+        if map["category"] not in pmfx["resources"].keys():
+            pmfx["resources"][map["category"]] = dict()
+        for decl in decls:
+            parse_register(decl)
+            if decl["name"] in pmfx["resources"][map["category"]]:
+                assert(0)
+            pmfx["resources"][map["category"]][decl["name"]] = decl
+
+    # for each technique
+    # - for each shader type
+    # - - add entry function
+    # - - - add used functions
+    # - - - - add used resources
+
+    shader_stages = [
+        "vs",
+        "ps",
+        "cs"
+    ]
+
+    resource_categories = [
+        "structs",
+        "cbuffers",
+        "structured_buffers",
+        "textures"
+    ]
+
+    if "techniques" in pmfx["pmfx"]:
+        for technique in pmfx["pmfx"]["techniques"]:
+            print("processing: {}".format(technique))
+            for stage in shader_stages:
+                if stage in pmfx["pmfx"]["techniques"][technique]:
+                    print("{}:".format(stage))
+                    # grab entry point
+                    added_functions = []
+                    entry_point = pmfx["pmfx"]["techniques"][technique][stage]
+                    src = pmfx["functions"][entry_point]["source"]
+                    complete = False
+                    added_functions.append(entry_point)
+                    # recursively insert functions
+                    while not complete:
+                        complete = True
+                        for func in pmfx["functions"]:
+                            if func not in added_functions:
+                                if cgu.find_token(func, src) != -1:
+                                    added_functions.append(func)
+                                    src = pmfx["functions"][func]["source"] + "\n" + src
+                                    complete = False
+                                    break
+                    res = ""
+                    # now add used resources
+                    for category in resource_categories:
+                        for resource in pmfx["resources"][category]:
+                            if cgu.find_token(resource, src) != -1:
+                                res += pmfx["resources"][category][resource]["declaration"] + "\n"
+
+                    # find used functions and add them
+                    src = cgu.format_source(res + src, 4)
+                    print(src)
+
+    # print(json.dumps(pmfx, indent=4))
+
+
 # parse a pmfx file which is a collection of techniques and permutations, made up of vs, ps, cs combinations
 def parse_pmfx(file, root):
     global _info
@@ -2998,12 +3106,12 @@ def main():
                 for file in files:
                     if file.endswith(".pmfx"):
                         try:
-                            parse_pmfx(file, root)
+                            parse_pmfx_2(file, root)
                         except Exception as e:
                             print("error: while processing", os.path.join(root, file), flush=True)
                             raise e
         else:
-            parse_pmfx(source, "")
+            parse_pmfx_2(source, "")
 
     # error code for ci
     sys.exit(_info.error_code)
