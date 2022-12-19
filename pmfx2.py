@@ -119,8 +119,16 @@ def generate_descriptor_layout(resources):
 
 
 # compile a hlsl version 2
-def compile_shader_hlsl(src, temp_path, output_path, filename):
-    open(os.path.join(temp_path, filename), "w+").write(src)
+def compile_shader_hlsl(info, src, temp_path, output_path, filename, stage, entry_point):
+    exe = os.path.join(info.tools_dir, "bin", "dxc", "dxc")
+    temp_filepath = os.path.join(temp_path, filename)
+    output_filepath = os.path.join(output_path, filename + "c")
+    open(temp_filepath, "w+").write(src)
+    cmdline = "{} -T {}_{} -E {} -Fo {} {}".format(exe, stage, info.shader_version, entry_point, output_filepath, temp_filepath)
+    print(cmdline)
+    error_code, error_list, output_list = build_pmfx.call_wait_subprocess(cmdline)
+    print(error_list)
+    print(output_list)
 
 
 # new generation of pmfx
@@ -245,7 +253,7 @@ def generate_pmfx(file, root):
                     # compile shader source
                     stage_source_filepath = "{}.{}".format(pipeline_key, stage)
                     pipeline_json[stage] = stage_source_filepath
-                    compile_shader_hlsl(src, temp_path, output_path, stage_source_filepath)
+                    compile_shader_hlsl(info, src, temp_path, output_path, stage_source_filepath, stage, entry_point)
             # build descriptor set
             pipeline_json["descriptor_layout"] = generate_descriptor_layout(resources)
             # store info in dict
