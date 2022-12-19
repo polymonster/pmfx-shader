@@ -347,8 +347,8 @@ def get_struct_members(declaration):
             semantic = declaration[semantic_pos:skip].strip().strip(";").strip(":").strip()
         members.append({
             "member_type": member_type,
-            "data_type": type_decl["type"],
-            "name": type_decl["name"],
+            "data_type": type_decl["type"].strip(),
+            "name": type_decl["name"].strip(),
             "default": type_decl["default"],
             "declaration": decl,
             "attributes": attrubutes,

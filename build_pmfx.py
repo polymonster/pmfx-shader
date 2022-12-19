@@ -2960,9 +2960,9 @@ def get_info():
 
 
 # main function to avoid shadowing
-def main(parse_function):
+def main(parse_function, version):
     print("--------------------------------------------------------------------------------", flush=True)
-    print("pmfx shader (v1.1) -------------------------------------------------------------", flush=True)
+    print("pmfx shader (v{}) -------------------------------------------------------------".format(version), flush=True)
     print("--------------------------------------------------------------------------------", flush=True)
 
     global _info
@@ -3018,7 +3018,7 @@ def main(parse_function):
 
 # entry
 if __name__ == "__main__":
-    main(parse_pmfx)
+    main(parse_pmfx, "1.1")
 
 
 # builds self into an exe

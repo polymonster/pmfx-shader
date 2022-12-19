@@ -2,6 +2,7 @@ import build_pmfx
 import re
 import os
 import cgu
+import json
 
 # separate name (alpha characters) from index (numerical_characters)
 def separate_name_index(src):
@@ -54,7 +55,8 @@ def parse_vertex_layout(type_dict):
         semantic_name, semantic_index = separate_name_index(member["semantic"])
         num_elems, elem_size, size = get_type_size_info(member["data_type"])
         input = {
-            "name": semantic_name,
+            "name": member["name"],
+            "semantic_name": semantic_name,
             "semantic_index": semantic_index,
             "num_elements": num_elems,
             "element_size": elem_size,
@@ -115,8 +117,8 @@ def parse_descriptor_layout(resources):
 
 
 # compile a hlsl version 2
-def compile_shader_hlsl(src):
-    print(src)
+def compile_shader_hlsl(src, temp_path, output_path, filename):
+    open(os.path.join(temp_path, filename), "w+").write(src)
 
 
 # new generation of pmfx
@@ -184,6 +186,8 @@ def generate_pmfx(file, root):
         "textures"
     ]
 
+    output_json = dict()
+
     if "pipelines" in pmfx["pmfx"]:
         pipelines = pmfx["pmfx"]["pipelines"]
         for pipeline_key in pipelines:
@@ -191,6 +195,7 @@ def generate_pmfx(file, root):
             print("processing: {}".format(pipeline_key))
             resources = dict()
             vertex_layout = dict()
+            pipeline_json = dict()
             for stage in shader_stages:
                 if stage in pipeline:
                     print("{}:".format(stage))
@@ -225,20 +230,22 @@ def generate_pmfx(file, root):
                         for input in pmfx["functions"][entry_point]["args"]:
                             t = input["type"]
                             if t in pmfx["resources"]["structs"]:
-                                vertex_layout = parse_vertex_layout(pmfx["resources"]["structs"][t])
+                                pipeline_json["vertex_layout"] = parse_vertex_layout(pmfx["resources"]["structs"][t])
                     src = cgu.format_source(res + src, 4)
                     # compile shader source
-                    compile_shader_hlsl(src)
+                    stage_source_filepath = "{}.{}".format(pipeline_key, stage)
+                    pipeline_json[stage] = stage_source_filepath
+                    compile_shader_hlsl(src, temp_path, output_path, stage_source_filepath)
             # build descriptor set
-            descriptor_layout = parse_descriptor_layout(resources)
+            pipeline_json["descriptor_layout"] = parse_descriptor_layout(resources)
+            # store info in dict
+            output_json[pipeline_key] = pipeline_json
 
-            pipeline_json = dict()
-            pipeline_json["vertex_layout"] = vertex_layout
-            pipeline_json["descriptor_layout"] = descriptor_layout
-
-            # print(json.dumps(pipeline_json, indent=4))
+        # write info per pmfx, containing multiple pipelines
+        json_filepath = os.path.join(output_path, "{}.json".format(name))
+        open(json_filepath, "w+").write(json.dumps(output_json, indent=4))
 
 
 # entry
 if __name__ == "__main__":
-    build_pmfx.main(generate_pmfx)
+    build_pmfx.main(generate_pmfx, "2.0")
