@@ -69,6 +69,11 @@ def display_name(token, title):
     return spaced.strip()
 
 
+# separate alpha and numeric characters ie. TEXCOORD0 becomes (TEXCOORD, 0)
+def separate_alpha_numeric(src):
+    pass
+
+
 # finds the end of a body of text enclosed between 2 symbols ie. [], {}, <>
 def enclose(open_symbol, close_symbol, source, pos):
     pos = source.find(open_symbol, pos)
@@ -315,9 +320,13 @@ def get_struct_members(declaration):
     members = []
     pos = declaration.find("{")+1
     while pos != -1:
+        semantic_pos = declaration.find(":", pos)
         end_pos = declaration.find(";", pos)
         if end_pos == -1:
             break
+        skip = end_pos
+        if us(semantic_pos) < end_pos:
+            end_pos = semantic_pos
         bracket_pos = declaration.find("{", pos)
         start_pos = pos
         if us(bracket_pos) < end_pos:
@@ -333,15 +342,19 @@ def get_struct_members(declaration):
             attrubutes = statement[attr_start+2:attr_end]
         decl = statement.strip()
         type_decl = breakdown_type_decl(decl)
+        semantic = None
+        if semantic_pos != -1:
+            semantic = declaration[semantic_pos:skip].strip().strip(";").strip(":").strip()
         members.append({
             "member_type": member_type,
             "data_type": type_decl["type"],
             "name": type_decl["name"],
             "default": type_decl["default"],
             "declaration": decl,
-            "attributes": attrubutes
+            "attributes": attrubutes,
+            "semantic": semantic
         })
-        pos = end_pos + 1
+        pos = skip + 1
     return members
 
 
@@ -668,6 +681,7 @@ def find_functions(source):
             if (ep == -1 or pp < ep) and next != "*":
                 # this a function decl, so break down into context
                 body = ""
+                body_end = skip
                 if statement_token == "{":
                     body_end = enclose("{", "}", source, statement_end-1)
                     body = source[statement_end-1:body_end]

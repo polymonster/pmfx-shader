@@ -29,9 +29,9 @@ cbuffer per_pass_vs : register(b1)
 };
 
 SamplerState decl_sampler : register(s0);
-StructuredBuffer<sb_sb> decl_structured_buffer : register(u0);
+StructuredBuffer<sb_sb> decl_structured_buffer : register(u0, space0);
 ConstantBuffer<sbsb> decl_cbuffer_array[] : register(b2);
-ConstantBuffer<sbsb> decl_cbuffer_array_bounded[69] : register(b2);
+ConstantBuffer<sbsb> decl_cbuffer_array_bounded[69] : register(b3, space0);
 
 Texture1D decl_texture1d : register(t0);
 Texture2D decl_texture2d : register(t1);
@@ -62,28 +62,29 @@ ps_output ps_main()
 }
 
 pmfx: {
-    techniques: {
+    version: 2
+    pipelines: {
         basic_lit: {
             vs: vs_main
             ps: ps_main
+            vertex_input: {
+
+            }
             descriptor_layout: {
 
             }
-        }
-    }
-    pipeline: {
-        blend_info: {
+            blend_info: {
 
-        }
-        mrt_blend_info: {
+            }
+            mrt_blend_info: {
 
-        }
-        depth_stencil_info: {
+            }
+            depth_stencil_info: {
 
-        }
-        raster_info: {
+            }
+            raster_info: {
 
+            }
         }
-        technique: basic_lit
     }
 }
