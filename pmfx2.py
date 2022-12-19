@@ -48,7 +48,7 @@ def get_type_size_info(type):
 
 
 # parses a type and generates a vertex layout, array of elements with sizes and offsets
-def parse_vertex_layout(type_dict):
+def generate_vertex_layout(type_dict):
     offset = 0
     layout = list()
     for member in type_dict["members"]:
@@ -56,12 +56,13 @@ def parse_vertex_layout(type_dict):
         num_elems, elem_size, size = get_type_size_info(member["data_type"])
         input = {
             "name": member["name"],
-            "semantic_name": semantic_name,
-            "semantic_index": semantic_index,
-            "num_elements": num_elems,
-            "element_size": elem_size,
-            "size": size,
-            "offset": offset
+            "semantic": semantic_name,
+            "index": semantic_index,
+            "format": "Unknown",
+            "aligned_byte_offset": offset,
+            "input_slot": 0,
+            "input_slot_class": "PerVertex",
+            "step_rate": 0
         }
         offset += size
         layout.append(input)
@@ -70,31 +71,31 @@ def parse_vertex_layout(type_dict):
 
 # shader visibility can be on a single stage or all
 def get_shader_visibility(vis):
-    if len(vis) > 1:
-        return "all"
-    elif len(vis) == 1:
+    if len(vis) == 1:
         stages = {
-            "vs": "vertex",
-            "ps": "fragment",
-            "cs": "compute"
+            "vs": "Vertex",
+            "ps": "Fragment",
+            "cs": "Compute"
         }
         return stages[vis[0]]
+    return "All"
 
 
 # return the binding type from hlsl register names
 def get_binding_type(register_type):
     type_lookup = {
-        "t": "shader_resource",
-        "b": "constant_buffer",
-        "u": "unordered_access",
-        "s": "sampler"
+        "t": "ShaderResource",
+        "b": "ConstantBuffer",
+        "u": "UnorderedAccess",
+        "s": "Sampler"
     }
     return type_lookup[register_type]
 
 
 # builds a descriptor set from resources used in the pipeline
-def parse_descriptor_layout(resources):
+def generate_descriptor_layout(resources):
     bindable_resources = [
+        "cbuffer",
         "ConstantBuffer",
         "StructuredBuffer",
         "Texture1D",
@@ -105,7 +106,8 @@ def parse_descriptor_layout(resources):
     descriptor_layout["bindings"] = list()
     for r in resources:
         resource = resources[r]
-        if resource["type"] in bindable_resources:
+        resource_type = resource["type"]
+        if resource_type in bindable_resources:
             binding = {
                 "shader_register": resource["shader_register"],
                 "register_space": resource["register_space"],
@@ -187,18 +189,17 @@ def generate_pmfx(file, root):
     ]
 
     output_json = dict()
+    output_json["pipelines"] = dict()
 
     if "pipelines" in pmfx["pmfx"]:
         pipelines = pmfx["pmfx"]["pipelines"]
         for pipeline_key in pipelines:
             pipeline = pipelines[pipeline_key]
-            print("processing: {}".format(pipeline_key))
             resources = dict()
-            vertex_layout = dict()
             pipeline_json = dict()
             for stage in shader_stages:
                 if stage in pipeline:
-                    print("{}:".format(stage))
+                    print("processing: {}.{}".format(pipeline_key, stage))
                     # grab entry point
                     added_functions = []
                     entry_point = pipeline[stage]
@@ -219,27 +220,36 @@ def generate_pmfx(file, root):
                     res = ""
                     for category in resource_categories:
                         for resource in pmfx["resources"][category]:
-                            if cgu.find_token(resource, src) != -1:
-                                res += pmfx["resources"][category][resource]["declaration"] + ";\n"
-                                resources[resource] = pmfx["resources"][category][resource]
-                                if "visibility" not in resources[resource]:
-                                    resources[resource]["visibility"] = list()
-                                resources[resource]["visibility"].append(stage)
+                            tokens = [
+                                resource
+                            ]
+                            # cbuffers with inline decl need to check for usage per member
+                            if pmfx["resources"][category][resource]["type"] == "cbuffer":
+                                for member in pmfx["resources"][category][resource]["members"]:
+                                    tokens.append(member["name"])
+                            for token in tokens:
+                                if cgu.find_token(token, src) != -1:
+                                    res += pmfx["resources"][category][resource]["declaration"] + ";\n"
+                                    resources[resource] = pmfx["resources"][category][resource]
+                                    if "visibility" not in resources[resource]:
+                                        resources[resource]["visibility"] = list()
+                                    resources[resource]["visibility"].append(stage)
+                                    break
                     # extract vs_input (input layout)
                     if stage == "vs":
                         for input in pmfx["functions"][entry_point]["args"]:
                             t = input["type"]
                             if t in pmfx["resources"]["structs"]:
-                                pipeline_json["vertex_layout"] = parse_vertex_layout(pmfx["resources"]["structs"][t])
+                                pipeline_json["vertex_layout"] = generate_vertex_layout(pmfx["resources"]["structs"][t])
                     src = cgu.format_source(res + src, 4)
                     # compile shader source
                     stage_source_filepath = "{}.{}".format(pipeline_key, stage)
                     pipeline_json[stage] = stage_source_filepath
                     compile_shader_hlsl(src, temp_path, output_path, stage_source_filepath)
             # build descriptor set
-            pipeline_json["descriptor_layout"] = parse_descriptor_layout(resources)
+            pipeline_json["descriptor_layout"] = generate_descriptor_layout(resources)
             # store info in dict
-            output_json[pipeline_key] = pipeline_json
+            output_json["pipelines"][pipeline_key] = pipeline_json
 
         # write info per pmfx, containing multiple pipelines
         json_filepath = os.path.join(output_path, "{}.json".format(name))
