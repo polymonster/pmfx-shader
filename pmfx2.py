@@ -72,6 +72,7 @@ def vertex_format_from_type(type):
     }
     if type in lookup:
         return lookup[type]
+    assert(0)
     return "Unknown"
 
 
@@ -128,7 +129,8 @@ def generate_descriptor_layout(pmfx_pipeline, resources):
         "StructuredBuffer",
         "Texture1D",
         "Texture2D",
-        "Texture3D"
+        "Texture3D",
+        "SamplerState"
     ]
     descriptor_layout = dict()
     descriptor_layout["bindings"] = list()
@@ -172,10 +174,12 @@ def compile_shader_hlsl(info, src, temp_path, output_path, filename, stage, entr
     output_filepath = os.path.join(output_path, filename + "c")
     open(temp_filepath, "w+").write(src)
     cmdline = "{} -T {}_{} -E {} -Fo {} {}".format(exe, stage, info.shader_version, entry_point, output_filepath, temp_filepath)
-    print(cmdline)
     error_code, error_list, output_list = build_pmfx.call_wait_subprocess(cmdline)
-    print(error_list)
-    print(output_list)
+    if error_code:
+        for err in error_list:
+            print(err, flush=True)
+        for out in output_list:
+            print(out, flush=True)
 
 
 # new generation of pmfx
@@ -196,7 +200,6 @@ def generate_pmfx(file, root):
     output_path = os.path.join(info.output_dir, name)
     os.makedirs(temp_path, exist_ok=True)
     os.makedirs(output_path, exist_ok=True)
-    print(temp_path)
     
     # functions
     pmfx["functions"] = dict()
@@ -240,7 +243,8 @@ def generate_pmfx(file, root):
         "structs",
         "cbuffers",
         "structured_buffers",
-        "textures"
+        "textures",
+        "samplers"
     ]
 
     output_json = dict()
@@ -274,21 +278,33 @@ def generate_pmfx(file, root):
                     # now add used resource src decls
                     res = ""
                     for category in resource_categories:
-                        for resource in pmfx["resources"][category]:
-                            tokens = [
-                                resource
-                            ]
+                        for r in pmfx["resources"][category]:
+                            tokens = [r]
+                            resource = pmfx["resources"][category][r]
                             # cbuffers with inline decl need to check for usage per member
-                            if pmfx["resources"][category][resource]["type"] == "cbuffer":
-                                for member in pmfx["resources"][category][resource]["members"]:
+                            if category == "cbuffers":
+                                for member in resource["members"]:
                                     tokens.append(member["name"])
+                            # types with templates need to include structs
+                            if resource["template_type"]:
+                                template_typeame = resource["template_type"]
+                                if template_typeame in pmfx["resources"]["structs"]:
+                                    struct_resource = pmfx["resources"]["structs"][template_typeame]
+                                    # todo: fold 
+                                    res += struct_resource["declaration"] + ";\n"
+                                    resources[template_typeame] = struct_resource
+                                    if "visibility" not in resources[template_typeame]:
+                                        resources[template_typeame]["visibility"] = list()
+                                    resources[template_typeame]["visibility"].append(stage)
+                            # add 
                             for token in tokens:
                                 if cgu.find_token(token, src) != -1:
-                                    res += pmfx["resources"][category][resource]["declaration"] + ";\n"
-                                    resources[resource] = pmfx["resources"][category][resource]
-                                    if "visibility" not in resources[resource]:
-                                        resources[resource]["visibility"] = list()
-                                    resources[resource]["visibility"].append(stage)
+                                    # todo: fold 
+                                    res += resource["declaration"] + ";\n"
+                                    resources[r] = resource
+                                    if "visibility" not in resources[r]:
+                                        resources[r]["visibility"] = list()
+                                    resources[r]["visibility"].append(stage)
                                     break
                     # extract vs_input (input layout)
                     if stage == "vs":
@@ -296,7 +312,7 @@ def generate_pmfx(file, root):
                             t = input["type"]
                             if t in pmfx["resources"]["structs"]:
                                 pipeline_json["vertex_layout"] = generate_vertex_layout(pmfx["resources"]["structs"][t])
-                    src = cgu.format_source(res + src, 4)
+                    src = cgu.format_source(res, 4) + "\n" + cgu.format_source(src, 4)
                     # compile shader source
                     stage_source_filepath = "{}.{}".format(pipeline_key, stage)
                     pipeline_json[stage] = stage_source_filepath + "c"
@@ -314,3 +330,10 @@ def generate_pmfx(file, root):
 # entry
 if __name__ == "__main__":
     build_pmfx.main(generate_pmfx, "2.0")
+
+    # todo:
+    # compile shaders only once, not for each technique combination
+    # include handling
+    # timestamps
+    # proper error handling
+    # allow single file compilation (pmbuild... learn it)
