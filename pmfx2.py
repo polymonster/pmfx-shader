@@ -47,6 +47,34 @@ def get_type_size_info(type):
     return lookup[type]
 
 
+# returnnumber of 32 bit values for a member of a push constants cbuffer
+def get_num_32bit_values(type):
+    lookup = {
+        "float": 1, 
+        "float2": 2,
+        "float3": 3,
+        "float4": 4,
+        "float2x2": 8,
+        "float3x4": 12,
+        "float4x3": 12,
+        "float4x4": 16,
+    }
+    return lookup[type]
+
+
+# returns a vertex format type from the data type
+def vertex_format_from_type(type):
+    lookup = {
+        "float": "R32f",
+        "float2": "RG32f",
+        "float3": "RGB32f",
+        "float4": "RGBA32f"
+    }
+    if type in lookup:
+        return lookup[type]
+    return "Unknown"
+
+
 # parses a type and generates a vertex layout, array of elements with sizes and offsets
 def generate_vertex_layout(type_dict):
     offset = 0
@@ -58,7 +86,7 @@ def generate_vertex_layout(type_dict):
             "name": member["name"],
             "semantic": semantic_name,
             "index": semantic_index,
-            "format": "Unknown",
+            "format": vertex_format_from_type(member["data_type"]),
             "aligned_byte_offset": offset,
             "input_slot": 0,
             "input_slot_class": "PerVertex",
@@ -93,7 +121,7 @@ def get_binding_type(register_type):
 
 
 # builds a descriptor set from resources used in the pipeline
-def generate_descriptor_layout(resources):
+def generate_descriptor_layout(pmfx_pipeline, resources):
     bindable_resources = [
         "cbuffer",
         "ConstantBuffer",
@@ -104,9 +132,28 @@ def generate_descriptor_layout(resources):
     ]
     descriptor_layout = dict()
     descriptor_layout["bindings"] = list()
+    descriptor_layout["push_constants"] = list()
+    descriptor_layout["samplers"] = list()
     for r in resources:
         resource = resources[r]
         resource_type = resource["type"]
+        # check if we have flagged resource as push constants
+        if "push_constants" in pmfx_pipeline:
+            if r in pmfx_pipeline["push_constants"]:
+                # work out how many 32 bit values
+                num_values = 0
+                for member in resource["members"]:
+                    num_values += get_num_32bit_values(member["data_type"])
+                push_constants = {
+                    "shader_register": resource["shader_register"],
+                    "register_space": resource["register_space"],
+                    "binding_type": get_binding_type(resource["register_type"]),
+                    "visibility": get_shader_visibility(resource["visibility"]),
+                    "num_values": num_values
+                }
+                descriptor_layout["push_constants"].append(push_constants)
+                continue
+        # fall trhough and add as a bindable resource
         if resource_type in bindable_resources:
             binding = {
                 "shader_register": resource["shader_register"],
@@ -252,10 +299,10 @@ def generate_pmfx(file, root):
                     src = cgu.format_source(res + src, 4)
                     # compile shader source
                     stage_source_filepath = "{}.{}".format(pipeline_key, stage)
-                    pipeline_json[stage] = stage_source_filepath
+                    pipeline_json[stage] = stage_source_filepath + "c"
                     compile_shader_hlsl(info, src, temp_path, output_path, stage_source_filepath, stage, entry_point)
             # build descriptor set
-            pipeline_json["descriptor_layout"] = generate_descriptor_layout(resources)
+            pipeline_json["descriptor_layout"] = generate_descriptor_layout(pipeline, resources)
             # store info in dict
             output_json["pipelines"][pipeline_key] = pipeline_json
 
