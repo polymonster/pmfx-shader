@@ -4,6 +4,24 @@ import os
 import cgu
 import json
 
+
+# log formatted json
+def log_json(j):
+    print(json.dumps(j, indent=4), flush=True)
+
+
+# member wise merge 2 dicts, second will overwrite dest
+def merge_dicts(dest, second):
+    for k, v in second.items():
+        if type(v) == dict:
+            if k not in dest or type(dest[k]) != dict:
+                dest[k] = dict()
+            merge_dicts(dest[k], v)
+        else:
+            dest[k] = v
+    return dest
+
+
 # separate name (alpha characters) from index (numerical_characters)
 def separate_name_index(src):
     name = re.sub(r'[0-9]', '', src)
@@ -121,21 +139,35 @@ def get_binding_type(register_type):
     return type_lookup[register_type]
 
 
+# retuns the array size of a descriptor binding -1 can indicate unbounded, which translates to None
+def get_descriptor_array_size(resource):
+    if "array_size" in resource:
+        if resource["array_size"] == -1:
+            return None
+        else:
+            return resource["array_size"]
+    return None
+
+
 # builds a descriptor set from resources used in the pipeline
-def generate_descriptor_layout(pmfx_pipeline, resources):
+def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
     bindable_resources = [
         "cbuffer",
         "ConstantBuffer",
         "StructuredBuffer",
+        "RWStructuredBuffer",
         "Texture1D",
         "Texture2D",
         "Texture3D",
+        "RWTexture1D",
+        "RWTexture2D",
+        "RWTexture3D",
         "SamplerState"
     ]
     descriptor_layout = dict()
     descriptor_layout["bindings"] = list()
     descriptor_layout["push_constants"] = list()
-    descriptor_layout["samplers"] = list()
+    descriptor_layout["static_samplers"] = list()
     for r in resources:
         resource = resources[r]
         resource_type = resource["type"]
@@ -146,6 +178,7 @@ def generate_descriptor_layout(pmfx_pipeline, resources):
                 num_values = 0
                 for member in resource["members"]:
                     num_values += get_num_32bit_values(member["data_type"])
+                # todo: fold
                 push_constants = {
                     "shader_register": resource["shader_register"],
                     "register_space": resource["register_space"],
@@ -155,15 +188,38 @@ def generate_descriptor_layout(pmfx_pipeline, resources):
                 }
                 descriptor_layout["push_constants"].append(push_constants)
                 continue
+        if "static_samplers" in pmfx_pipeline:
+            if r in pmfx_pipeline["static_samplers"]:
+                lookup = pmfx_pipeline["static_samplers"][r]
+                 # todo: fold
+                static_sampler = {
+                    "shader_register": resource["shader_register"],
+                    "register_space": resource["register_space"],
+                    "visibility": get_shader_visibility(resource["visibility"]),
+                    "sampler_info": pmfx["sampler_states"][lookup]
+                }
+                descriptor_layout["static_samplers"].append(static_sampler)
+                continue
         # fall trhough and add as a bindable resource
         if resource_type in bindable_resources:
+             # todo: fold
             binding = {
                 "shader_register": resource["shader_register"],
                 "register_space": resource["register_space"],
                 "binding_type": get_binding_type(resource["register_type"]),
-                "visibility": get_shader_visibility(resource["visibility"])
+                "visibility": get_shader_visibility(resource["visibility"]),
+                "num_descriptors": get_descriptor_array_size(resource)
             }
             descriptor_layout["bindings"].append(binding)
+    # sort bindings in index order
+    sorted_bindings = list()
+    for binding in descriptor_layout["bindings"]:
+        insert_pos = 0
+        for i in range(0, len(sorted_bindings)):
+            if binding["shader_register"] < sorted_bindings[i]["shader_register"]:
+                insert_pos = i
+        sorted_bindings.insert(insert_pos, binding)
+    descriptor_layout["bindings"] = sorted_bindings
     return descriptor_layout
 
 
@@ -180,6 +236,46 @@ def compile_shader_hlsl(info, src, temp_path, output_path, filename, stage, entr
             print(err, flush=True)
         for out in output_list:
             print(out, flush=True)
+
+
+# assign default values to all struct members
+def state_with_defaults(state_type, state):
+    state_defaults = {
+        "depth_stencil_states": {
+            "depth_enabled": False,
+            "depth_write_mask": "None",
+            "depth_func": "Always",
+            "stencil_enabled": False,
+            "stencil_read_mask": 0,
+            "stencil_write_mask": 0,
+            "front_face": {
+                "fail": "Keep",
+                "depth_fail": "Keep",
+                "pass": "Keep",
+                "func": "Always"
+            },
+            "back_face": {
+                "fail": "Keep",
+                "depth_fail": "Keep",
+                "pass": "Keep",
+                "func": "Always"
+            }
+        },
+        "sampler_states": {
+            "filter": "Linear",
+            "address_u": "Wrap",
+            "address_v": "Wrap",
+            "address_w": "Wrap",
+            "comparison": None,
+            "border_colour": None,
+            "mip_lod_bias": 0.0,
+            "max_aniso": 0,
+            "min_lod": -1.0,
+            "max_lod": -1.0
+        }
+    }
+    default = dict(state_defaults[state_type])
+    return merge_dicts(default, state)
 
 
 # new generation of pmfx
@@ -208,6 +304,7 @@ def generate_pmfx(file, root):
         if function["name"] != "register":
             pmfx["functions"][function["name"]] = function
 
+
     # type mappings
     mapping = [
         {"category": "structs", "identifier": "struct"},
@@ -215,9 +312,13 @@ def generate_pmfx(file, root):
         {"category": "cbuffers", "identifier": "ConstantBuffer"},
         {"category": "samplers", "identifier": "SamplerState"},
         {"category": "structured_buffers", "identifier": "StructuredBuffer"},
+        {"category": "structured_buffers", "identifier": "RWStructuredBuffer"},
         {"category": "textures", "identifier": "Texture1D"},
         {"category": "textures", "identifier": "Texture2D"},
-        {"category": "textures", "identifier": "Texture3D"}
+        {"category": "textures", "identifier": "Texture3D"},
+        {"category": "textures", "identifier": "RWTexture1D"},
+        {"category": "textures", "identifier": "RWTexture2D"},
+        {"category": "textures", "identifier": "RWTexture3D"},
     ]
 
     # find types
@@ -231,6 +332,12 @@ def generate_pmfx(file, root):
             if decl["name"] in pmfx["resources"][map["category"]]:
                 assert(0)
             pmfx["resources"][map["category"]][decl["name"]] = decl
+
+    # process states (just fill the defaults out)
+    states = [
+        "depth_stencil_states",
+        "sampler_states"
+    ]
 
     # for each pipeline generate code and track used resources
     shader_stages = [
@@ -250,6 +357,15 @@ def generate_pmfx(file, root):
     output_json = dict()
     output_json["pipelines"] = dict()
 
+    # fill state default parameters
+    for state_type in states:
+        if state_type in pmfx["pmfx"]:
+            category = pmfx["pmfx"][state_type]
+            output_json[state_type] = dict()
+            for state in category:
+                output_json[state_type][state] = state_with_defaults(state_type, category[state])
+
+    # process pipelines
     if "pipelines" in pmfx["pmfx"]:
         pipelines = pmfx["pmfx"]["pipelines"]
         for pipeline_key in pipelines:
@@ -272,6 +388,7 @@ def generate_pmfx(file, root):
                             if func not in added_functions:
                                 if cgu.find_token(func, src) != -1:
                                     added_functions.append(func)
+                                    # add attributes
                                     src = pmfx["functions"][func]["source"] + "\n" + src
                                     complete = False
                                     break
@@ -318,7 +435,7 @@ def generate_pmfx(file, root):
                     pipeline_json[stage] = stage_source_filepath + "c"
                     compile_shader_hlsl(info, src, temp_path, output_path, stage_source_filepath, stage, entry_point)
             # build descriptor set
-            pipeline_json["descriptor_layout"] = generate_descriptor_layout(pipeline, resources)
+            pipeline_json["descriptor_layout"] = generate_descriptor_layout(output_json, pipeline, resources)
             # store info in dict
             output_json["pipelines"][pipeline_key] = pipeline_json
 

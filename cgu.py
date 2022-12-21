@@ -661,21 +661,40 @@ def parse_return_type(statement):
     return rt, template, inline
 
 
+# prepends attributes to soiurce coe of functions, structs etc
+def combine_src_attributes(attribs, src):
+    out = "["
+    for attrib in attribs:
+        out += attrib
+    out += "]\n" + src
+    return out
+
+
 # find functions
 def find_functions(source):
     # look for parenthesis to identiy function decls
     functions = []
     function_names = []
     pos = 0
+    attributes = []
     while True:
         statement_end, statement_token = find_first(source, [";", "{"], pos)
         if statement_end == -1:
             break
-        statement = source[pos:statement_end]
+        statement = source[pos:statement_end].strip()
         src_start = pos
         pp = statement.find("(")
         ep = statement.find("=")
         skip = statement_end+1
+        
+        # check for attributes
+        if len(statement) > 0:
+            if statement[0] == "[":
+                start, end = enclose_start_end("[", "]", statement, 0)
+                attributes.append(statement[start:end])
+                pos += start + end + 1
+                continue
+
         if pp != -1:
             next = next_token(statement, pp)
             if (ep == -1 or pp < ep) and next != "*":
@@ -689,7 +708,7 @@ def find_functions(source):
                     skip = body_end
                 args_end = enclose("(", ")", statement, pp)-1
                 name_pos = statement[:pp].rfind(" ")
-                name = statement[name_pos+1:pp]
+                name = statement[name_pos+1:pp].strip()
                 name_unscoped = name.rfind(":")
                 qualifier = ""
                 if name_unscoped != -1:
@@ -707,8 +726,10 @@ def find_functions(source):
                     "body": body,
                     "template": template,
                     "inline": inline,
-                    "source": source[src_start:body_end].strip()
+                    "source": combine_src_attributes(attributes, source[src_start:body_end].strip()).strip(),
+                    "attributes": list(attributes)
                 })
+                attributes.clear()
                 function_names.append(name)
         pos = skip
         if pos > len(source):
