@@ -336,7 +336,7 @@ def generate_pmfx(file, root):
     # process states (just fill the defaults out)
     states = [
         "depth_stencil_states",
-        "sampler_states"
+        "sampler_states",
     ]
 
     # for each pipeline generate code and track used resources
@@ -436,6 +436,9 @@ def generate_pmfx(file, root):
                     compile_shader_hlsl(info, src, temp_path, output_path, stage_source_filepath, stage, entry_point)
             # build descriptor set
             pipeline_json["descriptor_layout"] = generate_descriptor_layout(output_json, pipeline, resources)
+            # topology
+            if "topology" in pipeline:
+                pipeline_json["topology"] = pipeline["topology"]
             # store info in dict
             output_json["pipelines"][pipeline_key] = pipeline_json
 
