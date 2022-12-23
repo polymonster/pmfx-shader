@@ -454,6 +454,9 @@ if __name__ == "__main__":
     # todo:
     # compile shaders only once, not for each technique combination
     # include handling
+    # expand permutations
     # timestamps
     # proper error handling
     # allow single file compilation (pmbuild... learn it)
+    # automate cargo publish
+    # cargo doc options
