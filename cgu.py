@@ -663,6 +663,8 @@ def parse_return_type(statement):
 
 # prepends attributes to soiurce coe of functions, structs etc
 def combine_src_attributes(attribs, src):
+    if len(attribs) == 0:
+        return src
     out = "["
     for attrib in attribs:
         out += attrib

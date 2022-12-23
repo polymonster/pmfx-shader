@@ -63,28 +63,16 @@ ps_output ps_main()
 
 pmfx: {
     version: 2
+    depth_stencil_states: {
+        depth_test_less: {
+
+        }
+    }
     pipelines: {
         basic_lit: {
             vs: vs_main
             ps: ps_main
-            vertex_input: {
-
-            }
-            descriptor_layout: {
-
-            }
-            blend_info: {
-
-            }
-            mrt_blend_info: {
-
-            }
-            depth_stencil_info: {
-
-            }
-            raster_info: {
-
-            }
+            depth_stencil_state: depth_test_less
         }
     }
 }

@@ -4,50 +4,69 @@ import os
 import cgu
 import json
 
-
-# log formatted json
-def log_json(j):
-    print(json.dumps(j, indent=4), flush=True)
-
-
-# member wise merge 2 dicts, second will overwrite dest
-def merge_dicts(dest, second):
-    for k, v in second.items():
-        if type(v) == dict:
-            if k not in dest or type(dest[k]) != dict:
-                dest[k] = dict()
-            merge_dicts(dest[k], v)
-        else:
-            dest[k] = v
-    return dest
+# return names of supported shader stages
+def get_shader_stages():
+    return [
+        "vs",
+        "ps",
+        "cs"
+    ]
 
 
-# separate name (alpha characters) from index (numerical_characters)
-def separate_name_index(src):
-    name = re.sub(r'[0-9]', '', src)
-    index = re.sub(r'[^0-9]','', src)
-    if len(index) == 0:
-        index = 0
-    index = int(index)
-    return (name, index)
+# return the key of state groups, specified in pmfx
+def get_states():
+    return [
+        "depth_stencil_states",
+        "sampler_states",
+        "blend_states",
+        "raster_states"
+    ]
 
 
-# parses the register for the resource unit, ie. : register(t0)
-def parse_register(type_dict):
-    rp = cgu.find_token("register", type_dict["declaration"])
-    type_dict["shader_register"] = None
-    type_dict["register_type"] = None
-    type_dict["register_space"] = 0
-    if rp != -1:
-        start, end = cgu.enclose_start_end("(", ")", type_dict["declaration"], rp)
-        decl = type_dict["declaration"][start:end]
-        multi = decl.split(",")
-        for r in multi:
-            r = r.strip()
-            if r.find("space") != -1:
-                type_dict["register_space"] = separate_name_index(r)[1]
-            else:
-                type_dict["register_type"], type_dict["shader_register"] = separate_name_index(r)
+# return a lits of bindabled resource keywords 
+def get_bindable_resource_keys():
+    return [
+        "cbuffer",
+        "ConstantBuffer",
+        "StructuredBuffer",
+        "RWStructuredBuffer",
+        "Texture1D",
+        "Texture2D",
+        "Texture3D",
+        "RWTexture1D",
+        "RWTexture2D",
+        "RWTexture3D",
+        "SamplerState"
+    ]
+
+
+# resource keyword to categroy mapping
+def get_resource_mappings():
+    return [
+        {"category": "structs", "identifier": "struct"},
+        {"category": "cbuffers", "identifier": "cbuffer"},
+        {"category": "cbuffers", "identifier": "ConstantBuffer"},
+        {"category": "samplers", "identifier": "SamplerState"},
+        {"category": "structured_buffers", "identifier": "StructuredBuffer"},
+        {"category": "structured_buffers", "identifier": "RWStructuredBuffer"},
+        {"category": "textures", "identifier": "Texture1D"},
+        {"category": "textures", "identifier": "Texture2D"},
+        {"category": "textures", "identifier": "Texture3D"},
+        {"category": "textures", "identifier": "RWTexture1D"},
+        {"category": "textures", "identifier": "RWTexture2D"},
+        {"category": "textures", "identifier": "RWTexture3D"},
+    ]
+
+
+# return list of resource categories
+def get_resource_categories():
+    return [
+        "structs",
+        "cbuffers",
+        "structured_buffers",
+        "textures",
+        "samplers"
+    ]
 
 
 # returns info for types, (num_elements, element_size, total_size)
@@ -94,28 +113,6 @@ def vertex_format_from_type(type):
     return "Unknown"
 
 
-# parses a type and generates a vertex layout, array of elements with sizes and offsets
-def generate_vertex_layout(type_dict):
-    offset = 0
-    layout = list()
-    for member in type_dict["members"]:
-        semantic_name, semantic_index = separate_name_index(member["semantic"])
-        num_elems, elem_size, size = get_type_size_info(member["data_type"])
-        input = {
-            "name": member["name"],
-            "semantic": semantic_name,
-            "index": semantic_index,
-            "format": vertex_format_from_type(member["data_type"]),
-            "aligned_byte_offset": offset,
-            "input_slot": 0,
-            "input_slot_class": "PerVertex",
-            "step_rate": 0
-        }
-        offset += size
-        layout.append(input)
-    return layout
-
-
 # shader visibility can be on a single stage or all
 def get_shader_visibility(vis):
     if len(vis) == 1:
@@ -149,21 +146,78 @@ def get_descriptor_array_size(resource):
     return None
 
 
+# log formatted json
+def log_json(j):
+    print(json.dumps(j, indent=4), flush=True)
+
+
+# member wise merge 2 dicts, second will overwrite dest
+def merge_dicts(dest, second):
+    for k, v in second.items():
+        if type(v) == dict:
+            if k not in dest or type(dest[k]) != dict:
+                dest[k] = dict()
+            merge_dicts(dest[k], v)
+        elif type(v) == list and k in dest and type(dest[k]) == list:
+            dest[k].extend(v)
+        else:
+            dest[k] = v
+    return dest
+
+
+# separate name (alpha characters) from index (numerical_characters)
+def separate_name_index(src):
+    name = re.sub(r'[0-9]', '', src)
+    index = re.sub(r'[^0-9]','', src)
+    if len(index) == 0:
+        index = 0
+    index = int(index)
+    return (name, index)
+
+
+# parses the register for the resource unit, ie. : register(t0)
+def parse_register(type_dict):
+    rp = cgu.find_token("register", type_dict["declaration"])
+    type_dict["shader_register"] = None
+    type_dict["register_type"] = None
+    type_dict["register_space"] = 0
+    if rp != -1:
+        start, end = cgu.enclose_start_end("(", ")", type_dict["declaration"], rp)
+        decl = type_dict["declaration"][start:end]
+        multi = decl.split(",")
+        for r in multi:
+            r = r.strip()
+            if r.find("space") != -1:
+                type_dict["register_space"] = separate_name_index(r)[1]
+            else:
+                type_dict["register_type"], type_dict["shader_register"] = separate_name_index(r)
+
+
+# parses a type and generates a vertex layout, array of elements with sizes and offsets
+def generate_vertex_layout(type_dict):
+    offset = 0
+    layout = list()
+    for member in type_dict["members"]:
+        semantic_name, semantic_index = separate_name_index(member["semantic"])
+        num_elems, elem_size, size = get_type_size_info(member["data_type"])
+        input = {
+            "name": member["name"],
+            "semantic": semantic_name,
+            "index": semantic_index,
+            "format": vertex_format_from_type(member["data_type"]),
+            "aligned_byte_offset": offset,
+            "input_slot": 0,
+            "input_slot_class": "PerVertex",
+            "step_rate": 0
+        }
+        offset += size
+        layout.append(input)
+    return layout
+
+
 # builds a descriptor set from resources used in the pipeline
 def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
-    bindable_resources = [
-        "cbuffer",
-        "ConstantBuffer",
-        "StructuredBuffer",
-        "RWStructuredBuffer",
-        "Texture1D",
-        "Texture2D",
-        "Texture3D",
-        "RWTexture1D",
-        "RWTexture2D",
-        "RWTexture3D",
-        "SamplerState"
-    ]
+    bindable_resources = get_bindable_resource_keys()
     descriptor_layout = dict()
     descriptor_layout["bindings"] = list()
     descriptor_layout["push_constants"] = list()
@@ -224,7 +278,8 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
 
 
 # compile a hlsl version 2
-def compile_shader_hlsl(info, src, temp_path, output_path, filename, stage, entry_point):
+def compile_shader_hlsl(info, src, stage, entry_point, temp_path, output_path):
+    filename = entry_point + "." + stage
     exe = os.path.join(info.tools_dir, "bin", "dxc", "dxc")
     temp_filepath = os.path.join(temp_path, filename)
     output_filepath = os.path.join(output_path, filename + "c")
@@ -278,16 +333,89 @@ def state_with_defaults(state_type, state):
     return merge_dicts(default, state)
 
 
+# add shader resource for the shader stage
+def add_used_shader_resource(resource, stage):
+    output = dict(resource)
+    if "visibility" not in output:
+        output["visibility"] = list()
+    output["visibility"].append(stage)
+    return output
+
+
+# given an entry point generate src code and resource meta data for the shader
+def generate_shader(pmfx, entry_point, stage):
+    # resource categories
+    resource_categories = get_resource_categories()
+    # start with entry point src code
+    src = pmfx["functions"][entry_point]["source"]
+    resources = dict()
+    vertex_layout = None
+    # recursively insert used functions
+    complete = False
+    added_functions = [entry_point]
+    while not complete:
+        complete = True
+        for func in pmfx["functions"]:
+            if func not in added_functions:
+                if cgu.find_token(func, src) != -1:
+                    added_functions.append(func)
+                    # add attributes
+                    src = pmfx["functions"][func]["source"] + "\n" + src
+                    complete = False
+                    break
+    # now add used resource src decls
+    res = ""
+    for category in resource_categories:
+        for r in pmfx["resources"][category]:
+            tokens = [r]
+            resource = pmfx["resources"][category][r]
+            # cbuffers with inline decl need to check for usage per member
+            if category == "cbuffers":
+                for member in resource["members"]:
+                    tokens.append(member["name"])
+            # types with templates need to include structs
+            if resource["template_type"]:
+                template_typeame = resource["template_type"]
+                if template_typeame in pmfx["resources"]["structs"]:
+                    struct_resource = pmfx["resources"]["structs"][template_typeame]
+                    res += struct_resource["declaration"] + ";\n"
+                    resources[template_typeame] = add_used_shader_resource(struct_resource, stage)
+            # add resource and append resource src code
+            for token in tokens:
+                if cgu.find_token(token, src) != -1:
+                    res += resource["declaration"] + ";\n"
+                    resources[r] = add_used_shader_resource(resource, stage)
+                    break
+    # extract vs_input (input layout)
+    if stage == "vs":
+        for input in pmfx["functions"][entry_point]["args"]:
+            t = input["type"]
+            if t in pmfx["resources"]["structs"]:
+                vertex_layout = generate_vertex_layout(pmfx["resources"]["structs"][t])
+    # join resource src and src
+    src = cgu.format_source(res, 4) + "\n" + cgu.format_source(src, 4)
+    return {
+        "src": src,
+        "resources": dict(resources),
+        "vertex_layout": vertex_layout
+    }
+
+
 # new generation of pmfx
 def generate_pmfx(file, root):
     file_and_path = os.path.join(root, file)
     shader_file_text_full, included_files = build_pmfx.create_shader_set(file_and_path, root)
     pmfx_json, shader_source = build_pmfx.find_pmfx_json(shader_file_text_full)
 
-    # pmfx dictionary
+    # src (input) pmfx dictionary
     pmfx = dict()
     pmfx["pmfx"] = pmfx_json
     pmfx["source"] = cgu.format_source(shader_source, 4)
+
+    # output dictionary
+    output_pmfx = {
+        "pipelines": dict()
+    }
 
     # create build folders
     info = build_pmfx.get_info()
@@ -297,33 +425,16 @@ def generate_pmfx(file, root):
     os.makedirs(temp_path, exist_ok=True)
     os.makedirs(output_path, exist_ok=True)
     
-    # functions
+    # parse functions
     pmfx["functions"] = dict()
     functions, function_names = cgu.find_functions(pmfx["source"])
     for function in functions:
         if function["name"] != "register":
             pmfx["functions"][function["name"]] = function
 
-
-    # type mappings
-    mapping = [
-        {"category": "structs", "identifier": "struct"},
-        {"category": "cbuffers", "identifier": "cbuffer"},
-        {"category": "cbuffers", "identifier": "ConstantBuffer"},
-        {"category": "samplers", "identifier": "SamplerState"},
-        {"category": "structured_buffers", "identifier": "StructuredBuffer"},
-        {"category": "structured_buffers", "identifier": "RWStructuredBuffer"},
-        {"category": "textures", "identifier": "Texture1D"},
-        {"category": "textures", "identifier": "Texture2D"},
-        {"category": "textures", "identifier": "Texture3D"},
-        {"category": "textures", "identifier": "RWTexture1D"},
-        {"category": "textures", "identifier": "RWTexture2D"},
-        {"category": "textures", "identifier": "RWTexture3D"},
-    ]
-
-    # find types
+    # parse types
     pmfx["resources"] = dict()
-    for map in mapping:
+    for map in get_resource_mappings():
         decls, names = cgu.find_type_declarations(map["identifier"], pmfx["source"])
         if map["category"] not in pmfx["resources"].keys():
             pmfx["resources"][map["category"]] = dict()
@@ -333,118 +444,56 @@ def generate_pmfx(file, root):
                 assert(0)
             pmfx["resources"][map["category"]][decl["name"]] = decl
 
-    # process states (just fill the defaults out)
-    states = [
-        "depth_stencil_states",
-        "sampler_states",
-    ]
-
-    # for each pipeline generate code and track used resources
-    shader_stages = [
-        "vs",
-        "ps",
-        "cs"
-    ]
-
-    resource_categories = [
-        "structs",
-        "cbuffers",
-        "structured_buffers",
-        "textures",
-        "samplers"
-    ]
-
-    output_json = dict()
-    output_json["pipelines"] = dict()
-
     # fill state default parameters
-    for state_type in states:
+    for state_type in get_states():
         if state_type in pmfx["pmfx"]:
             category = pmfx["pmfx"][state_type]
-            output_json[state_type] = dict()
+            output_pmfx[state_type] = dict()
             for state in category:
-                output_json[state_type][state] = state_with_defaults(state_type, category[state])
+                output_pmfx[state_type][state] = state_with_defaults(state_type, category[state])
 
-    # process pipelines
+    # compile individual used entry points
+    shaders = dict()
+    for stage in get_shader_stages():
+        shaders[stage] = dict()
+    if "pipelines" in pmfx["pmfx"]:
+        pipelines = pmfx["pmfx"]["pipelines"]
+        for pipeline_key in pipelines:
+            pipeline = pipelines[pipeline_key]
+            for stage in get_shader_stages():
+                if stage in pipeline:
+                    entry_point = pipeline[stage]
+                    if entry_point not in shaders[stage]:
+                        shaders[stage][entry_point] = generate_shader(pmfx, entry_point, stage)
+                        compile_shader_hlsl(info, shaders[stage][entry_point]["src"], stage, entry_point, temp_path, output_path)
+
+    # generate pipeline reflection info
     if "pipelines" in pmfx["pmfx"]:
         pipelines = pmfx["pmfx"]["pipelines"]
         for pipeline_key in pipelines:
             pipeline = pipelines[pipeline_key]
             resources = dict()
-            pipeline_json = dict()
-            for stage in shader_stages:
+            output_pipeline = dict(pipeline)
+            # lookup info from compiled shaders and combine resources
+            for stage in get_shader_stages():
                 if stage in pipeline:
-                    print("processing: {}.{}".format(pipeline_key, stage))
-                    # grab entry point
-                    added_functions = []
                     entry_point = pipeline[stage]
-                    src = pmfx["functions"][entry_point]["source"]
-                    complete = False
-                    added_functions.append(entry_point)
-                    # recursively insert used functions
-                    while not complete:
-                        complete = True
-                        for func in pmfx["functions"]:
-                            if func not in added_functions:
-                                if cgu.find_token(func, src) != -1:
-                                    added_functions.append(func)
-                                    # add attributes
-                                    src = pmfx["functions"][func]["source"] + "\n" + src
-                                    complete = False
-                                    break
-                    # now add used resource src decls
-                    res = ""
-                    for category in resource_categories:
-                        for r in pmfx["resources"][category]:
-                            tokens = [r]
-                            resource = pmfx["resources"][category][r]
-                            # cbuffers with inline decl need to check for usage per member
-                            if category == "cbuffers":
-                                for member in resource["members"]:
-                                    tokens.append(member["name"])
-                            # types with templates need to include structs
-                            if resource["template_type"]:
-                                template_typeame = resource["template_type"]
-                                if template_typeame in pmfx["resources"]["structs"]:
-                                    struct_resource = pmfx["resources"]["structs"][template_typeame]
-                                    # todo: fold 
-                                    res += struct_resource["declaration"] + ";\n"
-                                    resources[template_typeame] = struct_resource
-                                    if "visibility" not in resources[template_typeame]:
-                                        resources[template_typeame]["visibility"] = list()
-                                    resources[template_typeame]["visibility"].append(stage)
-                            # add 
-                            for token in tokens:
-                                if cgu.find_token(token, src) != -1:
-                                    # todo: fold 
-                                    res += resource["declaration"] + ";\n"
-                                    resources[r] = resource
-                                    if "visibility" not in resources[r]:
-                                        resources[r]["visibility"] = list()
-                                    resources[r]["visibility"].append(stage)
-                                    break
-                    # extract vs_input (input layout)
+                    output_pipeline[stage] = entry_point + ".{}{}".format(stage, "c")
+                    shader = shaders[stage][entry_point]
+                    resources = merge_dicts(resources, shader["resources"])
                     if stage == "vs":
-                        for input in pmfx["functions"][entry_point]["args"]:
-                            t = input["type"]
-                            if t in pmfx["resources"]["structs"]:
-                                pipeline_json["vertex_layout"] = generate_vertex_layout(pmfx["resources"]["structs"][t])
-                    src = cgu.format_source(res, 4) + "\n" + cgu.format_source(src, 4)
-                    # compile shader source
-                    stage_source_filepath = "{}.{}".format(pipeline_key, stage)
-                    pipeline_json[stage] = stage_source_filepath + "c"
-                    compile_shader_hlsl(info, src, temp_path, output_path, stage_source_filepath, stage, entry_point)
+                        output_pipeline["vertex_layout"] = shader["vertex_layout"]
             # build descriptor set
-            pipeline_json["descriptor_layout"] = generate_descriptor_layout(output_json, pipeline, resources)
+            output_pipeline["descriptor_layout"] = generate_descriptor_layout(output_pmfx, pipeline, resources)
             # topology
             if "topology" in pipeline:
-                pipeline_json["topology"] = pipeline["topology"]
+                output_pipeline["topology"] = pipeline["topology"]
             # store info in dict
-            output_json["pipelines"][pipeline_key] = pipeline_json
+            output_pmfx["pipelines"][pipeline_key] = output_pipeline
 
         # write info per pmfx, containing multiple pipelines
         json_filepath = os.path.join(output_path, "{}.json".format(name))
-        open(json_filepath, "w+").write(json.dumps(output_json, indent=4))
+        open(json_filepath, "w+").write(json.dumps(output_pmfx, indent=4))
 
 
 # entry
@@ -452,11 +501,18 @@ if __name__ == "__main__":
     build_pmfx.main(generate_pmfx, "2.0")
 
     # todo:
-    # compile shaders only once, not for each technique combination
     # include handling
     # expand permutations
-    # timestamps
     # proper error handling
     # allow single file compilation (pmbuild... learn it)
+
+    # timestamps
+    # hashes
+
+    # blend state
+    # raster state
+    # vertex buffer override
+    # vertex step rate
+
     # automate cargo publish
     # cargo doc options
