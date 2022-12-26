@@ -3,6 +3,8 @@ import re
 import os
 import cgu
 import json
+import hashlib
+from multiprocessing.pool import ThreadPool
 
 # return names of supported shader stages
 def get_shader_stages():
@@ -286,6 +288,7 @@ def compile_shader_hlsl(info, src, stage, entry_point, temp_path, output_path):
     open(temp_filepath, "w+").write(src)
     cmdline = "{} -T {}_{} -E {} -Fo {} {}".format(exe, stage, info.shader_version, entry_point, output_filepath, temp_filepath)
     error_code, error_list, output_list = build_pmfx.call_wait_subprocess(cmdline)
+    print("  compiling {}".format(filename), flush=True)
     if error_code:
         for err in error_list:
             print(err, flush=True)
@@ -343,7 +346,7 @@ def add_used_shader_resource(resource, stage):
 
 
 # given an entry point generate src code and resource meta data for the shader
-def generate_shader(pmfx, entry_point, stage):
+def generate_shader_info(pmfx, entry_point, stage):
     # resource categories
     resource_categories = get_resource_categories()
     # start with entry point src code
@@ -396,15 +399,45 @@ def generate_shader(pmfx, entry_point, stage):
     src = cgu.format_source(res, 4) + "\n" + cgu.format_source(src, 4)
     return {
         "src": src,
+        "src_hash": hashlib.md5(src.encode("utf-8")).hexdigest(),
         "resources": dict(resources),
         "vertex_layout": vertex_layout
     }
 
 
+# generate shader and metadata
+def generate_shader(build_info, stage, entry_point, pmfx, temp_path, output_path):
+    info = generate_shader_info(pmfx, entry_point, stage)
+    compile_shader_hlsl(build_info, info["src"], stage, entry_point, temp_path, output_path)
+    return (stage, entry_point, info)
+
+
+# generate pipeline and metadata
+def generate_pipeline(pipeline_name, pipeline, output_pmfx, shaders):
+    print("generating pipeline: {}".format(pipeline_name))
+    resources = dict()
+    output_pipeline = dict(pipeline)
+    # lookup info from compiled shaders and combine resources
+    for stage in get_shader_stages():
+        if stage in pipeline:
+            entry_point = pipeline[stage]
+            output_pipeline[stage] = entry_point + ".{}{}".format(stage, "c")
+            shader = shaders[stage][entry_point]
+            resources = merge_dicts(resources, shader["resources"])
+            if stage == "vs":
+                output_pipeline["vertex_layout"] = shader["vertex_layout"]
+    # build descriptor set
+    output_pipeline["descriptor_layout"] = generate_descriptor_layout(output_pmfx, pipeline, resources)
+    # topology
+    if "topology" in pipeline:
+        output_pipeline["topology"] = pipeline["topology"]
+    return (pipeline_name, output_pipeline)
+
+
 # new generation of pmfx
 def generate_pmfx(file, root):
-    file_and_path = os.path.join(root, file)
-    shader_file_text_full, included_files = build_pmfx.create_shader_set(file_and_path, root)
+    input_pmfx_filepath = os.path.join(root, file)
+    shader_file_text_full, included_files = build_pmfx.create_shader_set(input_pmfx_filepath, root)
     pmfx_json, shader_source = build_pmfx.find_pmfx_json(shader_file_text_full)
 
     # src (input) pmfx dictionary
@@ -418,16 +451,37 @@ def generate_pmfx(file, root):
     }
 
     # create build folders
-    info = build_pmfx.get_info()
+    build_info = build_pmfx.get_info()
     name = os.path.splitext(file)[0]
-    temp_path = os.path.join(info.temp_dir, name)
-    output_path = os.path.join(info.output_dir, name)
+    temp_path = os.path.join(build_info.temp_dir, name)
+    output_path = os.path.join(build_info.output_dir, name)
+    json_filepath = os.path.join(output_path, "{}.json".format(name))
     os.makedirs(temp_path, exist_ok=True)
     os.makedirs(output_path, exist_ok=True)
+
+    # check deps
+    out_of_date = True
+    included_files.append(input_pmfx_filepath)
+    if os.path.exists(json_filepath):
+        out_of_date = False
+        last_built = os.path.getmtime(json_filepath)
+        for file in included_files:
+            filepath = build_pmfx.sanitize_file_path(os.path.join(build_info.root_dir, file))
+            mtime = os.path.getmtime(filepath)
+            if mtime > last_built:
+                out_of_date = True
+                break
+    
+    # return if file not out of date
+    if not out_of_date:
+        print("{}: up-to-date".format(file))
+        return
+    else:
+        print("building: {}".format(file))
     
     # parse functions
     pmfx["functions"] = dict()
-    functions, function_names = cgu.find_functions(pmfx["source"])
+    functions, _ = cgu.find_functions(pmfx["source"])
     for function in functions:
         if function["name"] != "register":
             pmfx["functions"][function["name"]] = function
@@ -440,8 +494,6 @@ def generate_pmfx(file, root):
             pmfx["resources"][map["category"]] = dict()
         for decl in decls:
             parse_register(decl)
-            if decl["name"] in pmfx["resources"][map["category"]]:
-                assert(0)
             pmfx["resources"][map["category"]][decl["name"]] = decl
 
     # fill state default parameters
@@ -452,48 +504,50 @@ def generate_pmfx(file, root):
             for state in category:
                 output_pmfx[state_type][state] = state_with_defaults(state_type, category[state])
 
-    # compile individual used entry points
+    # thread pool for compiling shaders and pipelines
+    pool = ThreadPool(processes=16)
+
+    # gather shader list
+    shader_list = list()
+    if "pipelines" in pmfx["pmfx"]:
+        pipelines = pmfx["pmfx"]["pipelines"]
+        for pipeline_key in pipelines:
+            pipeline = pipelines[pipeline_key]
+            for stage in get_shader_stages():
+                if stage in pipeline:
+                    stage_shader = (stage, pipeline[stage])
+                    if stage_shader not in shader_list:
+                        shader_list.append(stage_shader)
+
+    # compile individual used entry points async
+    compile_jobs = []
+    for shader in shader_list:
+        compile_jobs.append(
+            pool.apply_async(generate_shader, (build_info, shader[0], shader[1], pmfx, temp_path, output_path)))
+
+    # wait for compilation to complete, gather results into shaders
     shaders = dict()
     for stage in get_shader_stages():
         shaders[stage] = dict()
-    if "pipelines" in pmfx["pmfx"]:
-        pipelines = pmfx["pmfx"]["pipelines"]
-        for pipeline_key in pipelines:
-            pipeline = pipelines[pipeline_key]
-            for stage in get_shader_stages():
-                if stage in pipeline:
-                    entry_point = pipeline[stage]
-                    if entry_point not in shaders[stage]:
-                        shaders[stage][entry_point] = generate_shader(pmfx, entry_point, stage)
-                        compile_shader_hlsl(info, shaders[stage][entry_point]["src"], stage, entry_point, temp_path, output_path)
+    for j in compile_jobs:
+        (stage, entry_point, info) = j.get()
+        shaders[stage][entry_point] = info
 
     # generate pipeline reflection info
+    pipeline_jobs = []
     if "pipelines" in pmfx["pmfx"]:
         pipelines = pmfx["pmfx"]["pipelines"]
         for pipeline_key in pipelines:
-            pipeline = pipelines[pipeline_key]
-            resources = dict()
-            output_pipeline = dict(pipeline)
-            # lookup info from compiled shaders and combine resources
-            for stage in get_shader_stages():
-                if stage in pipeline:
-                    entry_point = pipeline[stage]
-                    output_pipeline[stage] = entry_point + ".{}{}".format(stage, "c")
-                    shader = shaders[stage][entry_point]
-                    resources = merge_dicts(resources, shader["resources"])
-                    if stage == "vs":
-                        output_pipeline["vertex_layout"] = shader["vertex_layout"]
-            # build descriptor set
-            output_pipeline["descriptor_layout"] = generate_descriptor_layout(output_pmfx, pipeline, resources)
-            # topology
-            if "topology" in pipeline:
-                output_pipeline["topology"] = pipeline["topology"]
-            # store info in dict
-            output_pmfx["pipelines"][pipeline_key] = output_pipeline
+            pipeline_jobs.append(
+                pool.apply_async(generate_pipeline, (pipeline_key, pipelines[pipeline_key], output_pmfx, shaders)))
 
-        # write info per pmfx, containing multiple pipelines
-        json_filepath = os.path.join(output_path, "{}.json".format(name))
-        open(json_filepath, "w+").write(json.dumps(output_pmfx, indent=4))
+    # wait on pipeline jobs and gather results
+    for j in pipeline_jobs:
+        (pipeline_name, pipeline_info) = j.get()
+        output_pmfx[pipeline_name] = pipeline_info
+    
+    # write info per pmfx, containing multiple pipelines
+    open(json_filepath, "w+").write(json.dumps(output_pmfx, indent=4))
 
 
 # entry
@@ -501,18 +555,20 @@ if __name__ == "__main__":
     build_pmfx.main(generate_pmfx, "2.0")
 
     # todo:
-    # include handling
-    # expand permutations
-    # proper error handling
-    # allow single file compilation (pmbuild... learn it)
+    # x include handling
 
-    # timestamps
-    # hashes
+    # x multi-threading
+    # - proper error handling
 
-    # blend state
-    # raster state
-    # vertex buffer override
-    # vertex step rate
+    # x timestamps
+    # - hashes
 
-    # automate cargo publish
-    # cargo doc options
+    # - blend state
+    # - raster state
+    # - vertex buffer override
+    # - vertex step rate
+    
+    # - expand permutations
+
+    # - automate cargo publish
+    # x cargo doc options
