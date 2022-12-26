@@ -280,20 +280,20 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
 
 
 # compile a hlsl version 2
-def compile_shader_hlsl(info, src, stage, entry_point, temp_path, output_path):
-    filename = entry_point + "." + stage
+def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_filepath):
     exe = os.path.join(info.tools_dir, "bin", "dxc", "dxc")
-    temp_filepath = os.path.join(temp_path, filename)
-    output_filepath = os.path.join(output_path, filename + "c")
     open(temp_filepath, "w+").write(src)
     cmdline = "{} -T {}_{} -E {} -Fo {} {}".format(exe, stage, info.shader_version, entry_point, output_filepath, temp_filepath)
     error_code, error_list, output_list = build_pmfx.call_wait_subprocess(cmdline)
-    print("  compiling {}".format(filename), flush=True)
+    output = ""
     if error_code:
         for err in error_list:
-            print(err, flush=True)
-        for out in output_list:
-            print(out, flush=True)
+            output += "  " + err + "\n"
+    for out in output_list:
+        output += "  " + out + "\n"
+    output =output.strip("\n")
+    print("  compiling {}\n{}".format(output_filepath, output), flush=True)
+    return error_code
 
 
 # assign default values to all struct members
@@ -405,10 +405,27 @@ def generate_shader_info(pmfx, entry_point, stage):
     }
 
 
+# check if we need to compile shaders
+def shader_needs_compiling(pmfx, entry_point, hash, output_filepath):
+    if not os.path.exists(output_filepath):
+        return True
+    if entry_point in pmfx["compiled_shaders"]:
+        if pmfx["compiled_shaders"][entry_point] != hash:
+            return True
+        else:
+            return False
+    else:
+        return True
+
+
 # generate shader and metadata
 def generate_shader(build_info, stage, entry_point, pmfx, temp_path, output_path):
     info = generate_shader_info(pmfx, entry_point, stage)
-    compile_shader_hlsl(build_info, info["src"], stage, entry_point, temp_path, output_path)
+    filename = entry_point + "." + stage
+    output_filepath = os.path.join(output_path, filename + "c")
+    if shader_needs_compiling(pmfx, entry_point, info["src_hash"], output_filepath):
+        temp_filepath = os.path.join(temp_path, filename)
+        info["error_code"] = compile_shader_hlsl(build_info, info["src"], stage, entry_point, temp_filepath, output_filepath)
     return (stage, entry_point, info)
 
 
@@ -426,6 +443,7 @@ def generate_pipeline(pipeline_name, pipeline, output_pmfx, shaders):
             resources = merge_dicts(resources, shader["resources"])
             if stage == "vs":
                 output_pipeline["vertex_layout"] = shader["vertex_layout"]
+            output_pipeline["error_code"] = shaders[stage][entry_point]["error_code"]
     # build descriptor set
     output_pipeline["descriptor_layout"] = generate_descriptor_layout(output_pmfx, pipeline, resources)
     # topology
@@ -461,6 +479,7 @@ def generate_pmfx(file, root):
 
     # check deps
     out_of_date = True
+    included_files.append(build_info.this_file)
     included_files.append(input_pmfx_filepath)
     if os.path.exists(json_filepath):
         out_of_date = False
@@ -471,13 +490,18 @@ def generate_pmfx(file, root):
             if mtime > last_built:
                 out_of_date = True
                 break
+        # get hashes from compiled shaders
+        existing = json.loads(open(json_filepath, "r").read())
+        if "compiled_shaders" in existing:
+            pmfx["compiled_shaders"] = existing["compiled_shaders"]
     
     # return if file not out of date
-    if not out_of_date:
-        print("{}: up-to-date".format(file))
-        return
-    else:
-        print("building: {}".format(file))
+    check_deps = False
+    if check_deps:
+        if not out_of_date:
+            print("{}: up-to-date".format(file))
+            return
+    print("building: {}".format(file))
     
     # parse functions
     pmfx["functions"] = dict()
@@ -529,9 +553,11 @@ def generate_pmfx(file, root):
     shaders = dict()
     for stage in get_shader_stages():
         shaders[stage] = dict()
-    for j in compile_jobs:
-        (stage, entry_point, info) = j.get()
+    output_pmfx["compiled_shaders"] = dict()
+    for job in compile_jobs:
+        (stage, entry_point, info) = job.get()
         shaders[stage][entry_point] = info
+        output_pmfx["compiled_shaders"][entry_point] = info["src_hash"]
 
     # generate pipeline reflection info
     pipeline_jobs = []
@@ -542,12 +568,19 @@ def generate_pmfx(file, root):
                 pool.apply_async(generate_pipeline, (pipeline_key, pipelines[pipeline_key], output_pmfx, shaders)))
 
     # wait on pipeline jobs and gather results
-    for j in pipeline_jobs:
-        (pipeline_name, pipeline_info) = j.get()
+    for job in pipeline_jobs:
+        (pipeline_name, pipeline_info) = job.get()
         output_pmfx[pipeline_name] = pipeline_info
     
     # write info per pmfx, containing multiple pipelines
     open(json_filepath, "w+").write(json.dumps(output_pmfx, indent=4))
+
+    # return errors
+    for pipeline in output_pmfx:
+        if "error_code" in output_pmfx[pipeline]:
+            return output_pmfx[pipeline]["error_code"]
+
+    return 0
 
 
 # entry
@@ -556,12 +589,12 @@ if __name__ == "__main__":
 
     # todo:
     # x include handling
-
     # x multi-threading
+
     # - proper error handling
 
     # x timestamps
-    # - hashes
+    # x hashes
 
     # - blend state
     # - raster state
