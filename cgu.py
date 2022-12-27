@@ -486,6 +486,7 @@ def find_type_declarations(type_specifier, source):
                 "name": name,
                 "qualified_name": qualified_name,
                 "declaration": declaration.strip(),
+                "position": start_pos,
                 "members": members,
                 "scope": scope,
                 "typedefs": typedefs,

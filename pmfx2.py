@@ -20,6 +20,7 @@ def get_states():
     return [
         "depth_stencil_states",
         "sampler_states",
+        "render_target_blend_states",
         "blend_states",
         "raster_states"
     ]
@@ -148,12 +149,82 @@ def get_descriptor_array_size(resource):
     return None
 
 
+# assign default values to all struct members
+def get_state_with_defaults(state_type, state):
+    state_defaults = {
+        "depth_stencil_states": {
+            "depth_enabled": False,
+            "depth_write_mask": "None",
+            "depth_func": "Always",
+            "stencil_enabled": False,
+            "stencil_read_mask": 0,
+            "stencil_write_mask": 0,
+            "front_face": {
+                "fail": "Keep",
+                "depth_fail": "Keep",
+                "pass": "Keep",
+                "func": "Always"
+            },
+            "back_face": {
+                "fail": "Keep",
+                "depth_fail": "Keep",
+                "pass": "Keep",
+                "func": "Always"
+            }
+        },
+        "sampler_states": {
+            "filter": "Linear",
+            "address_u": "Wrap",
+            "address_v": "Wrap",
+            "address_w": "Wrap",
+            "comparison": "None",
+            "border_colour": "None",
+            "mip_lod_bias": 0.0,
+            "max_aniso": 0,
+            "min_lod": -1.0,
+            "max_lod": -1.0
+        },
+        "render_target_blend_states": {
+            "blend_enabled": False,
+            "logic_op_enabled": False,
+            "src_blend": "Zero",
+            "dst_blend": "Zero",
+            "blend_op": "Add",
+            "src_blend_alpha": "Zero",
+            "dst_blend_alpha": "Zero",
+            "blend_op_alpha": "Add",
+            "logic_op": "Clear",
+            "write_mask": "ALL",
+        },
+        "blend_states": {
+            "alpha_to_coverage_enabled": False,
+            "independent_blend_enabled": False,
+            "render_target": []
+        },
+        "raster_states": {
+            "fill_mode": "Solid",
+            "cull_mode": "None",
+            "front_ccw": False,
+            "depth_bias": 0,
+            "depth_bias_clamp": 0.0,
+            "slope_scaled_depth_bias": 0.0,
+            "depth_clip_enable": False,
+            "multisample_enable": False,
+            "antialiased_line_enable": False,
+            "forced_sample_count": 0,
+            "conservative_raster_mode": False,
+        }
+    }
+    default = dict(state_defaults[state_type])
+    return merge_dicts(default, state)
+
+
 # log formatted json
 def log_json(j):
     print(json.dumps(j, indent=4), flush=True)
 
 
-# member wise merge 2 dicts, second will overwrite dest
+# member wise merge 2 dicts, second will overwrite dest will append items in arrays
 def merge_dicts(dest, second):
     for k, v in second.items():
         if type(v) == dict:
@@ -196,7 +267,7 @@ def parse_register(type_dict):
 
 
 # parses a type and generates a vertex layout, array of elements with sizes and offsets
-def generate_vertex_layout(type_dict):
+def generate_vertex_layout(type_dict, slot):
     offset = 0
     layout = list()
     for member in type_dict["members"]:
@@ -208,7 +279,7 @@ def generate_vertex_layout(type_dict):
             "index": semantic_index,
             "format": vertex_format_from_type(member["data_type"]),
             "aligned_byte_offset": offset,
-            "input_slot": 0,
+            "input_slot": slot,
             "input_slot_class": "PerVertex",
             "step_rate": 0
         }
@@ -296,46 +367,6 @@ def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_fil
     return error_code
 
 
-# assign default values to all struct members
-def state_with_defaults(state_type, state):
-    state_defaults = {
-        "depth_stencil_states": {
-            "depth_enabled": False,
-            "depth_write_mask": "None",
-            "depth_func": "Always",
-            "stencil_enabled": False,
-            "stencil_read_mask": 0,
-            "stencil_write_mask": 0,
-            "front_face": {
-                "fail": "Keep",
-                "depth_fail": "Keep",
-                "pass": "Keep",
-                "func": "Always"
-            },
-            "back_face": {
-                "fail": "Keep",
-                "depth_fail": "Keep",
-                "pass": "Keep",
-                "func": "Always"
-            }
-        },
-        "sampler_states": {
-            "filter": "Linear",
-            "address_u": "Wrap",
-            "address_v": "Wrap",
-            "address_w": "Wrap",
-            "comparison": None,
-            "border_colour": None,
-            "mip_lod_bias": 0.0,
-            "max_aniso": 0,
-            "min_lod": -1.0,
-            "max_lod": -1.0
-        }
-    }
-    default = dict(state_defaults[state_type])
-    return merge_dicts(default, state)
-
-
 # add shader resource for the shader stage
 def add_used_shader_resource(resource, stage):
     output = dict(resource)
@@ -367,7 +398,6 @@ def generate_shader_info(pmfx, entry_point, stage):
                     complete = False
                     break
     # now add used resource src decls
-    res = ""
     for category in resource_categories:
         for r in pmfx["resources"][category]:
             tokens = [r]
@@ -381,20 +411,25 @@ def generate_shader_info(pmfx, entry_point, stage):
                 template_typeame = resource["template_type"]
                 if template_typeame in pmfx["resources"]["structs"]:
                     struct_resource = pmfx["resources"]["structs"][template_typeame]
-                    res += struct_resource["declaration"] + ";\n"
                     resources[template_typeame] = add_used_shader_resource(struct_resource, stage)
             # add resource and append resource src code
             for token in tokens:
                 if cgu.find_token(token, src) != -1:
-                    res += resource["declaration"] + ";\n"
                     resources[r] = add_used_shader_resource(resource, stage)
                     break
+    # create resource src code
+    res = ""
+    for resource in resources:
+        res += resources[resource]["declaration"] + ";\n"
     # extract vs_input (input layout)
     if stage == "vs":
+        slot = 0
+        vertex_layout = []
         for input in pmfx["functions"][entry_point]["args"]:
             t = input["type"]
             if t in pmfx["resources"]["structs"]:
-                vertex_layout = generate_vertex_layout(pmfx["resources"]["structs"][t])
+                vertex_layout.extend(generate_vertex_layout(pmfx["resources"]["structs"][t], slot))
+                slot += 1
     # join resource src and src
     src = cgu.format_source(res, 4) + "\n" + cgu.format_source(src, 4)
     return {
@@ -526,12 +561,13 @@ def generate_pmfx(file, root):
             category = pmfx["pmfx"][state_type]
             output_pmfx[state_type] = dict()
             for state in category:
-                output_pmfx[state_type][state] = state_with_defaults(state_type, category[state])
+                output_pmfx[state_type][state] = get_state_with_defaults(state_type, category[state])
 
     # thread pool for compiling shaders and pipelines
     pool = ThreadPool(processes=16)
 
     # gather shader list
+    compile_jobs = []
     shader_list = list()
     if "pipelines" in pmfx["pmfx"]:
         pipelines = pmfx["pmfx"]["pipelines"]
@@ -588,16 +624,8 @@ if __name__ == "__main__":
     build_pmfx.main(generate_pmfx, "2.0")
 
     # todo:
-    # x include handling
-    # x multi-threading
-
-    # - proper error handling
-
-    # x timestamps
-    # x hashes
-
-    # - blend state
-    # - raster state
+    # - fwd args (verbose)
+    
     # - vertex buffer override
     # - vertex step rate
     

@@ -15,6 +15,12 @@ struct vs_input {
     float4 bitangent : TEXCOORD3;
 };
 
+struct instance_input {
+    float4 mat0 : TEXCOORD4;
+    float4 mat2 : TEXCOORD5;
+    float4 mat3 : TEXCOORD6;
+};
+
 struct sb_sb {
     float4 data;
 };
@@ -26,8 +32,8 @@ cbuffer per_pass_vs : register(b1) {
 
 SamplerState decl_sampler : register(s0);
 
-ConstantBuffer<sbsb> decl_cbuffer_array[] : register(b2);
-ConstantBuffer<sbsb> decl_cbuffer_array_bounded[69] : register(b3, space0);
+ConstantBuffer<sb_sb> decl_cbuffer_array[] : register(b2);
+ConstantBuffer<sb_sb> decl_cbuffer_array_bounded[69] : register(b3, space0);
 
 StructuredBuffer<sb_sb> decl_structured_buffer : register(u0, space0);
 RWStructuredBuffer<sb_sb> decl_structured_buffer_rw : register(u1, space0);
@@ -48,7 +54,7 @@ void test_func2() {
     decl_cbuffer_array_bounded;
 }
 
-vs_output vs_main(vs_input input) {
+vs_output vs_main(vs_input input, instance_input mat) {
     test_func();
 }
 
