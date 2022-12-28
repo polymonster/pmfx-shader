@@ -231,13 +231,13 @@ def log_json(j):
 
 
 # member wise merge 2 dicts, second will overwrite dest will append items in arrays
-def merge_dicts(dest, second):
+def merge_dicts(dest, second, extend = []):
     for k, v in second.items():
         if type(v) == dict:
             if k not in dest or type(dest[k]) != dict:
                 dest[k] = dict()
-            merge_dicts(dest[k], v)
-        elif type(v) == list and k in dest and type(dest[k]) == list:
+            merge_dicts(dest[k], v, extend)
+        elif k in dest and k in extend and type(v) == list and type(dest[k]) == list:
             dest[k].extend(v)
         else:
             dest[k] = v
@@ -273,20 +273,20 @@ def parse_register(type_dict):
 
 
 # parses a type and generates a vertex layout, array of elements with sizes and offsets
-def generate_vertex_layout_slot(members, slot):
+def generate_vertex_layout_slot(members):
     offset = 0
     layout = list()
     for member in members:
         semantic_name, semantic_index = cgu.separate_alpha_numeric(member["semantic"])
-        num_elems, elem_size, size = get_type_size_info(member["data_type"])
+        _, _, size = get_type_size_info(member["data_type"])
         input = {
             "name": member["name"],
             "semantic": semantic_name,
             "index": semantic_index,
             "format": vertex_format_from_type(member["data_type"]),
             "aligned_byte_offset": offset,
-            "input_slot": slot,
-            "input_slot_class": "PerVertex",
+            "input_slot": member["input_slot"],
+            "input_slot_class": member["input_slot_class"],
             "step_rate": 0
         }
         offset += size
@@ -295,10 +295,30 @@ def generate_vertex_layout_slot(members, slot):
 
 
 # generate a vertex layout from the supplied vertex shader inputs, overriding where specified in the pmfx
-def generate_vertex_layout(pmfx, entry_point):
-    slot = 0
+def generate_vertex_layout(vertex_elements, pmfx_vertex_layout):
+    # gather up individual slots
+    slots = {
+    }
+    for element in vertex_elements:
+        if element["parent"] in pmfx_vertex_layout:
+            element = merge_dicts(element, pmfx_vertex_layout[element["parent"]])
+        if element["name"] in pmfx_vertex_layout:
+            element = merge_dicts(element, pmfx_vertex_layout[element["name"]])
+        slot_key = str(element["input_slot"])
+        if slot_key not in slots.keys(): 
+            slots[slot_key]= []
+        slots[slot_key].append(element)
+    # make 1 array with combined slots, and calculate offsets
     vertex_layout = []
-    slots = []
+    for slot in slots.values():
+        vertex_layout.extend(generate_vertex_layout_slot(slot))
+    return vertex_layout
+
+
+# get a list of vertex elements deduced from the input arguments to a vertex shader, ready to be generated into a vertex layout with pipeline specified slot overrides
+def get_vertex_elements(pmfx, entry_point):
+    slot = 0
+    elements = []
     for input in pmfx["functions"][entry_point]["args"]:
         t = input["type"]
         # gather struct inputs
@@ -309,25 +329,24 @@ def generate_vertex_layout(pmfx, entry_point):
                 if semantic not in get_vertex_semantics():
                     is_vertex = False
             if is_vertex:
-                if len(slots) <= slot:
-                    slots.append([])
-                slots[slot].extend(pmfx["resources"]["structs"][t]["members"])
+                for member in pmfx["resources"]["structs"][t]["members"]:
+                    member_input = dict(member)
+                    member_input["parent"] = t
+                    member_input["input_slot"] = slot
+                    member_input["input_slot_class"] = "PerVertex"
+                    elements.append(member_input)
                 slot += 1
         else:
             # gather single elements
             semantic, _ = cgu.separate_alpha_numeric(input["semantic"])
             if semantic in get_vertex_semantics():
-                if len(slots) <= slot:
-                    slots.append([])
                 arg_input = dict(input)
+                arg_input["parent"] = "args"
                 arg_input["data_type"] = arg_input["type"]
-                slots[slot].append(arg_input)
-
-    # generate offsets, sizes and semantic info for each slot
-    for i in range(0, len(slots)):
-        vertex_layout.extend(generate_vertex_layout_slot(slots[i], i))
-
-    return vertex_layout
+                arg_input["input_slot"] = slot
+                arg_input["input_slot_class"] = "PerVertex"
+                elements.append(arg_input)
+    return elements
 
 
 # builds a descriptor set from resources used in the pipeline
@@ -427,6 +446,7 @@ def generate_shader_info(pmfx, entry_point, stage):
     src = pmfx["functions"][entry_point]["source"]
     resources = dict()
     vertex_layout = None
+    vertex_elements = None
     # recursively insert used functions
     complete = False
     added_functions = [entry_point]
@@ -466,7 +486,7 @@ def generate_shader_info(pmfx, entry_point, stage):
         res += resources[resource]["declaration"] + ";\n"
     # extract vs_input (input layout)
     if stage == "vs":
-        vertex_layout = generate_vertex_layout(pmfx, entry_point)
+        vertex_elements = get_vertex_elements(pmfx, entry_point)
 
     # join resource src and src
     src = cgu.format_source(res, 4) + "\n" + cgu.format_source(src, 4)
@@ -474,7 +494,7 @@ def generate_shader_info(pmfx, entry_point, stage):
         "src": src,
         "src_hash": hashlib.md5(src.encode("utf-8")).hexdigest(),
         "resources": dict(resources),
-        "vertex_layout": vertex_layout
+        "vertex_elements": vertex_elements
     }
 
 
@@ -513,9 +533,13 @@ def generate_pipeline(pipeline_name, pipeline, output_pmfx, shaders):
             entry_point = pipeline[stage]
             output_pipeline[stage] = entry_point + ".{}{}".format(stage, "c")
             shader = shaders[stage][entry_point]
-            resources = merge_dicts(resources, shader["resources"])
+            resources = merge_dicts(resources, shader["resources"], ["visibility"])
             if stage == "vs":
-                output_pipeline["vertex_layout"] = shader["vertex_layout"]
+                pmfx_vertex_layout = dict()
+                if "vertex_layout" in pipeline:
+                    pmfx_vertex_layout = pipeline["vertex_layout"]
+                output_pipeline["vertex_layout"] = generate_vertex_layout(shader["vertex_elements"], pmfx_vertex_layout)
+
             output_pipeline["error_code"] = shaders[stage][entry_point]["error_code"]
     # build descriptor set
     output_pipeline["descriptor_layout"] = generate_descriptor_layout(output_pmfx, pipeline, resources)

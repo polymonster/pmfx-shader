@@ -616,8 +616,8 @@ def breakdown_type_decl(a):
     name_pos = decl.rfind(" ")
     name_pos = decl.rfind(" ")
     return {
-        "type": decl[:name_pos],
-        "name": decl[name_pos:],
+        "type": decl[:name_pos].strip(),
+        "name": decl[name_pos:].strip(),
         "default": default,
         "semantic": semantic
     }
