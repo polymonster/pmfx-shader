@@ -16,20 +16,14 @@ pmfx: {
             depth_stencil_state: depth_test_less
         }
         basic_lit_2: {
-            vs: vs_main
+            vs: vs_main_mixed_semantics
             ps: ps_main
             depth_stencil_state: depth_test_never
         }
         basic_lit_3: {
-            vs: vs_main
+            vs: vs_main_separate_elements
             ps: ps_main
             depth_stencil_state: depth_test_never
         }
-        basic_lit_4: {
-            vs: vs_main
-            ps: ps_main
-            depth_stencil_state: depth_test_never
-        }
-        
     }
 }

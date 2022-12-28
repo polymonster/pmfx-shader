@@ -71,7 +71,12 @@ def display_name(token, title):
 
 # separate alpha and numeric characters ie. TEXCOORD0 becomes (TEXCOORD, 0)
 def separate_alpha_numeric(src):
-    pass
+    name = re.sub(r'[0-9]', '', src)
+    index = re.sub(r'[^0-9]','', src)
+    if len(index) == 0:
+        index = 0
+    index = int(index)
+    return (name, index)
 
 
 # finds the end of a body of text enclosed between 2 symbols ie. [], {}, <>
@@ -486,7 +491,7 @@ def find_type_declarations(type_specifier, source):
                 "name": name,
                 "qualified_name": qualified_name,
                 "declaration": declaration.strip(),
-                "position": start_pos,
+                "position": pos,
                 "members": members,
                 "scope": scope,
                 "typedefs": typedefs,
@@ -594,19 +599,27 @@ def arg_list(args):
 
 # breakdown a type decl ie. StructName variable_name = {}, into data_type: StructName, name: variable_name, default = {}
 def breakdown_type_decl(a):
-    # any other args
+    decl = a
+    # extract default
     dp = a.find("=")
     default = None
-    decl = a
     if dp != -1:
-        # extract default
         default = a[dp + 1:].strip()
         decl = a[:dp - 1]
+        sp = decl.find(":")
+    # extract semantic
+    sp = decl.find(":")
+    semantic = None
+    if sp != -1:
+        semantic = decl[sp + 1:].strip()
+        decl = decl[:sp - 1]
+    name_pos = decl.rfind(" ")
     name_pos = decl.rfind(" ")
     return {
         "type": decl[:name_pos],
         "name": decl[name_pos:],
-        "default": default
+        "default": default,
+        "semantic": semantic
     }
 
 
@@ -623,23 +636,11 @@ def breakdown_function_args(args):
             args_context.append({
                 "type": "...",
                 "name": "va_list",
-                "default": None
+                "default": None,
+                "semantic": None
             })
         else:
-            # any other args
-            dp = a.find("=")
-            default = None
-            decl = a
-            if dp != -1:
-                # extract default
-                default = a[dp + 1:].strip()
-                decl = a[:dp - 1]
-            name_pos = decl.rfind(" ")
-            args_context.append({
-                "type": decl[:name_pos],
-                "name": decl[name_pos:],
-                "default": default
-            })
+            args_context.append(breakdown_type_decl(a))
     return args_context
 
 

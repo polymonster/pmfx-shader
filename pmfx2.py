@@ -1,9 +1,9 @@
 import build_pmfx
-import re
 import os
 import cgu
 import json
 import hashlib
+
 from multiprocessing.pool import ThreadPool
 
 # return names of supported shader stages
@@ -139,16 +139,6 @@ def get_binding_type(register_type):
     return type_lookup[register_type]
 
 
-# retuns the array size of a descriptor binding -1 can indicate unbounded, which translates to None
-def get_descriptor_array_size(resource):
-    if "array_size" in resource:
-        if resource["array_size"] == -1:
-            return None
-        else:
-            return resource["array_size"]
-    return None
-
-
 # assign default values to all struct members
 def get_state_with_defaults(state_type, state):
     state_defaults = {
@@ -219,6 +209,22 @@ def get_state_with_defaults(state_type, state):
     return merge_dicts(default, state)
 
 
+# return identifier names of valid vertex semantics
+def get_vertex_semantics():
+    return [
+        "BINORMAL",
+        "BLENDINDICES",
+        "BLENDWEIGHT",
+        "COLOR",
+        "NORMAL",
+        "POSITION",
+        "POSITIONT",
+        "PSIZE",
+        "TANGENT",
+        "TEXCOORD"
+    ] 
+
+
 # log formatted json
 def log_json(j):
     print(json.dumps(j, indent=4), flush=True)
@@ -238,14 +244,14 @@ def merge_dicts(dest, second):
     return dest
 
 
-# separate name (alpha characters) from index (numerical_characters)
-def separate_name_index(src):
-    name = re.sub(r'[0-9]', '', src)
-    index = re.sub(r'[^0-9]','', src)
-    if len(index) == 0:
-        index = 0
-    index = int(index)
-    return (name, index)
+# retuns the array size of a descriptor binding -1 can indicate unbounded, which translates to None
+def get_descriptor_array_size(resource):
+    if "array_size" in resource:
+        if resource["array_size"] == -1:
+            return None
+        else:
+            return resource["array_size"]
+    return None
 
 
 # parses the register for the resource unit, ie. : register(t0)
@@ -261,17 +267,17 @@ def parse_register(type_dict):
         for r in multi:
             r = r.strip()
             if r.find("space") != -1:
-                type_dict["register_space"] = separate_name_index(r)[1]
+                type_dict["register_space"] = cgu.separate_alpha_numeric(r)[1]
             else:
-                type_dict["register_type"], type_dict["shader_register"] = separate_name_index(r)
+                type_dict["register_type"], type_dict["shader_register"] = cgu.separate_alpha_numeric(r)
 
 
 # parses a type and generates a vertex layout, array of elements with sizes and offsets
-def generate_vertex_layout(type_dict, slot):
+def generate_vertex_layout_slot(members, slot):
     offset = 0
     layout = list()
-    for member in type_dict["members"]:
-        semantic_name, semantic_index = separate_name_index(member["semantic"])
+    for member in members:
+        semantic_name, semantic_index = cgu.separate_alpha_numeric(member["semantic"])
         num_elems, elem_size, size = get_type_size_info(member["data_type"])
         input = {
             "name": member["name"],
@@ -288,13 +294,50 @@ def generate_vertex_layout(type_dict, slot):
     return layout
 
 
+# generate a vertex layout from the supplied vertex shader inputs, overriding where specified in the pmfx
+def generate_vertex_layout(pmfx, entry_point):
+    slot = 0
+    vertex_layout = []
+    slots = []
+    for input in pmfx["functions"][entry_point]["args"]:
+        t = input["type"]
+        # gather struct inputs
+        if t in pmfx["resources"]["structs"]:
+            is_vertex = True
+            for member in pmfx["resources"]["structs"][t]["members"]:
+                semantic, _ = cgu.separate_alpha_numeric(member["semantic"])
+                if semantic not in get_vertex_semantics():
+                    is_vertex = False
+            if is_vertex:
+                if len(slots) <= slot:
+                    slots.append([])
+                slots[slot].extend(pmfx["resources"]["structs"][t]["members"])
+                slot += 1
+        else:
+            # gather single elements
+            semantic, _ = cgu.separate_alpha_numeric(input["semantic"])
+            if semantic in get_vertex_semantics():
+                if len(slots) <= slot:
+                    slots.append([])
+                arg_input = dict(input)
+                arg_input["data_type"] = arg_input["type"]
+                slots[slot].append(arg_input)
+
+    # generate offsets, sizes and semantic info for each slot
+    for i in range(0, len(slots)):
+        vertex_layout.extend(generate_vertex_layout_slot(slots[i], i))
+
+    return vertex_layout
+
+
 # builds a descriptor set from resources used in the pipeline
 def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
     bindable_resources = get_bindable_resource_keys()
-    descriptor_layout = dict()
-    descriptor_layout["bindings"] = list()
-    descriptor_layout["push_constants"] = list()
-    descriptor_layout["static_samplers"] = list()
+    descriptor_layout = {
+        "bindings": [],
+        "push_constants": [],
+        "static_samplers": []
+    }
     for r in resources:
         resource = resources[r]
         resource_type = resource["type"]
@@ -423,13 +466,8 @@ def generate_shader_info(pmfx, entry_point, stage):
         res += resources[resource]["declaration"] + ";\n"
     # extract vs_input (input layout)
     if stage == "vs":
-        slot = 0
-        vertex_layout = []
-        for input in pmfx["functions"][entry_point]["args"]:
-            t = input["type"]
-            if t in pmfx["resources"]["structs"]:
-                vertex_layout.extend(generate_vertex_layout(pmfx["resources"]["structs"][t], slot))
-                slot += 1
+        vertex_layout = generate_vertex_layout(pmfx, entry_point)
+
     # join resource src and src
     src = cgu.format_source(res, 4) + "\n" + cgu.format_source(src, 4)
     return {
@@ -564,7 +602,7 @@ def generate_pmfx(file, root):
                 output_pmfx[state_type][state] = get_state_with_defaults(state_type, category[state])
 
     # thread pool for compiling shaders and pipelines
-    pool = ThreadPool(processes=16)
+    pool = ThreadPool(processes=1)
 
     # gather shader list
     compile_jobs = []
@@ -626,8 +664,11 @@ if __name__ == "__main__":
     # todo:
     # - fwd args (verbose)
     
-    # - vertex buffer override
+    # - vertex slots
     # - vertex step rate
+    # - vertex buffer override
+    # - vertex semantics (instance id, vertex id etc)
+    # - allow raw inputs to be supplied
     
     # - expand permutations
 

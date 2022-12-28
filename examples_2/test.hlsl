@@ -58,6 +58,14 @@ vs_output vs_main(vs_input input, instance_input mat) {
     test_func();
 }
 
+vs_output vs_main_mixed_semantics(vs_input input, uint iid : SV_InstanceID) {
+    test_func();
+}
+
+vs_output vs_main_separate_elements(float4 pos : POSITION, float4 tex : TEXCOORD0) {
+    test_func();
+}
+
 ps_output ps_main() {
     test_func2();
 }
