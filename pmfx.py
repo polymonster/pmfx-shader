@@ -10,7 +10,7 @@ import copy
 import threading
 import cgu
 import hashlib
-
+import pmfx_pipeline
 
 # paths and info for current build environment
 class BuildInfo:
@@ -3016,11 +3016,6 @@ def main(parse_function, version):
     sys.exit(_info.error_code)
 
 
-# entry
-if __name__ == "__main__":
-    main(parse_pmfx, "1.1")
-
-
 # builds self into an exe
 def build_executable():
     # dist dir based on platform
@@ -3059,3 +3054,11 @@ def build_executable():
         "linux": "Linux-x64"
     }
     shutil.make_archive("dist/" + exe_names[platform], 'zip', "dist/{}".format(platform))
+
+
+# entry
+if __name__ == "__main__":
+    if "-v1" in sys.argv:
+        main(parse_pmfx, "1.1")
+    else:
+        pmfx_pipeline.main()

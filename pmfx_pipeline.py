@@ -1,4 +1,4 @@
-import build_pmfx
+import pmfx as build_pmfx
 import os
 import cgu
 import json
@@ -681,20 +681,16 @@ def generate_pmfx(file, root):
     return 0
 
 
+# entry point wrangling
+def main():
+    build_pmfx.main(generate_pmfx, "2.0")
+
 # entry
 if __name__ == "__main__":
-    build_pmfx.main(generate_pmfx, "2.0")
+    main()
 
     # todo:
     # - fwd args (verbose)
-    
-    # - vertex slots
-    # - vertex step rate
-    # - vertex buffer override
-    # - vertex semantics (instance id, vertex id etc)
-    # - allow raw inputs to be supplied
-    
     # - expand permutations
-
     # - automate cargo publish
     # x cargo doc options
