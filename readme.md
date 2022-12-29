@@ -43,6 +43,7 @@ python3 build_pmfx.py -help (macos/linux)
 pmfx shader (v1.06) ------------------------------------------------------------
 --------------------------------------------------------------------------------
 commandline arguments:
+    -v1 compile using pmfx version 1 (legacy) will use v2 otherwise
     -shader_platform <hlsl, glsl, gles, spirv, metal, pssl, nvn>
     -shader_version (optional) <shader version unless overridden in technique>
         hlsl: 3_0, 4_0 (default), 5_0
@@ -76,22 +77,22 @@ commandline arguments:
 
 ```
 // metal macos
-python3 build_pmfx.py -shader_platform metal -metal_sdk macosx -metal_min_os 10.14 -shader_version 2.2 -i examples -o output/bin -h output/structs -t
+python3 pmfx.py -v1 -shader_platform metal -metal_sdk macosx -metal_min_os 10.14 -shader_version 2.2 -i examples -o output/bin -h output/structs -t
 
 // metal ios
-python3 build_pmfx.py -shader_platform metal -metal_sdk iphoneos -metal_min_os 0.9 -shader_version 2.2 -i examples -o output/bin -h output/structs -t 
+python3 pmfx.py -v1 -shader_platform metal -metal_sdk iphoneos -metal_min_os 0.9 -shader_version 2.2 -i examples -o output/bin -h output/structs -t 
 
 // spir-v vulkan
-python3 build_pmfx.py -shader_platform spirv -i examples -o output/bin -h output/structs -t output/temp
+python3 pmfx.py -v1 -shader_platform spirv -i examples -o output/bin -h output/structs -t output/temp
 
 // hlsl d3d11
-python3 build_pmfx.py -shader_platform hlsl -shader_version 4_0 -i examples -o output/bin -h output/structs -t output/temp
+python3 pmfx.py -v1 -shader_platform hlsl -shader_version 4_0 -i examples -o output/bin -h output/structs -t output/temp
 
 // glsl
-python3 build_pmfx.py -shader_platform glsl -shader_version 330 -i examples -o output/bin -h output/structs -t output/temp
+python3 pmfx.py -v1 -shader_platform glsl -shader_version 330 -i examples -o output/bin -h output/structs -t output/temp
 
 // gles
-python3 build_pmfx.py -shader_platform gles -shader_version 320 -i examples -o output/bin -h output/structs -t output/temp
+python3 pmfx.py -v1 -shader_platform gles -shader_version 320 -i examples -o output/bin -h output/structs -t output/temp
 ```
 
 ## Shader Language
