@@ -179,6 +179,7 @@ def parse_args():
 # display help for args
 def display_help():
     print("commandline arguments:")
+    print("    -v1 compile using pmfx version 1 (legacy) will use v2 otherwise")
     print("    -shader_platform <hlsl, glsl, gles, spirv, metal, pssl, nvn>")
     print("    -shader_version (optional) <shader version unless overridden in technique>")
     print("        hlsl: 3_0, 4_0 (default), 5_0")

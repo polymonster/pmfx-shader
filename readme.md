@@ -1,6 +1,5 @@
 # pmfx-shader
-[![Build Status](https://app.travis-ci.com/polymonster/pmfx-shader.svg?branch=master)](https://travis-ci.org/polymonster/pmfx-shader) 
-[![Build status](https://ci.appveyor.com/api/projects/status/wohe0i5v0hvnjnfb?svg=true)](https://ci.appveyor.com/project/polymonster/pmfx-shader)
+[![tests](https://github.com/polymonster/pmfx-shader/actions/workflows/tests.yaml/badge.svg)](https://github.com/polymonster/pmfx-shader/actions/workflows/tests.yaml)  
 [![release](https://github.com/polymonster/pmfx-shader/actions/workflows/release.yaml/badge.svg)](https://github.com/polymonster/pmfx-shader/actions/workflows/release.yaml)  
 
 A cross platform shader language with multi-threaded offline compilation or platform shader source code generation. Output json reflection info and c++ header with your shaders structs, fx-like techniques and compile time branch evaluation via (uber-shader) "permutations".
@@ -35,7 +34,7 @@ Compilation for Orbis and Nvn is possible but you will need the SDK's installed 
 
 You can use from source by cloning this repository and build `build_pmfx.py`, or install the latest packaged [release](https://github.com/polymonster/pmfx-shader/releases) if you do not need access to the source code.
 
-```
+```text
 py -3 build_pmfx.py -help (windows)
 python3 build_pmfx.py -help (macos/linux)
 
@@ -75,7 +74,7 @@ commandline arguments:
 
 ## Compiling Examples
 
-```
+```text
 // metal macos
 python3 pmfx.py -v1 -shader_platform metal -metal_sdk macosx -metal_min_os 10.14 -shader_version 2.2 -i examples -o output/bin -h output/structs -t
 
