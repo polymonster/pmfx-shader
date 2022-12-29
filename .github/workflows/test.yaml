@@ -8,11 +8,11 @@ jobs:
         uses: actions/checkout@v2
       - name: hlsl-examples-v1
         run: |
-          "py -3 pmfx.py -v1 -i examples/v1 -shader_platform hlsl -shader_version 4_0 -o build/v1/hlsl_sm4 -t build/temp/v1/hlsl_sm4 -h build/v1/hlsl_sm4/headers"
-          "py -3 pmfx.py -v1 -i examples/v1 -shader_platform hlsl -shader_version 5_0 -o build/v1/hlsl_sm5 -t build/temp/v1/hlsl_sm5 -h build/v1/hlsl_sm5/headers"
+          py -3 pmfx.py -v1 -i examples/v1 -shader_platform hlsl -shader_version 4_0 -o build/v1/hlsl_sm4 -t build/temp/v1/hlsl_sm4 -h build/v1/hlsl_sm4/headers
+          py -3 pmfx.py -v1 -i examples/v1 -shader_platform hlsl -shader_version 5_0 -o build/v1/hlsl_sm5 -t build/temp/v1/hlsl_sm5 -h build/v1/hlsl_sm5/headers
       - name: hlsl-examples-v2
         run: |
-          "python3 pmfx.py -i examples/v2 -shader_platform hlsl -shader_version 6_0 -o build/v2/hlsl_sm6 -t build/temp/v2/hlsl_sm6"
+          python3 pmfx.py -i examples/v2 -shader_platform hlsl -shader_version 6_0 -o build/v2/hlsl_sm6 -t build/temp/v2/hlsl_sm6
   metal:
     runs-on: macos-latest
     steps:
@@ -20,8 +20,8 @@ jobs:
         uses: actions/checkout@v2
       - name: metal-examples-v1
         run: |
-          "python3 pmfx.py -v1 -i examples/v1 -metal_sdk macosx -shader_platform metal -shader_version 2.2 -o build/v1/metal_macos -t build/temp/v1/metal_macos -h build/v1/metal_macos/headers"
-          "python3 pmfx.py -v1 -i examples/v1 -metal_sdk iphoneos -shader_platform metal -shader_version 2.2 -o build/v1/metal_ios -t build/temp/v1/metal_ios -h build/v1/metal_ios/headers"
+          python3 pmfx.py -v1 -i examples/v1 -metal_sdk macosx -shader_platform metal -shader_version 2.2 -o build/v1/metal_macos -t build/temp/v1/metal_macos -h build/v1/metal_macos/headers
+          python3 pmfx.py -v1 -i examples/v1 -metal_sdk iphoneos -shader_platform metal -shader_version 2.2 -o build/v1/metal_ios -t build/temp/v1/metal_ios -h build/v1/metal_ios/headers
   glsl:
     runs-on: ubuntu-latest
     steps:
@@ -29,6 +29,6 @@ jobs:
         uses: actions/checkout@v2
       - name: glsl-examples-v1
         run: |
-          "python3 pmfx.py -v1 -i examples/v1 -shader_platform gles -shader_version 300 -o build/v1/gles_300 -t build/temp/v1/gles_300 -v_flip -h build/v1/gles_300/headers"
-          "python3 pmfx.py -v1 -i examples/v1 -shader_platform glsl -shader_version 450 -o build/v1/glsl_450 -t build/temp/v1/glsl_450 -v_flip -h build/v1/glsl_450/headers"
-          "python3 pmfx.py -v1 -i examples/v1 -shader_platform spirv -shader_version 420 -o build/v1/spirv_420 -t build/temp/v1/spirv_420 -v_flip -h build/v1/spirv_420/headers"
+          python3 pmfx.py -v1 -i examples/v1 -shader_platform gles -shader_version 300 -o build/v1/gles_300 -t build/temp/v1/gles_300 -v_flip -h build/v1/gles_300/headers
+          python3 pmfx.py -v1 -i examples/v1 -shader_platform glsl -shader_version 450 -o build/v1/glsl_450 -t build/temp/v1/glsl_450 -v_flip -h build/v1/glsl_450/headers
+          python3 pmfx.py -v1 -i examples/v1 -shader_platform spirv -shader_version 420 -o build/v1/spirv_420 -t build/temp/v1/spirv_420 -v_flip -h build/v1/spirv_420/headers
