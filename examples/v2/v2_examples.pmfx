@@ -1,4 +1,4 @@
-#include "test.hlsl"
+#include "v2_examples.hlsl"
 
 pmfx: {
     depth_stencil_states: {
