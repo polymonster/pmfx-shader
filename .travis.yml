@@ -1,9 +1,0 @@
-language: cpp
-matrix:
-  include:
-    - compiler: clang
-      os: osx
-      script: python3 build_pmfx.py -shader_platform spirv -i examples -o output/bin -h output/structs -t output/temp
-    - compiler: clang
-      os: osx
-      script: python3 build_pmfx.py -shader_platform glsl -i examples -o output/bin -h output/structs -t output/temp

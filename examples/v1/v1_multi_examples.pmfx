@@ -1,0 +1,90 @@
+// input output structs with hlsl vertex shader semantics
+struct vs_input {
+    float4 position : POSITION;
+    float2 tex_coord: TEXCOORD0;
+};
+
+struct vs_output {
+    float4 position : SV_POSITION;
+    float2 tex_coord: TEXCOORD0;
+};
+
+// pixel shader output with hlsl pixel shader semantics
+struct ps_output {
+    float4 colour : SV_Target;
+};
+
+// define textures and structured buffers in here
+shader_resources {
+    // texture sampling
+    texture_2d(tex2d, 0);
+    texture_3d(tex3d, 0);
+    texture_2d(texarray, 0);
+
+    // compute rw
+    texture_2d_r(input_rgb, 0);
+    texture_2d_w(output_l, 1);
+};
+
+// basic 2d shader taking screen space input coordinates
+vs_output vs_main_2d(vs_input input) {
+    // pmfx needs input and output structs to deduce reflection info
+    vs_output output;
+    // read input, write output
+    output.position = input.position;
+    output.tex_coord = input.tex_coord;
+    return output;
+}
+
+// write constant colour in pixel shader
+ps_output ps_constant_colour(vs_output input) {
+    // use structs for output so pmfx can deduce reflection info
+    ps_output output;
+    // write constant colour
+    output.colour = float4(1.0, 1.0, 1.0, 1.0);
+    return output;
+}
+
+// sample a 2d texture using sample_texture on shader resource tex2d
+ps_output ps_texture_2d(vs_output input) {
+    ps_output output;
+    // sample texture, tex2d has a combined texture and sampler on slot 0
+    output.colour = sample_texture(tex2d, input.tex_coord.xy);
+    return output;
+}
+
+// read the input texture input_rgb using (read_texture) convert to grescale
+void cs_greyscale(uint3 gid : SV_DispatchThreadID) {
+    // read texture in compute shader
+    float4 col = read_texture(input_rgb, gid.xy);
+    // convert greyscale
+    float  grey = dot(col.rgb, float3(0.2126, 0.7152, 0.0722));
+    // write the result back
+    write_texture(output_l, float4(grey, grey, grey, 1.0), gid.xy);
+}
+
+pmfx:
+{
+    // supply vs and ps to create a render pipeline technique
+    constant_colour: {
+        vs: "vs_main_2d",
+        ps: "ps_constant_colour",
+    }
+
+    texture_2d: {
+        vs: "vs_main_2d",
+        ps: "ps_texture_2d",
+    }
+
+    // supply cs and threads for compute
+    basic_compute: {
+        cs: "cs_greyscale"
+        threads: [16, 16, 1]
+
+        // compute might not be supported on all platforms, you can filter supported platforms as so
+        supported_platforms: {
+            hlsl: ["5_0"],
+            metal: ["all"]
+        }
+    }
+}

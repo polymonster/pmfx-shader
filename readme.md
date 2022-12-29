@@ -1,13 +1,7 @@
 # pmfx-shader
-[![Build Status](https://app.travis-ci.com/polymonster/pmfx-shader.svg?branch=master)](https://travis-ci.org/polymonster/pmfx-shader) 
-[![Build status](https://ci.appveyor.com/api/projects/status/wohe0i5v0hvnjnfb?svg=true)](https://ci.appveyor.com/project/polymonster/pmfx-shader)
-[![release](https://github.com/polymonster/pmfx-shader/actions/workflows/release.yaml/badge.svg)](https://github.com/polymonster/pmfx-shader/actions/workflows/release.yaml) 
+[![tests](https://github.com/polymonster/pmfx-shader/actions/workflows/tests.yaml/badge.svg)](https://github.com/polymonster/pmfx-shader/actions/workflows/tests.yaml)[![release](https://github.com/polymonster/pmfx-shader/actions/workflows/release.yaml/badge.svg)](https://github.com/polymonster/pmfx-shader/actions/workflows/release.yaml)  
 
-A cross platform shader language with multi-threaded offline compilation or platform shader source code generation. Output json reflection info and c++ header with your shaders structs, fx-like techniques and compile time branch evaluation via (uber-shader) "permutations".
-
-A single file does all the shader parsing and code generation. Simple syntax changes are handled through macros and defines found in [platform](https://github.com/polymonster/pmfx-shader/tree/master/platform), so it is simple to add new features or change things to behave how you like. More complex differences between shader languages are handled through code-generation. 
-
-This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/wiki/Pmfx) system found in [pmtech](https://github.com/polymonster/pmtech), it has been moved into a separate repository to be used with other projects, if you are interested to see how pmfx shaders are integrated please take a look [here](https://github.com/polymonster/pmtech).
+A cross platform shader language with multi-threaded offline compilation or platform shader source code generation. Output json reflection info and c++ header with your shaders structs, fx-like techniques and compile time branch evaluation via (uber-shader) "permutations". Version 1.0 is now in maintenence mode and version 2.0 is in progress which aims to offer wider support for more modern GPU features.
 
 ## Supported Targets
 
@@ -24,6 +18,7 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 (compatibility) platforms for older hardware might not support all pmfx features and may have missing legacy features.
 
 ## Dependencies
+
 Windows users need [vcredist 2013](https://www.microsoft.com/en-us/download/confirmation.aspx?id=40784) for the glsl/spirv validator.
 
 ## Console Platforms
@@ -32,16 +27,17 @@ Compilation for Orbis and Nvn is possible but you will need the SDK's installed 
 
 ## Usage
 
-You can use from source by cloning this repository and build `build_pmfx.py`, or install the latest packaged [release](https://github.com/polymonster/pmfx-shader/releases) if you do not need access to the source code.
+You can use from source by cloning this repository and build `pmfx.py`, or install the latest packaged [release](https://github.com/polymonster/pmfx-shader/releases) if you do not need access to the source code.
 
-```
-py -3 build_pmfx.py -help (windows)
-python3 build_pmfx.py -help (macos/linux)
+```text
+py -3 build.py -help (windows)
+python3 build.py -help (macos/linux)
 
 --------------------------------------------------------------------------------
-pmfx shader (v1.06) ------------------------------------------------------------
+pmfx shader (v2.0) ------------------------------------------------------------
 --------------------------------------------------------------------------------
 commandline arguments:
+    -v1 compile using pmfx version 1 (legacy) will use v2 otherwise
     -shader_platform <hlsl, glsl, gles, spirv, metal, pssl, nvn>
     -shader_version (optional) <shader version unless overridden in technique>
         hlsl: 3_0, 4_0 (default), 5_0
@@ -71,33 +67,43 @@ commandline arguments:
 --------------------------------------------------------------------------------
 ```
 
-## Compiling Examples
+## Version 2 (Experimental)
 
-```
+Version 2.0 is currently work in progress, documentation will be updated in due course. Version 2 will use Microsoft DXC to cross compile to SPIRV and exposes support to specify entire pipeline state objects using jsn compatible with Vulkan, Direct3D 12 and Metal. Currently only HLSL is the only supported platform, others will become available via SPIRV-cross and DXC.
+
+## Version 1 (Maintenance Mode)
+
+A single file does all the shader parsing and code generation. Simple syntax changes are handled through macros and defines found in [platform](https://github.com/polymonster/pmfx-shader/tree/master/platform), so it is simple to add new features or change things to behave how you like. More complex differences between shader languages are handled through code-generation.  
+
+This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/wiki/Pmfx) system found in [pmtech](https://github.com/polymonster/pmtech), it has been moved into a separate repository to be used with other projects, if you are interested to see how pmfx shaders are integrated please take a look [here](https://github.com/polymonster/pmtech).
+
+### Compiling Version 1 Examples
+
+```text
 // metal macos
-python3 build_pmfx.py -shader_platform metal -metal_sdk macosx -metal_min_os 10.14 -shader_version 2.2 -i examples -o output/bin -h output/structs -t
+python3 pmfx.py -v1 -shader_platform metal -metal_sdk macosx -metal_min_os 10.14 -shader_version 2.2 -i examples/v1 -o output/bin -h output/structs -t
 
 // metal ios
-python3 build_pmfx.py -shader_platform metal -metal_sdk iphoneos -metal_min_os 0.9 -shader_version 2.2 -i examples -o output/bin -h output/structs -t 
+python3 pmfx.py -v1 -shader_platform metal -metal_sdk iphoneos -metal_min_os 0.9 -shader_version 2.2 -i examples/v1 -o output/bin -h output/structs -t 
 
 // spir-v vulkan
-python3 build_pmfx.py -shader_platform spirv -i examples -o output/bin -h output/structs -t output/temp
+python3 pmfx.py -v1 -shader_platform spirv -i examples/v1 -o output/bin -h output/structs -t output/temp
 
 // hlsl d3d11
-python3 build_pmfx.py -shader_platform hlsl -shader_version 4_0 -i examples -o output/bin -h output/structs -t output/temp
+python3 pmfx.py -v1 -shader_platform hlsl -shader_version 4_0 -i examples/v1 -o output/bin -h output/structs -t output/temp
 
 // glsl
-python3 build_pmfx.py -shader_platform glsl -shader_version 330 -i examples -o output/bin -h output/structs -t output/temp
+python3 pmfx.py -v1 -shader_platform glsl -shader_version 330 -i examples/v1 -o output/bin -h output/structs -t output/temp
 
 // gles
-python3 build_pmfx.py -shader_platform gles -shader_version 320 -i examples -o output/bin -h output/structs -t output/temp
+python3 pmfx.py -v1 -shader_platform gles -shader_version 320 -i examples/v1 -o output/bin -h output/structs -t output/temp
 ```
 
-## Shader Language
+### Shader Language
 
 Use mostly HLSL syntax for shaders, with some small differences:
 
-#### Always use structs for inputs and outputs.
+#### Always use structs for inputs and outputs  
 
 ```hlsl
 struct vs_input
@@ -348,7 +354,7 @@ Include files are supported even though some shader platforms or versions may no
 
 To enable glsl extensions you can pass a list of strings to the `-extensions` commandline argument. The glsl extension will be inserted to the top of the generated code with `: require` set:
 
-```
+```text
 -extensions GL_OES_EGL_image_external GL_OES_get_program_binary
 ```
 
@@ -366,7 +372,7 @@ Vulkan: -texture_offset (textures start binding at this point allowing uniform b
 
 OpenGL has different viewport co-ordinates to texture coordinate so when rendering to the backbuffer vs rendering into a render target you can get output results that are flipped in the y-axis, this can propagate it's way far into a code base with conditional "v_flips" happening during different render passes.
 
-To solve this issue in a cross platform way, pmfx will expose a uniform bool called "v_flip" in all gl vertex shaders, this allows you to conditionally flip the y-coordinate when rendering to the backbuffer or not. 
+To solve this issue in a cross platform way, pmfx will expose a uniform bool called "v_flip" in all gl vertex shaders, this allows you to conditionally flip the y-coordinate when rendering to the backbuffer or not.  
 
 To make this work make sure you also change the winding glFrontFace(GL_CCW) to glFrontFace(GL_CW).
 
@@ -531,4 +537,3 @@ Each .pmfx file comes along with a json file containing reflection info. This in
         "offset": 0
     }]
 ```
-

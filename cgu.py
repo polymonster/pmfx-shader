@@ -69,6 +69,16 @@ def display_name(token, title):
     return spaced.strip()
 
 
+# separate alpha and numeric characters ie. TEXCOORD0 becomes (TEXCOORD, 0)
+def separate_alpha_numeric(src):
+    name = re.sub(r'[0-9]', '', src)
+    index = re.sub(r'[^0-9]','', src)
+    if len(index) == 0:
+        index = 0
+    index = int(index)
+    return (name, index)
+
+
 # finds the end of a body of text enclosed between 2 symbols ie. [], {}, <>
 def enclose(open_symbol, close_symbol, source, pos):
     pos = source.find(open_symbol, pos)
@@ -81,6 +91,23 @@ def enclose(open_symbol, close_symbol, source, pos):
             stack.pop()
         pos += 1
     return pos
+
+
+# returns the interior range of the string contained within open_symbol and close_symbol
+def enclose_start_end(open_symbol, close_symbol, source, pos):
+    pos = source.find(open_symbol, pos)
+    if pos == -1:
+        return (-1, -1)
+    start_pos = pos+1
+    stack = [open_symbol]
+    pos += 1
+    while len(stack) > 0 and pos < len(source):
+        if source[pos] == open_symbol:
+            stack.append(open_symbol)
+        if source[pos] == close_symbol:
+            stack.pop()
+        pos += 1
+    return (start_pos, pos-1)
 
 
 # parse a string and return the end position in source, taking into account escaped \" quotes
@@ -134,6 +161,20 @@ def type_name(type_declaration):
     pos = type_declaration.find("{")
     name = type_declaration[:pos].strip().split()[1]
     return name
+
+
+# get the typename stripping resource_array[21] arrays and return (resource_array, 21)
+def type_name_array(type_declaration):
+    pos = type_declaration.find("[")
+    if pos != -1:
+        start, end = enclose_start_end("[", "]", type_declaration, 0)
+        array_size_str = type_declaration[start:end]
+        if len(array_size_str) == 0:
+            array_size = -1
+        else:
+            array_size = int(array_size_str)
+        return (type_declaration[:pos], array_size)
+    return (type_declaration, None)
 
 
 # tidy source with consistent spaces, remove tabs and comments to make subsequent operations easier
@@ -284,12 +325,16 @@ def get_struct_members(declaration):
     members = []
     pos = declaration.find("{")+1
     while pos != -1:
+        semantic_pos = declaration.find(":", pos)
         end_pos = declaration.find(";", pos)
         if end_pos == -1:
             break
+        skip = end_pos
+        if us(semantic_pos) < end_pos:
+            end_pos = semantic_pos
         bracket_pos = declaration.find("{", pos)
         start_pos = pos
-        if bracket_pos < end_pos:
+        if us(bracket_pos) < end_pos:
             end_pos = enclose("{", "}", declaration, start_pos)
         statement = declaration[start_pos:end_pos]
         member_type = "variable"
@@ -300,19 +345,29 @@ def get_struct_members(declaration):
         if attr_start != -1:
             attr_end = statement.find("]]")
             attrubutes = statement[attr_start+2:attr_end]
+        decl = statement.strip()
+        type_decl = breakdown_type_decl(decl)
+        semantic = None
+        if semantic_pos != -1:
+            semantic = declaration[semantic_pos:skip].strip().strip(";").strip(":").strip()
         members.append({
-            "type": member_type,
-            "declaration": statement,
-            "attributes": attrubutes
+            "member_type": member_type,
+            "data_type": type_decl["type"].strip(),
+            "name": type_decl["name"].strip(),
+            "default": type_decl["default"],
+            "declaration": decl,
+            "attributes": attrubutes,
+            "semantic": semantic
         })
-        pos = end_pos + 1
+        pos = skip + 1
     return members
 
 
 def get_members(type_specifier, declaration):
     lookup = {
         "enum": get_enum_members,
-        "struct": get_struct_members
+        "struct": get_struct_members,
+        "cbuffer": get_struct_members
     }
     if type_specifier in lookup:
         return lookup[type_specifier](declaration)
@@ -391,6 +446,14 @@ def find_type_attributes(source, type_pos):
     return None
 
 
+# extract the type of the template parameter ie. StructuredBuffer<float4> (template_type = float4)
+def get_template_type(type_decl):
+    start, end = enclose_start_end("<", ">", type_decl, 0)
+    if start != -1 and end != -1:
+        return type_decl[start:end]
+    return None
+    
+
 # finds all type declarations.. ie struct, enum. returning them in dict with name, and code
 def find_type_declarations(type_specifier, source):
     results = []
@@ -414,6 +477,7 @@ def find_type_declarations(type_specifier, source):
                 members = get_members(type_specifier, declaration)
             scope = get_type_declaration_scope(source, start_pos)
             name = type_name(declaration)
+            name, array_size = type_name_array(name)
             qualified_name = ""
             for s in scope:
                 if s["type"] == "namespace":
@@ -421,17 +485,21 @@ def find_type_declarations(type_specifier, source):
             qualified_name += name
             typedefs, typedef_names = find_typedefs(qualified_name, source)
             attributes = find_type_attributes(source, start_pos)
+            decl = declaration.strip()
             results.append({
                 "type": type_specifier,
                 "name": name,
                 "qualified_name": qualified_name,
-                "declaration": declaration,
+                "declaration": declaration.strip(),
+                "position": pos,
                 "members": members,
                 "scope": scope,
                 "typedefs": typedefs,
                 "typedef_names": typedef_names,
                 "attributes": attributes,
-                "forward_declaration": forward
+                "forward_declaration": forward,
+                "template_type": get_template_type(decl),
+                "array_size": array_size
             })
             pos = end_pos+1
         else:
@@ -529,6 +597,32 @@ def arg_list(args):
     return a
 
 
+# breakdown a type decl ie. StructName variable_name = {}, into data_type: StructName, name: variable_name, default = {}
+def breakdown_type_decl(a):
+    decl = a
+    # extract default
+    dp = a.find("=")
+    default = None
+    if dp != -1:
+        default = a[dp + 1:].strip()
+        decl = a[:dp - 1]
+        sp = decl.find(":")
+    # extract semantic
+    sp = decl.find(":")
+    semantic = None
+    if sp != -1:
+        semantic = decl[sp + 1:].strip()
+        decl = decl[:sp - 1]
+    name_pos = decl.rfind(" ")
+    name_pos = decl.rfind(" ")
+    return {
+        "type": decl[:name_pos].strip(),
+        "name": decl[name_pos:].strip(),
+        "default": default,
+        "semantic": semantic
+    }
+
+
 # break down arg decl (int a, int b, int c = 0) into contextual info
 def breakdown_function_args(args):
     args = arg_list(args)
@@ -542,23 +636,11 @@ def breakdown_function_args(args):
             args_context.append({
                 "type": "...",
                 "name": "va_list",
-                "default": None
+                "default": None,
+                "semantic": None
             })
         else:
-            # any other args
-            dp = a.find("=")
-            default = None
-            decl = a
-            if dp != -1:
-                # extract default
-                default = a[dp + 1:].strip()
-                decl = a[:dp - 1]
-            name_pos = decl.rfind(" ")
-            args_context.append({
-                "type": decl[:name_pos],
-                "name": decl[name_pos:],
-                "default": default
-            })
+            args_context.append(breakdown_type_decl(a))
     return args_context
 
 
@@ -581,31 +663,56 @@ def parse_return_type(statement):
     return rt, template, inline
 
 
+# prepends attributes to soiurce coe of functions, structs etc
+def combine_src_attributes(attribs, src):
+    if len(attribs) == 0:
+        return src
+    out = "["
+    for attrib in attribs:
+        out += attrib
+    out += "]\n" + src
+    return out
+
+
 # find functions
 def find_functions(source):
     # look for parenthesis to identiy function decls
     functions = []
     function_names = []
     pos = 0
+    attributes = []
     while True:
         statement_end, statement_token = find_first(source, [";", "{"], pos)
         if statement_end == -1:
             break
-        statement = source[pos:statement_end]
+        statement = source[pos:statement_end].strip()
+        src_start = pos
         pp = statement.find("(")
         ep = statement.find("=")
+        skip = statement_end+1
+        
+        # check for attributes
+        if len(statement) > 0:
+            if statement[0] == "[":
+                start, end = enclose_start_end("[", "]", statement, 0)
+                attributes.append(statement[start:end])
+                pos += start + end + 1
+                continue
+
         if pp != -1:
             next = next_token(statement, pp)
             if (ep == -1 or pp < ep) and next != "*":
                 # this a function decl, so break down into context
                 body = ""
+                body_end = skip
                 if statement_token == "{":
                     body_end = enclose("{", "}", source, statement_end-1)
                     body = source[statement_end-1:body_end]
                     statement_end = body_end+1
+                    skip = body_end
                 args_end = enclose("(", ")", statement, pp)-1
                 name_pos = statement[:pp].rfind(" ")
-                name = statement[name_pos+1:pp]
+                name = statement[name_pos+1:pp].strip()
                 name_unscoped = name.rfind(":")
                 qualifier = ""
                 if name_unscoped != -1:
@@ -622,10 +729,13 @@ def find_functions(source):
                     "scope": scope,
                     "body": body,
                     "template": template,
-                    "inline": inline
+                    "inline": inline,
+                    "source": combine_src_attributes(attributes, source[src_start:body_end].strip()).strip(),
+                    "attributes": list(attributes)
                 })
+                attributes.clear()
                 function_names.append(name)
-        pos = statement_end + 1
+        pos = skip
         if pos > len(source):
             break
     return functions, function_names

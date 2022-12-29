@@ -10,7 +10,7 @@ import copy
 import threading
 import cgu
 import hashlib
-
+import pmfx_pipeline
 
 # paths and info for current build environment
 class BuildInfo:
@@ -179,6 +179,7 @@ def parse_args():
 # display help for args
 def display_help():
     print("commandline arguments:")
+    print("    -v1 compile using pmfx version 1 (legacy) will use v2 otherwise")
     print("    -shader_platform <hlsl, glsl, gles, spirv, metal, pssl, nvn>")
     print("    -shader_version (optional) <shader version unless overridden in technique>")
     print("        hlsl: 3_0, 4_0 (default), 5_0")
@@ -1060,14 +1061,15 @@ def find_pmfx_json(shader_file_text):
         json_loc = shader_file_text.find("{", pmfx_loc)
         pmfx_end = enclose_brackets(shader_file_text[pmfx_loc:])
         pmfx_json = jsn.loads(shader_file_text[json_loc:pmfx_end + json_loc])
-        return pmfx_json
+        shader_text_removed = shader_file_text[:pmfx_loc] + shader_file_text[pmfx_loc + pmfx_end:].strip()
+        return pmfx_json, shader_text_removed
     else:
         # shader can have no pmfx, provided it supplies vs_main and ps_main
         if find_function(shader_file_text, "vs_main") and find_function(shader_file_text, "ps_main"):
             pmfx_json = dict()
             pmfx_json["default"] = {"vs": "vs_main", "ps": "ps_main"}
-            return pmfx_json
-    return None
+            return pmfx_json, shader_file_text
+    return None, None
 
 
 # strips array [] from a resource access
@@ -2720,8 +2722,8 @@ def parse_pmfx(file, root):
     file_and_path = os.path.join(root, file)
     shader_file_text, included_files = create_shader_set(file_and_path, root)
 
-    _pmfx.json = find_pmfx_json(shader_file_text)
-    _pmfx.source = shader_file_text
+    _pmfx.json, _pmfx.source = find_pmfx_json(shader_file_text)
+    # _pmfx.source = shader_file_text
     _pmfx.json_text = json.dumps(_pmfx.json)
 
     # pmfx file may be an include or library module containing only functions
@@ -2952,10 +2954,16 @@ def configure_sub_platforms():
         _info.shader_sub_platform = "nvn"
 
 
+# get global info which contains the parsed args and other info
+def get_info():
+    global _info
+    return _info
+
+
 # main function to avoid shadowing
-def main():
+def main(parse_function, version):
     print("--------------------------------------------------------------------------------", flush=True)
-    print("pmfx shader (v1.1) -------------------------------------------------------------", flush=True)
+    print("pmfx shader (v{}) -------------------------------------------------------------".format(version), flush=True)
     print("--------------------------------------------------------------------------------", flush=True)
 
     global _info
@@ -2998,20 +3006,15 @@ def main():
                 for file in files:
                     if file.endswith(".pmfx"):
                         try:
-                            parse_pmfx(file, root)
+                            parse_function(file, root)
                         except Exception as e:
                             print("error: while processing", os.path.join(root, file), flush=True)
                             raise e
         else:
-            parse_pmfx(source, "")
+            parse_function(source, "")
 
     # error code for ci
     sys.exit(_info.error_code)
-
-
-# entry
-if __name__ == "__main__":
-    main()
 
 
 # builds self into an exe
@@ -3052,3 +3055,11 @@ def build_executable():
         "linux": "Linux-x64"
     }
     shutil.make_archive("dist/" + exe_names[platform], 'zip', "dist/{}".format(platform))
+
+
+# entry
+if __name__ == "__main__":
+    if "-v1" in sys.argv:
+        main(parse_pmfx, "1.1")
+    else:
+        pmfx_pipeline.main()
