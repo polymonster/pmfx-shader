@@ -20,8 +20,8 @@ jobs:
         uses: actions/checkout@v2
       - name: metal-examples-v1
         run: |
-          "python3 pmfx.py -v1 -i examples/v1 -metal_sdk macosx -shader_platform metal -o build/v1/metal_macos -t build/temp/v1/metal_macos -h build/v1/metal_macos/headers"
-          "python3 pmfx.py -v1 -i examples/v1 -metal_sdk iphoneos -shader_platform metal -o build/v1/metal_ios -t build/temp/v1/metal_ios -h build/v1/metal_ios/headers"
+          "python3 pmfx.py -v1 -i examples/v1 -metal_sdk macosx -shader_platform metal -shader_version 2.2 -o build/v1/metal_macos -t build/temp/v1/metal_macos -h build/v1/metal_macos/headers"
+          "python3 pmfx.py -v1 -i examples/v1 -metal_sdk iphoneos -shader_platform metal -shader_version 2.2 -o build/v1/metal_ios -t build/temp/v1/metal_ios -h build/v1/metal_ios/headers"
   glsl:
     runs-on: ubuntu-latest
     steps:
