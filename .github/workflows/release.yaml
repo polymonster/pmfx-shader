@@ -30,7 +30,7 @@ jobs:
       - name: pyinstaller
         run: "pip install PyInstaller"
       - name: build
-        run: py -3 -c "import build_pmfx; build_pmfx.build_executable()"
+        run: py -3 -c "import pmfx; pmfx.build_executable()"
       - name: upload
         id: upload-release-asset 
         uses: actions/upload-release-asset@v1
@@ -51,7 +51,7 @@ jobs:
       - name: pyinstaller
         run: "pip3 install PyInstaller"
       - name: build
-        run: python3 -c "import build_pmfx; build_pmfx.build_executable()"
+        run: python3 -c "import pmfx; pmfx.build_executable()"
       - name: upload
         id: upload-release-asset 
         uses: actions/upload-release-asset@v1
@@ -72,7 +72,7 @@ jobs:
       - name: pyinstaller
         run: "pip3 install PyInstaller"
       - name: build
-        run: python3 -c "import build_pmfx; build_pmfx.build_executable()"
+        run: python3 -c "import pmfx; pmfx.build_executable()"
       - name: upload
         id: upload-release-asset 
         uses: actions/upload-release-asset@v1
