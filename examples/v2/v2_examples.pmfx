@@ -32,5 +32,14 @@ pmfx: {
             ps: ps_main
             depth_stencil_state: depth_test_never
         }
+        basic_lit_4: {
+            vs: vs_main_permutations
+            ps: ps_main
+            depth_stencil_state: depth_test_never
+            permutations: {
+                SKINNED: [31, [0,1]],
+                INSTANCED: [30, [0,1]]
+            }
+        }
     }
 }

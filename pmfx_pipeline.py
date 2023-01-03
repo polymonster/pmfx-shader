@@ -439,18 +439,20 @@ def add_used_shader_resource(resource, stage):
 
 
 # given an entry point generate src code and resource meta data for the shader
-def generate_shader_info(pmfx, entry_point, stage):
+def generate_shader_info(pmfx, entry_point, stage, permute=None):
     # resource categories
     resource_categories = get_resource_categories()
     # start with entry point src code
     src = pmfx["functions"][entry_point]["source"]
     resources = dict()
-    vertex_layout = None
     vertex_elements = None
     # recursively insert used functions
     complete = False
     added_functions = [entry_point]
     while not complete:
+        if permute:
+            # evaluate permutations each iteration to remove all dead code
+            src = build_pmfx.evaluate_conditional_blocks(src, permute)
         complete = True
         for func in pmfx["functions"]:
             if func not in added_functions:
@@ -460,6 +462,7 @@ def generate_shader_info(pmfx, entry_point, stage):
                     src = pmfx["functions"][func]["source"] + "\n" + src
                     complete = False
                     break
+
     # now add used resource src decls
     for category in resource_categories:
         for r in pmfx["resources"][category]:
@@ -490,12 +493,26 @@ def generate_shader_info(pmfx, entry_point, stage):
 
     # join resource src and src
     src = cgu.format_source(res, 4) + "\n" + cgu.format_source(src, 4)
+
+    if permute:
+        # evaluate permutations on the full source including resources
+        src = build_pmfx.evaluate_conditional_blocks(src, permute)
+        src = cgu.format_source(src, 4)
+
     return {
         "src": src,
         "src_hash": hashlib.md5(src.encode("utf-8")).hexdigest(),
         "resources": dict(resources),
         "vertex_elements": vertex_elements
     }
+
+
+# generate shader info permutations
+def generate_shader_info_permutation(pmfx, entry_point, stage, permute, define_list):
+    info = generate_shader_info(pmfx, entry_point, stage, permute)
+    info["permutation_id"] = build_pmfx.generate_permutation_id(define_list, permute)
+    info["filename"] = "placeholder"
+    return stage, entry_point, info
 
 
 # check if we need to compile shaders
@@ -522,6 +539,20 @@ def generate_shader(build_info, stage, entry_point, pmfx, temp_path, output_path
     return (stage, entry_point, info)
 
 
+# generate shader permutation
+def generate_shader_permutation(build_info, shader_info, stage, entry_point, pmfx, temp_path, output_path):
+    if shader_info["permutation_id"] == 0:
+        filename = entry_point + "." + stage
+    else:
+        filename = "{}_{}.{}".format(entry_point, shader_info["src_hash"], stage)
+    output_filepath = os.path.join(output_path, filename + "c")
+    if shader_needs_compiling(pmfx, entry_point, shader_info["src_hash"], output_filepath):
+        temp_filepath = os.path.join(temp_path, filename)
+        shader_info["error_code"] = compile_shader_hlsl(build_info, shader_info["src"], stage, entry_point, temp_filepath, output_filepath)
+    shader_info["filename"] = filename
+    return (stage, entry_point, shader_info)
+
+
 # generate pipeline and metadata
 def generate_pipeline(pipeline_name, pipeline, output_pmfx, shaders):
     print("generating pipeline: {}".format(pipeline_name))
@@ -539,7 +570,6 @@ def generate_pipeline(pipeline_name, pipeline, output_pmfx, shaders):
                 if "vertex_layout" in pipeline:
                     pmfx_vertex_layout = pipeline["vertex_layout"]
                 output_pipeline["vertex_layout"] = generate_vertex_layout(shader["vertex_elements"], pmfx_vertex_layout)
-
             output_pipeline["error_code"] = shaders[stage][entry_point]["error_code"]
     # build descriptor set
     output_pipeline["descriptor_layout"] = generate_descriptor_layout(output_pmfx, pipeline, resources)
@@ -547,6 +577,38 @@ def generate_pipeline(pipeline_name, pipeline, output_pmfx, shaders):
     if "topology" in pipeline:
         output_pipeline["topology"] = pipeline["topology"]
     return (pipeline_name, output_pipeline)
+
+
+# generate a pipeline and metadat for permutation
+def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders, pemutation_id):
+    print("generating pipeline permutation: {}".format(pipeline_name))
+    resources = dict()
+    output_pipeline = dict(pipeline)
+    # lookup info from compiled shaders and combine resources
+    for stage in get_shader_stages():
+        if stage in pipeline:
+            entry_point = pipeline[stage]
+            # lookup shader info, and redirect to shared shaders
+            shader_info = shaders[stage][entry_point][pemutation_id]
+            if "lookup" in shader_info:
+                lookup = shader_info["lookup"]
+                shader_info = dict(shaders[stage][lookup[0]][lookup[1]])
+            output_pipeline[stage] = shader_info["filename"]
+            shader = shader_info
+            resources = merge_dicts(resources, shader["resources"], ["visibility"])
+            if stage == "vs":
+                pmfx_vertex_layout = dict()
+                if "vertex_layout" in pipeline:
+                    pmfx_vertex_layout = pipeline["vertex_layout"]
+                output_pipeline["vertex_layout"] = generate_vertex_layout(shader["vertex_elements"], pmfx_vertex_layout)
+            # todo
+            output_pipeline["error_code"] = shader_info["error_code"]
+    # build descriptor set
+    output_pipeline["descriptor_layout"] = generate_descriptor_layout(output_pmfx, pipeline, resources)
+    # topology
+    if "topology" in pipeline:
+        output_pipeline["topology"] = pipeline["topology"]
+    return (pipeline_name, pemutation_id, output_pipeline)
 
 
 # new generation of pmfx
@@ -641,34 +703,59 @@ def generate_pmfx(file, root):
                     if stage_shader not in shader_list:
                         shader_list.append(stage_shader)
 
-    # compile individual used entry points async
-    compile_jobs = []
-    for shader in shader_list:
-        compile_jobs.append(
-            pool.apply_async(generate_shader, (build_info, shader[0], shader[1], pmfx, temp_path, output_path)))
-
-    # wait for compilation to complete, gather results into shaders
-    shaders = dict()
-    for stage in get_shader_stages():
-        shaders[stage] = dict()
-    output_pmfx["compiled_shaders"] = dict()
-    for job in compile_jobs:
-        (stage, entry_point, info) = job.get()
-        shaders[stage][entry_point] = info
-        output_pmfx["compiled_shaders"][entry_point] = info["src_hash"]
-
-    # generate pipeline reflection info
-    pipeline_jobs = []
+    # gather permutations
+    permutation_jobs = []
+    pipeline_jobs = [] 
     if "pipelines" in pmfx["pmfx"]:
         pipelines = pmfx["pmfx"]["pipelines"]
         for pipeline_key in pipelines:
-            pipeline_jobs.append(
-                pool.apply_async(generate_pipeline, (pipeline_key, pipelines[pipeline_key], output_pmfx, shaders)))
+            pipeline = pipelines[pipeline_key]
+            pipeline_permutations, permutation_options, mask, define_list, c_defines = build_pmfx.generate_permutations(pipeline_key, pipeline)
+            for permute in pipeline_permutations:
+                id = build_pmfx.generate_permutation_id(define_list, permute)
+                pipeline_jobs.append((pipeline_key, id))
+                for stage in get_shader_stages():
+                    if stage in pipeline:
+                        permutation_jobs.append(
+                            pool.apply_async(generate_shader_info_permutation, (pmfx, pipeline[stage], stage, permute, define_list)))
+            
+    # wait on shader permutations
+    shaders = dict()
+    for stage in get_shader_stages():
+        shaders[stage] = dict()
+    compile_jobs = []
+    added_hashes = dict()
+    for job in permutation_jobs:
+        stage, entry_point, info = job.get()
+        # add an entry
+        if entry_point not in shaders[stage]:
+            shaders[stage][entry_point] = dict()
+        hash = str(info["src_hash"]) + stage
+        shaders[stage][entry_point][info["permutation_id"]] = info
+        if hash not in added_hashes:
+            added_hashes[hash] = (entry_point, info["permutation_id"])
+            compile_jobs.append(
+                pool.apply_async(generate_shader_permutation, (build_info, info, stage, entry_point, pmfx, temp_path, output_path)))
+        else:
+            shaders[stage][entry_point][info["permutation_id"]]["lookup"] = added_hashes[hash]
+        
+    # wait on shader compilation
+    for job in compile_jobs:
+        (stage, entry_point, info) = job.get()
+        shaders[stage][entry_point][info["permutation_id"]] = info
+
+    # generate pipeline reflection info
+    pipeline_compile_jobs = []
+    for job in pipeline_jobs:
+        pipeline_compile_jobs.append(
+            pool.apply_async(generate_pipeline_permutation, (job[0], pipelines[job[0]], output_pmfx, shaders, job[1])))
 
     # wait on pipeline jobs and gather results
-    for job in pipeline_jobs:
-        (pipeline_name, pipeline_info) = job.get()
-        output_pmfx[pipeline_name] = pipeline_info
+    for job in pipeline_compile_jobs:
+        (pipeline_name, permutation_id, pipeline_info) = job.get()
+        if pipeline_name not in output_pmfx["pipelines"]:
+            output_pmfx["pipelines"][pipeline_name] = dict()
+        output_pmfx["pipelines"][pipeline_name][permutation_id] = pipeline_info
     
     # write info per pmfx, containing multiple pipelines
     open(json_filepath, "w+").write(json.dumps(output_pmfx, indent=4))
@@ -690,7 +777,7 @@ if __name__ == "__main__":
     main()
 
     # todo:
-    # - fwd args (verbose)
-    # - expand permutations
+    # - fwd args (verbose + num threads)
+
     # - automate cargo publish
     # x cargo doc options

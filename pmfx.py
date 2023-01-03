@@ -1007,7 +1007,6 @@ def generate_permutations(technique, technique_json):
     permutation_options = dict()
     permutation_option_mask = 0
     define_string = ""
-
     define_list.append((_info.shader_platform.upper(), [1], -1))
     define_list.append((_info.shader_sub_platform.upper(), [1], -1))
     define_list = defines_from_caps(define_list)

@@ -69,7 +69,7 @@ commandline arguments:
 
 ## Version 2 (Experimental)
 
-Version 2.0 is currently work in progress, documentation will be updated in due course. Version 2 will use Microsoft DXC to cross compile to SPIRV and exposes support to specify entire pipeline state objects using jsn compatible with Vulkan, Direct3D 12 and Metal. Currently only HLSL is the only supported platform, others will become available via SPIRV-cross and DXC.
+Version 2 is currently work in progress, documentation will be updated in due course. Version 2 will use Microsoft DXC to cross compile to SPIRV and exposes support to specify entire pipeline state objects using jsn compatible with Vulkan, Direct3D 12 and Metal. Currently only HLSL is the only supported platform, others will become available via SPIRV-cross and DXC.
 
 ## Version 1 (Maintenance Mode)
 
@@ -99,7 +99,7 @@ python3 pmfx.py -v1 -shader_platform glsl -shader_version 330 -i examples/v1 -o 
 python3 pmfx.py -v1 -shader_platform gles -shader_version 320 -i examples/v1 -o output/bin -h output/structs -t output/temp
 ```
 
-### Shader Language
+### Shader Language 
 
 Use mostly HLSL syntax for shaders, with some small differences:
 
