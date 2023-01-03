@@ -581,7 +581,10 @@ def generate_pipeline(pipeline_name, pipeline, output_pmfx, shaders):
 
 # generate a pipeline and metadat for permutation
 def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders, pemutation_id):
-    print("generating pipeline permutation: {}".format(pipeline_name))
+    permutation_name = ""
+    if pemutation_id > 0:
+        permutation_name = str(pemutation_id)
+    print("pipeline permutation: {} {}".format(pipeline_name, permutation_name))
     resources = dict()
     output_pipeline = dict(pipeline)
     # lookup info from compiled shaders and combine resources
@@ -688,7 +691,7 @@ def generate_pmfx(file, root):
                 output_pmfx[state_type][state] = get_state_with_defaults(state_type, category[state])
 
     # thread pool for compiling shaders and pipelines
-    pool = ThreadPool(processes=1)
+    pool = ThreadPool(processes=build_info.num_threads)
 
     # gather shader list
     compile_jobs = []
@@ -777,7 +780,5 @@ if __name__ == "__main__":
     main()
 
     # todo:
-    # - fwd args (verbose + num threads)
-
     # - automate cargo publish
     # x cargo doc options

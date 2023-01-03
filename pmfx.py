@@ -37,6 +37,7 @@ class BuildInfo:
     error_code = 0                                                      # non-zero if any shaders failed to build
     nvn_exe = ""                                                        # optional executable path for nvn
     cmdline_string = ""                                                 # stores the full cmdline passed
+    num_threads = 4                                                     # number of threadsto distribute work over
 
 
 # info and contents of a .pmfx file
@@ -145,6 +146,8 @@ def parse_args():
             _info.metal_sdk = sys.argv[i+1]
         elif sys.argv[i] == "-nvn_exe":
             _info.nvn_exe = sys.argv[i+1]
+        elif sys.argv[i] == "-num_threads":
+            _info.num_threads = int(sys.argv[i+1])
         elif sys.argv[i] == "-extensions":
             j = i + 1
             while j < len(sys.argv) and sys.argv[j][0] != '-':
@@ -180,6 +183,7 @@ def parse_args():
 def display_help():
     print("commandline arguments:")
     print("    -v1 compile using pmfx version 1 (legacy) will use v2 otherwise")
+    print("    -num_threads 4 (default) <supply threadpool size>")
     print("    -shader_platform <hlsl, glsl, gles, spirv, metal, pssl, nvn>")
     print("    -shader_version (optional) <shader version unless overridden in technique>")
     print("        hlsl: 3_0, 4_0 (default), 5_0")
