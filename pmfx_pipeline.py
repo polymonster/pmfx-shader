@@ -1,6 +1,6 @@
 import pmfx as build_pmfx
-import os
 import cgu
+import os
 import json
 import hashlib
 
@@ -167,8 +167,8 @@ def get_state_with_defaults(state_type, state):
             "address_u": "Wrap",
             "address_v": "Wrap",
             "address_w": "Wrap",
-            "comparison": "None",
-            "border_colour": "None",
+            "comparison": None,
+            "border_colour": None,
             "mip_lod_bias": 0.0,
             "max_aniso": 0,
             "min_lod": -1.0,
@@ -424,7 +424,7 @@ def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_fil
             output += "  " + err + "\n"
     for out in output_list:
         output += "  " + out + "\n"
-    output =output.strip("\n")
+    output = output.strip("\n")
     print("  compiling {}\n{}".format(output_filepath, output), flush=True)
     return error_code
 
@@ -511,7 +511,6 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
 def generate_shader_info_permutation(pmfx, entry_point, stage, permute, define_list):
     info = generate_shader_info(pmfx, entry_point, stage, permute)
     info["permutation_id"] = build_pmfx.generate_permutation_id(define_list, permute)
-    info["filename"] = "placeholder"
     return stage, entry_point, info
 
 
@@ -519,24 +518,13 @@ def generate_shader_info_permutation(pmfx, entry_point, stage, permute, define_l
 def shader_needs_compiling(pmfx, entry_point, hash, output_filepath):
     if not os.path.exists(output_filepath):
         return True
-    if entry_point in pmfx["compiled_shaders"]:
+    if "compiled_shaders" in pmfx and entry_point in pmfx["compiled_shaders"]:
         if pmfx["compiled_shaders"][entry_point] != hash:
             return True
         else:
             return False
     else:
         return True
-
-
-# generate shader and metadata
-def generate_shader(build_info, stage, entry_point, pmfx, temp_path, output_path):
-    info = generate_shader_info(pmfx, entry_point, stage)
-    filename = entry_point + "." + stage
-    output_filepath = os.path.join(output_path, filename + "c")
-    if shader_needs_compiling(pmfx, entry_point, info["src_hash"], output_filepath):
-        temp_filepath = os.path.join(temp_path, filename)
-        info["error_code"] = compile_shader_hlsl(build_info, info["src"], stage, entry_point, temp_filepath, output_filepath)
-    return (stage, entry_point, info)
 
 
 # generate shader permutation
@@ -549,34 +537,8 @@ def generate_shader_permutation(build_info, shader_info, stage, entry_point, pmf
     if shader_needs_compiling(pmfx, entry_point, shader_info["src_hash"], output_filepath):
         temp_filepath = os.path.join(temp_path, filename)
         shader_info["error_code"] = compile_shader_hlsl(build_info, shader_info["src"], stage, entry_point, temp_filepath, output_filepath)
-    shader_info["filename"] = filename
+    shader_info["filename"] = filename + "c"
     return (stage, entry_point, shader_info)
-
-
-# generate pipeline and metadata
-def generate_pipeline(pipeline_name, pipeline, output_pmfx, shaders):
-    print("generating pipeline: {}".format(pipeline_name))
-    resources = dict()
-    output_pipeline = dict(pipeline)
-    # lookup info from compiled shaders and combine resources
-    for stage in get_shader_stages():
-        if stage in pipeline:
-            entry_point = pipeline[stage]
-            output_pipeline[stage] = entry_point + ".{}{}".format(stage, "c")
-            shader = shaders[stage][entry_point]
-            resources = merge_dicts(resources, shader["resources"], ["visibility"])
-            if stage == "vs":
-                pmfx_vertex_layout = dict()
-                if "vertex_layout" in pipeline:
-                    pmfx_vertex_layout = pipeline["vertex_layout"]
-                output_pipeline["vertex_layout"] = generate_vertex_layout(shader["vertex_elements"], pmfx_vertex_layout)
-            output_pipeline["error_code"] = shaders[stage][entry_point]["error_code"]
-    # build descriptor set
-    output_pipeline["descriptor_layout"] = generate_descriptor_layout(output_pmfx, pipeline, resources)
-    # topology
-    if "topology" in pipeline:
-        output_pipeline["topology"] = pipeline["topology"]
-    return (pipeline_name, output_pipeline)
 
 
 # generate a pipeline and metadat for permutation
