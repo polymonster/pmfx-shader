@@ -2,6 +2,7 @@
 #ifdef GLES
 precision highp float;
 precision highp samplerCube;
+precision highp sampler2D;
 #endif
 
 #ifdef GLES3
