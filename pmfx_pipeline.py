@@ -22,7 +22,10 @@ def get_states():
         "sampler_states",
         "render_target_blend_states",
         "blend_states",
-        "raster_states"
+        "raster_states",
+        "textures",
+        "views",
+        "graphs"
     ]
 
 
@@ -203,10 +206,29 @@ def get_state_with_defaults(state_type, state):
             "antialiased_line_enable": False,
             "forced_sample_count": 0,
             "conservative_raster_mode": False,
+        },
+        "textures": {
+            "format": "RGBA8n",
+            "width": 1,
+            "height": 1,
+            "depth": 1,
+            "array_levels": 1,
+            "mip_levels": 1,
+            "samples": 1,
+            "usage": ["ShaderResource"]
+        },
+        "views": {
+            "viewport": [0.0, 0.0, 1.0, 1.0, 0.0, 1.0],
+            "scissor": [0.0, 0.0, 1.0, 1.0],
+            "render_target": list(),
+            "depth_stencil": list(),
         }
     }
-    default = dict(state_defaults[state_type])
-    return merge_dicts(default, state)
+    if state_type in state_defaults:
+        default = dict(state_defaults[state_type])
+        return merge_dicts(default, state)
+    else:
+        return state
 
 
 # return identifier names of valid vertex semantics
@@ -420,12 +442,19 @@ def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_fil
     error_code, error_list, output_list = build_pmfx.call_wait_subprocess(cmdline)
     output = ""
     if error_code:
+        # build output string from error
+        output = "\n"
         for err in error_list:
             output += "  " + err + "\n"
-    for out in output_list:
-        output += "  " + out + "\n"
-    output = output.strip("\n")
-    print("  compiling {}\n{}".format(output_filepath, output), flush=True)
+        output = output.strip("\n")
+    elif len(output_list) > 0:
+        # build output string from output message
+        output = "\n"
+        for out in output_list:
+            output += "  " + out + "\n"
+        output = output.strip("\n")
+    basename = os.path.basename(output_filepath)
+    print("  compiling: {}{}".format(basename, output), flush=True)
     return error_code
 
 
@@ -546,7 +575,7 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
     permutation_name = ""
     if pemutation_id > 0:
         permutation_name = str(pemutation_id)
-    print("pipeline permutation: {} {}".format(pipeline_name, permutation_name))
+    print("  pipeline: {} {}".format(pipeline_name, permutation_name))
     resources = dict()
     output_pipeline = dict(pipeline)
     # lookup info from compiled shaders and combine resources
@@ -625,7 +654,7 @@ def generate_pmfx(file, root):
         if not out_of_date:
             print("{}: up-to-date".format(file))
             return
-    print("building: {}".format(file))
+    print("building: {}".format(build_pmfx.sanitize_file_path(file)))
     
     # parse functions
     pmfx["functions"] = dict()
@@ -651,6 +680,9 @@ def generate_pmfx(file, root):
             output_pmfx[state_type] = dict()
             for state in category:
                 output_pmfx[state_type][state] = get_state_with_defaults(state_type, category[state])
+        else:
+            # write place holder of empty sates
+            output_pmfx[state_type] = dict()
 
     # thread pool for compiling shaders and pipelines
     pool = ThreadPool(processes=build_info.num_threads)
@@ -737,10 +769,7 @@ def generate_pmfx(file, root):
 def main():
     build_pmfx.main(generate_pmfx, "2.0")
 
+
 # entry
 if __name__ == "__main__":
     main()
-
-    # todo:
-    # - automate cargo publish
-    # x cargo doc options
