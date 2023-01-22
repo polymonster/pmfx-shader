@@ -92,6 +92,7 @@ pmfx: {
 Pipeline states can be specified and included in `.pmfx` files:
 
 ```yaml
+pmfx: {
     depth_stencil_states: {
         depth_test_less: {
             depth_enabled: true
@@ -104,6 +105,7 @@ Pipeline states can be specified and included in `.pmfx` files:
             depth_stencil_state: depth_test_less
         }
     }
+}
 ```
 
 ### Building
