@@ -34,10 +34,11 @@ py -3 build.py -help (windows)
 python3 build.py -help (macos/linux)
 
 --------------------------------------------------------------------------------
-pmfx shader (v2.0) ------------------------------------------------------------
+pmfx shader (v2.0) -------------------------------------------------------------
 --------------------------------------------------------------------------------
 commandline arguments:
     -v1 compile using pmfx version 1 (legacy) will use v2 otherwise
+    -num_threads 4 (default) <supply threadpool size>
     -shader_platform <hlsl, glsl, gles, spirv, metal, pssl, nvn>
     -shader_version (optional) <shader version unless overridden in technique>
         hlsl: 3_0, 4_0 (default), 5_0
@@ -47,9 +48,10 @@ commandline arguments:
         metal: 2.0 (default)
         nvn: (glsl)
     -metal_sdk [metal only] <iphoneos, macosx, appletvos>
-    -metal_min_os (optional) <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>
+    -metal_min_os (optional) [metal only] <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>
     -nvn_exe [nvn only] <path to execulatble that can compile glsl to nvn glslc>
-    -extensions (optional) <list of glsl extension strings separated by spaces>
+    -extensions (optional) [glsl/gles only] <list of glsl extension strings separated by spaces>
+    -nvn_extensions (optional) [nvn only] <list of nvn glsl extension strings separated by spaces>
     -i <list of input files or directories separated by spaces>
     -o <output dir for shaders>
     -t <output dir for temp files>
@@ -57,19 +59,18 @@ commandline arguments:
     -d (optional) generate debuggable shader
     -root_dir (optional) <directory> sets working directory here
     -source (optional) (generates platform source into -o no compilation)
-    -stage_in <0, 1> (optional) [metal only] (default 1)
+    -stage_in <0, 1> (optional) [metal only] (default 1) 
         uses stage_in for metal vertex buffers, 0 uses raw buffers
-    -cbuffer_offset (optional) [metal only] (default 4)
+    -cbuffer_offset (optional) [metal only] (default 4) 
         specifies an offset applied to cbuffer locations to avoid collisions with vertex buffers
-    -texture_offset (optional) [vulkan only] (default 32)
+    -texture_offset (optional) [vulkan only] (default 32) 
         specifies an offset applied to texture locations to avoid collisions with buffers
-    -v_flip (optional) (inserts glsl uniform to conditionally flip verts in the y axis)
---------------------------------------------------------------------------------
+    -v_flip (optional) [glsl only] (inserts glsl uniform to conditionally flip verts in the y axis)
 ```
 
 ## Version 2 (Experimental)
 
-Version 2.0 is currently work in progress, documentation will be updated in due course. Version 2 will use Microsoft DXC to cross compile to SPIRV and exposes support to specify entire pipeline state objects using jsn compatible with Vulkan, Direct3D 12 and Metal. Currently only HLSL is the only supported platform, others will become available via SPIRV-cross and DXC.
+Version 2 is currently work in progress, documentation will be updated in due course. Version 2 will use Microsoft DXC to cross compile to SPIRV and exposes support to specify entire pipeline state objects using jsn compatible with Vulkan, Direct3D 12 and Metal. Currently only HLSL is the only supported platform, others will become available via SPIRV-cross and DXC.
 
 ## Version 1 (Maintenance Mode)
 
@@ -99,7 +100,7 @@ python3 pmfx.py -v1 -shader_platform glsl -shader_version 330 -i examples/v1 -o 
 python3 pmfx.py -v1 -shader_platform gles -shader_version 320 -i examples/v1 -o output/bin -h output/structs -t output/temp
 ```
 
-### Shader Language
+### Shader Language 
 
 Use mostly HLSL syntax for shaders, with some small differences:
 

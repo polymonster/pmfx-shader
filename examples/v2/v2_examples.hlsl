@@ -54,6 +54,16 @@ void test_func2() {
     decl_cbuffer_array_bounded;
 }
 
+vs_output vs_main_permutations(vs_input input) {
+    if:(SKINNED) {
+        test_func();
+        return 0;
+    }
+    else if:(INSTANCED) {
+        return 1;
+    }
+}
+
 vs_output vs_main(vs_input input, instance_input mat) {
     test_func();
 }
