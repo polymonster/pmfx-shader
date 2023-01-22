@@ -70,7 +70,106 @@ commandline arguments:
 
 ## Version 2 (Experimental)
 
-Version 2 is currently work in progress, documentation will be updated in due course. Version 2 will use Microsoft DXC to cross compile to SPIRV and exposes support to specify entire pipeline state objects using jsn compatible with Vulkan, Direct3D 12 and Metal. Currently only HLSL is the only supported platform, others will become available via SPIRV-cross and DXC.
+Version 2 is currently work in progress, documentation will be updated in due course. Version 2 will use Microsoft DXC to cross compile to SPIRV and exposes support to specify entire pipeline state objects using jsn compatible with Vulkan, Direct3D 12 and Metal. Currently only HLSL is the only supported platform, others will become available via SPIRV-cross and DXC. Newer GPU features such as mesh shaders and ray tracking will become available in future too.
+
+### Usage
+
+Use `.hlsl` files and hlsl source code, create a `.pmfx` which can create pipelines from small amount of meta data:
+
+```yaml
+#include "imdraw.hlsl"
+pmfx: {
+    pipelines: {
+        imdraw_2d: {
+            vs: vs_2d
+            ps: ps_main
+            push_constants: ["view_push_constants"]
+            topology: "LineList"
+        }
+    }
+```
+
+Pipeline states can be specified and included in `.pmfx` files:
+
+```yaml
+    depth_stencil_states: {
+        depth_test_less: {
+            depth_enabled: true
+            depth_write_mask: "All"
+            depth_func: "Less"
+        }
+    }
+    pipelines: {
+        imdraw_mesh: {
+            depth_stencil_state: depth_test_less
+        }
+    }
+```
+
+### Building
+
+Compilation is simple with command line args as so:
+
+```text
+pmfx.py -shader_platform hlsl -shader_version 6_0 -i src/shaders/ -o ${data_dir}/shaders -t ${temp_dir}/shaders -source
+```
+
+### Output
+
+Compiled shaders and reflection information will be emitted to your chosen `-o` outout directory, Each `.pmfx` file will create a directory which it will cpmpile shader binaries into. Shader compilation is minimised and reduced within single `.pmfx` files by sharing and re-using binaries which are identical across different shader permitations or stages.
+
+Descriptor layout and Vertex layout can be automatically generated based on resource usage inside shaders, the whole pipeline is exported as `.json` along with the built shaders. Hashes for the various pieces of the render pipline states are stored so you can quickly check for pipelines that may need rebuilding as part of a hot reloading process.
+
+```json
+"imdraw_2d": {
+    "0": {
+        "vs": "vs_2d.vsc",
+        "ps": "ps_main.psc",
+        "push_constants": [
+            "view_push_constants"
+        ],
+        "topology": "LineList",
+        "vs_hash:": 2752841994,
+        "vertex_layout": [
+            {
+                "name": "position",
+                "semantic": "POSITION",
+                "index": 0,
+                "format": "RG32f",
+                "aligned_byte_offset": 0,
+                "input_slot": 0,
+                "input_slot_class": "PerVertex",
+                "step_rate": 0
+            },
+            {
+                "name": "colour",
+                "semantic": "TEXCOORD",
+                "index": 0,
+                "format": "RGBA32f",
+                "aligned_byte_offset": 8,
+                "input_slot": 0,
+                "input_slot_class": "PerVertex",
+                "step_rate": 0
+        }
+    ],
+    "error_code": 0,
+    "ps_hash:": 2326464525,
+    "descriptor_layout": {
+        "bindings": [],
+        "push_constants": [
+            {
+                "shader_register": 0,
+                "register_space": 0,
+                "binding_type": "ConstantBuffer",
+                "visibility": "Vertex",
+                "num_values": 16
+            }
+        ],
+        "static_samplers": []
+    },
+    "hash": 3046174282
+}
+```
 
 ## Version 1 (Maintenance Mode)
 
@@ -100,7 +199,7 @@ python3 pmfx.py -v1 -shader_platform glsl -shader_version 330 -i examples/v1 -o 
 python3 pmfx.py -v1 -shader_platform gles -shader_version 320 -i examples/v1 -o output/bin -h output/structs -t output/temp
 ```
 
-### Shader Language 
+### V1 Shader language 
 
 Use mostly HLSL syntax for shaders, with some small differences:
 
@@ -230,47 +329,6 @@ structured_buffer[gid] = val;        // write
 // there is a `read` type you can use to be platform safe
 read3 read_coord = read3(x, y, z);
 read_texture( tex_rw, read_coord );
-```
-
-### Bindless resources
-
-Initial implementation of bindless resources is implemented and tested with HLSL, more platforms will follow. This is still work in progress. 
-
-Define resource tables types with `[]` dimensions (you could use multi-dimensional resources `[10][5][2]` for instance). Use `[]` empty square brackets for unbounded sizes. The resources are called `tables` due to ambiguity with using `array` due to `texture_2d_array` and other dimensional array types. 
-
-With bindless rendering, textures and samplers need to be decoupled so to sample a texture you supply both a `texture` and a `sampler` to the `texture_sample` macro, which can be used on textures and tables of varying dimensitonality. Constant buffer tables can be accessed through raw `[]` operator access. Smplers can also be a `table` type.
-
-Reflection info for creating descriptor sets from these resource tables will be generated and output into the `.json` file after compilation.
-
-```hlsl
-shader_resources
-{
-    // resource table types
-    texture2d_table(texture0, float4, [6], 0, 0);
-    cbuffer_table(constant_buffer0, data, [6], 1, 0);
-    sampler_state_table(sampler_table0, [], 0);
-
-    // separate sampler
-    sampler_state(sampler0, 0);
-};
-
-ps_output ps_main(ps_input input)
-{
-    ps_output output;
-
-    float4 final = float4(0.0, 0.0, 0.0, 0.0);
-    float2 uv = input.colour.rg * float2(1.0, -1.0);
-
-    float4 r0 = texture_sample(texture0[0], sampler0, uv * 2.0);
-    float4 r1 = texture_sample(texture0[1], sampler0, (uv * 2.0) + float2(0.0, 1.0));
-    float4 r2 = texture_sample(texture0[2], sampler0, (uv * 2.0) + float2(1.0, 1.0));
-    float4 r3 = texture_sample(texture0[5], sampler0, (input.colour.rg * 2.0) + float2(1.0, 0.0));
-    r3 += texture_sample(texture0[6], sampler0, (input.colour.rg * 2.0) + float2(1.0, 0.0));
-
-    // ..
-
-    final *= constant_buffer0[4].rgba;
-}
 ```
 
 ### cbuffers
