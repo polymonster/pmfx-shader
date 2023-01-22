@@ -3045,6 +3045,7 @@ def build_executable():
     # platform binaries
     if platform == "win64":
         shutil.copytree("bin/fxc", "dist/win64/bin/fxc", dirs_exist_ok=True)
+        shutil.copytree("bin/dxc", "dist/win64/bin/fxc", dirs_exist_ok=True)
         shutil.copytree("bin/glsl/win64", "dist/win64/bin/glsl/win64", dirs_exist_ok=True)
     elif platform == "osx":
         shutil.copytree("bin/glsl/osx", "dist/osx/bin/glsl/osx", dirs_exist_ok=True)
