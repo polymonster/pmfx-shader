@@ -3,8 +3,14 @@ import cgu
 import os
 import json
 import hashlib
+import zlib
 
 from multiprocessing.pool import ThreadPool
+
+# return a 32 bit hash from objects which can cast to str
+def pmfx_hash(src):
+    return zlib.adler32(bytes(str(src).encode("utf8")))
+    
 
 # return names of supported shader stages
 def get_shader_stages():
@@ -25,7 +31,8 @@ def get_states():
         "raster_states",
         "textures",
         "views",
-        "graphs"
+        "update_graphs",
+        "render_graphs"
     ]
 
 
@@ -147,7 +154,7 @@ def get_state_with_defaults(state_type, state):
     state_defaults = {
         "depth_stencil_states": {
             "depth_enabled": False,
-            "depth_write_mask": "None",
+            "depth_write_mask": "Zero",
             "depth_func": "Always",
             "stencil_enabled": False,
             "stencil_read_mask": 0,
@@ -226,9 +233,10 @@ def get_state_with_defaults(state_type, state):
     }
     if state_type in state_defaults:
         default = dict(state_defaults[state_type])
-        return merge_dicts(default, state)
-    else:
-        return state
+        state = merge_dicts(default, state)
+        state["hash"] = pmfx_hash(state)
+
+    return state
 
 
 # return identifier names of valid vertex semantics
@@ -588,6 +596,7 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
                 lookup = shader_info["lookup"]
                 shader_info = dict(shaders[stage][lookup[0]][lookup[1]])
             output_pipeline[stage] = shader_info["filename"]
+            output_pipeline["{}_hash:".format(stage)] = pmfx_hash(shader_info["src_hash"])
             shader = shader_info
             resources = merge_dicts(resources, shader["resources"], ["visibility"])
             if stage == "vs":
@@ -602,6 +611,8 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
     # topology
     if "topology" in pipeline:
         output_pipeline["topology"] = pipeline["topology"]
+    # hash the whole thing
+    output_pipeline["hash"] = pmfx_hash(output_pipeline)
     return (pipeline_name, pemutation_id, output_pipeline)
 
 
@@ -616,11 +627,6 @@ def generate_pmfx(file, root):
     pmfx["pmfx"] = pmfx_json
     pmfx["source"] = cgu.format_source(shader_source, 4)
 
-    # output dictionary
-    output_pmfx = {
-        "pipelines": dict()
-    }
-
     # create build folders
     build_info = build_pmfx.get_info()
     name = os.path.splitext(file)[0]
@@ -629,6 +635,12 @@ def generate_pmfx(file, root):
     json_filepath = os.path.join(output_path, "{}.json".format(name))
     os.makedirs(temp_path, exist_ok=True)
     os.makedirs(output_path, exist_ok=True)
+
+    # output dictionary
+    output_pmfx = {
+        "pipelines": dict(),
+        "shaders": dict()
+    }
 
     # check deps
     out_of_date = True
@@ -740,6 +752,7 @@ def generate_pmfx(file, root):
     for job in compile_jobs:
         (stage, entry_point, info) = job.get()
         shaders[stage][entry_point][info["permutation_id"]] = info
+        output_pmfx["shaders"][info["filename"]] = pmfx_hash(info["src_hash"]) 
 
     # generate pipeline reflection info
     pipeline_compile_jobs = []
@@ -754,6 +767,9 @@ def generate_pmfx(file, root):
             output_pmfx["pipelines"][pipeline_name] = dict()
         output_pmfx["pipelines"][pipeline_name][permutation_id] = pipeline_info
     
+    # timestamp info
+    output_pmfx["filepath"] = os.path.abspath(json_filepath)
+
     # write info per pmfx, containing multiple pipelines
     open(json_filepath, "w+").write(json.dumps(output_pmfx, indent=4))
 
