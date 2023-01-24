@@ -166,7 +166,7 @@ def parse_args():
         "-o",
         "-t"
     ]
-    if _info.shader_platform == "nvm":
+    if _info.shader_platform == "nvn":
         required.append("-nvn_exe")
     missing = False
     for r in required:
@@ -1528,7 +1528,7 @@ def generate_texture_decl(texture_list):
 
 # insert glsl location if we need it
 def insert_layout_location(loc):
-    if _info.shader_sub_platform == "spirv":
+    if _info.shader_sub_platform == "spirv" or _info.shader_sub_platform == "nvn":
        return "layout(location = " + str(loc) + ") "
     return ""
 
