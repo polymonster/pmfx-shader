@@ -4,6 +4,7 @@ import os
 import json
 import hashlib
 import zlib
+import sys
 
 from multiprocessing.pool import ThreadPool
 
@@ -574,7 +575,7 @@ def generate_shader_permutation(build_info, shader_info, stage, entry_point, pmf
     if shader_needs_compiling(pmfx, entry_point, shader_info["src_hash"], output_filepath):
         temp_filepath = os.path.join(temp_path, filename)
         shader_info["error_code"] = compile_shader_hlsl(build_info, shader_info["src"], stage, entry_point, temp_filepath, output_filepath)
-    shader_info["filename"] = filename + "c"
+    shader_info["filename"] = "{}/{}c".format(pmfx["pmfx_name"], filename)
     return (stage, entry_point, shader_info)
 
 
@@ -604,15 +605,27 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
                 if "vertex_layout" in pipeline:
                     pmfx_vertex_layout = pipeline["vertex_layout"]
                 output_pipeline["vertex_layout"] = generate_vertex_layout(shader["vertex_elements"], pmfx_vertex_layout)
-            # todo
-            output_pipeline["error_code"] = shader_info["error_code"]
+            # set non zero error codes to track failures
+            if shader_info["error_code"] != 0:
+                output_pipeline["error_code"] = shader_info["error_code"]
     # build descriptor set
     output_pipeline["descriptor_layout"] = generate_descriptor_layout(output_pmfx, pipeline, resources)
     # topology
     if "topology" in pipeline:
         output_pipeline["topology"] = pipeline["topology"]
     # hash the whole thing
-    output_pipeline["hash"] = pmfx_hash(output_pipeline)
+    expanded = {
+        "pipeline": output_pipeline,
+    }
+
+    if "depth_stencil_state" in pipeline:
+        expanded["depth_stencil_state"] = output_pmfx["depth_stencil_states"][output_pipeline["depth_stencil_state"]]
+    
+    output_pipeline["hash"] = pmfx_hash(expanded)
+
+    # need to has the state objects
+    output_pmfx
+
     return (pipeline_name, pemutation_id, output_pipeline)
 
 
@@ -626,6 +639,7 @@ def generate_pmfx(file, root):
     pmfx = dict()
     pmfx["pmfx"] = pmfx_json
     pmfx["source"] = cgu.format_source(shader_source, 4)
+    pmfx["pmfx_name"] = os.path.splitext(file)[0]
 
     # create build folders
     build_info = build_pmfx.get_info()
@@ -752,7 +766,8 @@ def generate_pmfx(file, root):
     for job in compile_jobs:
         (stage, entry_point, info) = job.get()
         shaders[stage][entry_point][info["permutation_id"]] = info
-        output_pmfx["shaders"][info["filename"]] = pmfx_hash(info["src_hash"]) 
+        shader_name = info["filename"]
+        output_pmfx["shaders"][shader_name] = pmfx_hash(info["src_hash"]) 
 
     # generate pipeline reflection info
     pipeline_compile_jobs = []
@@ -767,20 +782,28 @@ def generate_pmfx(file, root):
             output_pmfx["pipelines"][pipeline_name] = dict()
         output_pmfx["pipelines"][pipeline_name][permutation_id] = pipeline_info
     
-    # timestamp info
+    # timestamp / dependency info
+    dependency_set = list()
+    for file in included_files:
+        abs_file = os.path.abspath(file)
+        if abs_file not in dependency_set:
+            dependency_set.append(abs_file)
     output_pmfx["filepath"] = os.path.abspath(json_filepath)
+    output_pmfx["dependencies"] = dependency_set
 
     # write info per pmfx, containing multiple pipelines
     open(json_filepath, "w+").write(json.dumps(output_pmfx, indent=4))
 
     # return errors
-    for pipeline in output_pmfx:
-        if "error_code" in output_pmfx[pipeline]:
-            return output_pmfx[pipeline]["error_code"]
+    build_info.error_code = 0
+    for pipeline in output_pmfx["pipelines"]:
+        for permutation in output_pmfx["pipelines"][pipeline]:
+            if "error_code" in output_pmfx["pipelines"][pipeline][permutation]:
+                sys.exit(output_pmfx["pipelines"][pipeline][permutation]["error_code"])
 
     return 0
 
-
+""
 # entry point wrangling
 def main():
     build_pmfx.main(generate_pmfx, "2.0")

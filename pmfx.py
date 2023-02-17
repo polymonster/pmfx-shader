@@ -2963,6 +2963,12 @@ def get_info():
     return _info
 
 
+# sets the global info
+def set_info(info):
+    global _info
+    _info = info
+
+
 # main function to avoid shadowing
 def main(parse_function, version):
     print("--------------------------------------------------------------------------------", flush=True)
