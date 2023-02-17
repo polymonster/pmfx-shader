@@ -21,6 +21,10 @@ struct instance_input {
     float4 mat3 : TEXCOORD6;
 };
 
+struct ps_output {
+    float4 colour : SV_Target;
+};
+
 struct sb_sb {
     float4 data;
 };
@@ -57,25 +61,47 @@ void test_func2() {
 vs_output vs_main_permutations(vs_input input) {
     if:(SKINNED) {
         test_func();
-        return 0;
+        return vs_output_default();
     }
     else if:(INSTANCED) {
-        return 1;
+        return vs_output_default();
     }
+    return vs_output_default();
+}
+
+vs_output vs_output_default() {
+    vs_output output;
+    output.position = float4(0.0, 0.0, 0.0, 1.0);
+    output.world_pos = float4(0.0, 0.0, 0.0, 1.0);
+    output.normal = float4(0.0, 0.0, 0.0, 1.0);
+    output.tangent = float4(0.0, 0.0, 0.0, 1.0);
+    output.bitangent = float4(0.0, 0.0, 0.0, 1.0);
+    output.texcoord = float4(0.0, 0.0, 0.0, 1.0);
+    return output;
+}
+
+ps_output ps_output_default() {
+    ps_output output;
+    output.colour = float4(0.0, 0.0, 0.0, 1.0);
+    return output;
 }
 
 vs_output vs_main(vs_input input, instance_input mat) {
     test_func();
+    return vs_output_default();
 }
 
 vs_output vs_main_mixed_semantics(vs_input input, uint iid : SV_InstanceID) {
     test_func();
+    return vs_output_default();
 }
 
 vs_output vs_main_separate_elements(float4 pos : POSITION, float4 tex : TEXCOORD0) {
     test_func();
+    return vs_output_default();
 }
 
 ps_output ps_main() {
     test_func2();
+    return ps_output_default();
 }
