@@ -618,8 +618,15 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
         "pipeline": output_pipeline,
     }
 
+    # adds extra hashes
     if "depth_stencil_state" in pipeline:
         expanded["depth_stencil_state"] = output_pmfx["depth_stencil_states"][output_pipeline["depth_stencil_state"]]
+    
+    if "raster_state" in pipeline:
+        expanded["raster_state"] = output_pmfx["raster_states"][output_pipeline["raster_state"]]
+
+    if "blend_state" in pipeline:
+        expanded["blend_state"] = output_pmfx["blend_states"][output_pipeline["blend_state"]]
     
     output_pipeline["hash"] = pmfx_hash(expanded)
 
