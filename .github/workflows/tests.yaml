@@ -14,7 +14,7 @@ jobs:
           py -3 pmfx.py -v1 -i examples/v1 -shader_platform hlsl -shader_version 5_0 -o build/v1/hlsl_sm5 -t build/temp/v1/hlsl_sm5 -h build/v1/hlsl_sm5/headers
       - name: hlsl-sm6-examples-v2
         run: |
-          python3 pmfx.py -i examples/v2 -shader_platform hlsl -shader_version 6_0 -o build/v2/hlsl_sm6 -t build/temp/v2/hlsl_sm6
+          py -3 pmfx.py -i examples/v2 -shader_platform hlsl -shader_version 6_0 -o build/v2/hlsl_sm6 -t build/temp/v2/hlsl_sm6
   metal:
     runs-on: macos-latest
     steps:
