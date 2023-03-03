@@ -1,0 +1,112 @@
+{
+    "cmdline": "..\\third_party\\pmbuild\\scripts\\pmfx-shader\\build_pmfx.py -shader_platform glsl -shader_version 450 -i assets/shaders ../assets/shaders -o bin/win32/data/pmfx/glsl -h shader_structs -t build/temp/shaders -source -v_flip ",
+    "files": [
+        {
+            "name": "C:\\actions-runner-pmtech\\_work\\pmtech\\pmtech\\third_party\\pmbuild\\scripts\\pmfx-shader\\build_pmfx.py",
+            "timestamp": 1653222595.2662177
+        },
+        {
+            "name": "C:\\actions-runner-pmtech\\_work\\pmtech\\pmtech\\third_party\\pmbuild\\scripts\\pmfx-shader\\platform\\pmfx.h",
+            "timestamp": 1650810183.096692
+        },
+        {
+            "name": "C:\\actions-runner-pmtech\\_work\\pmtech\\pmtech\\third_party\\pmbuild\\scripts\\pmfx-shader\\platform\\glsl.h",
+            "timestamp": 1651918963.725134
+        },
+        {
+            "name": "C:\\actions-runner-pmtech\\_work\\pmtech\\pmtech\\examples\\..\\assets\\shaders\\imgui.pmfx",
+            "timestamp": 1650810162.782683
+        }
+    ],
+    "techniques": [
+        {
+            "vs": "vs_main",
+            "ps": "ps_main",
+            "name": "default",
+            "texture_sampler_bindings": [
+                {
+                    "name": "tex",
+                    "data_type": "float4",
+                    "fragments": 1,
+                    "type": "texture_2d",
+                    "unit": 0
+                }
+            ],
+            "structured_buffers": [],
+            "descriptor_tables": [],
+            "samplers": [],
+            "cbuffers": [
+                {
+                    "name": "per_pass_vs",
+                    "location": 1,
+                    "space": -1
+                }
+            ],
+            "vs_inputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 1,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 0
+                },
+                {
+                    "name": "tex_coord",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 8
+                },
+                {
+                    "name": "colour",
+                    "semantic_index": 0,
+                    "semantic_id": 7,
+                    "size": 4,
+                    "element_size": 1,
+                    "num_elements": 4,
+                    "offset": 16
+                }
+            ],
+            "instance_inputs": [],
+            "vs_outputs": [
+                {
+                    "name": "position",
+                    "semantic_index": 0,
+                    "semantic_id": 0,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 0
+                },
+                {
+                    "name": "colour",
+                    "semantic_index": 0,
+                    "semantic_id": 2,
+                    "size": 16,
+                    "element_size": 4,
+                    "num_elements": 4,
+                    "offset": 16
+                },
+                {
+                    "name": "tex_coord",
+                    "semantic_index": 1,
+                    "semantic_id": 2,
+                    "size": 8,
+                    "element_size": 4,
+                    "num_elements": 2,
+                    "offset": 32
+                }
+            ],
+            "vs_file": "default.vsc",
+            "ps_file": "default.psc",
+            "permutations": {},
+            "permutation_id": 0,
+            "permutation_option_mask": 0
+        }
+    ],
+    "failures": {}
+}

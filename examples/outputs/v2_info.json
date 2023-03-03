@@ -1,0 +1,420 @@
+{
+    "pipelines": {
+        "mesh_debug": {
+            "0": {
+                "vs": "basic/vs_mesh.vsc",
+                "ps": "basic/ps_checkerboard.psc",
+                "push_constants": [
+                    "view_push_constants",
+                    "draw_push_constants"
+                ],
+                "depth_stencil_state": "depth_test_less",
+                "raster_state": "cull_back",
+                "topology": "TriangleList",
+                "vs_hash:": 2233862273,
+                "vertex_layout": [
+                    {
+                        "name": "position",
+                        "semantic": "POSITION",
+                        "index": 0,
+                        "format": "RGB32f",
+                        "aligned_byte_offset": 0,
+                        "input_slot": 0,
+                        "input_slot_class": "PerVertex",
+                        "step_rate": 0
+                    },
+                    {
+                        "name": "texcoord",
+                        "semantic": "TEXCOORD",
+                        "index": 0,
+                        "format": "RG32f",
+                        "aligned_byte_offset": 12,
+                        "input_slot": 0,
+                        "input_slot_class": "PerVertex",
+                        "step_rate": 0
+                    },
+                    {
+                        "name": "normal",
+                        "semantic": "TEXCOORD",
+                        "index": 1,
+                        "format": "RGB32f",
+                        "aligned_byte_offset": 20,
+                        "input_slot": 0,
+                        "input_slot_class": "PerVertex",
+                        "step_rate": 0
+                    },
+                    {
+                        "name": "tangent",
+                        "semantic": "TEXCOORD",
+                        "index": 2,
+                        "format": "RGB32f",
+                        "aligned_byte_offset": 32,
+                        "input_slot": 0,
+                        "input_slot_class": "PerVertex",
+                        "step_rate": 0
+                    },
+                    {
+                        "name": "bitangent",
+                        "semantic": "TEXCOORD",
+                        "index": 3,
+                        "format": "RGB32f",
+                        "aligned_byte_offset": 44,
+                        "input_slot": 0,
+                        "input_slot_class": "PerVertex",
+                        "step_rate": 0
+                    }
+                ],
+                "ps_hash:": 2277378182,
+                "descriptor_layout": {
+                    "bindings": [],
+                    "push_constants": [
+                        {
+                            "shader_register": 0,
+                            "register_space": 0,
+                            "binding_type": "ConstantBuffer",
+                            "visibility": "Vertex",
+                            "num_values": 48
+                        },
+                        {
+                            "shader_register": 1,
+                            "register_space": 0,
+                            "binding_type": "ConstantBuffer",
+                            "visibility": "Vertex",
+                            "num_values": 16
+                        }
+                    ],
+                    "static_samplers": []
+                },
+                "hash": 3191457657
+            }
+        },
+        "wireframe_overlay": {
+            "0": {
+                "vs": "basic/vs_mesh.vsc",
+                "ps": "basic/ps_wireframe.psc",
+                "push_constants": [
+                    "view_push_constants",
+                    "draw_push_constants"
+                ],
+                "raster_state": "wireframe",
+                "depth_stencil_state": "depth_test_always",
+                "topology": "TriangleList",
+                "vs_hash:": 2233862273,
+                "vertex_layout": [
+                    {
+                        "name": "position",
+                        "semantic": "POSITION",
+                        "index": 0,
+                        "format": "RGB32f",
+                        "aligned_byte_offset": 0,
+                        "input_slot": 0,
+                        "input_slot_class": "PerVertex",
+                        "step_rate": 0
+                    },
+                    {
+                        "name": "texcoord",
+                        "semantic": "TEXCOORD",
+                        "index": 0,
+                        "format": "RG32f",
+                        "aligned_byte_offset": 12,
+                        "input_slot": 0,
+                        "input_slot_class": "PerVertex",
+                        "step_rate": 0
+                    },
+                    {
+                        "name": "normal",
+                        "semantic": "TEXCOORD",
+                        "index": 1,
+                        "format": "RGB32f",
+                        "aligned_byte_offset": 20,
+                        "input_slot": 0,
+                        "input_slot_class": "PerVertex",
+                        "step_rate": 0
+                    },
+                    {
+                        "name": "tangent",
+                        "semantic": "TEXCOORD",
+                        "index": 2,
+                        "format": "RGB32f",
+                        "aligned_byte_offset": 32,
+                        "input_slot": 0,
+                        "input_slot_class": "PerVertex",
+                        "step_rate": 0
+                    },
+                    {
+                        "name": "bitangent",
+                        "semantic": "TEXCOORD",
+                        "index": 3,
+                        "format": "RGB32f",
+                        "aligned_byte_offset": 44,
+                        "input_slot": 0,
+                        "input_slot_class": "PerVertex",
+                        "step_rate": 0
+                    }
+                ],
+                "ps_hash:": 2344290471,
+                "descriptor_layout": {
+                    "bindings": [],
+                    "push_constants": [
+                        {
+                            "shader_register": 0,
+                            "register_space": 0,
+                            "binding_type": "ConstantBuffer",
+                            "visibility": "Vertex",
+                            "num_values": 48
+                        },
+                        {
+                            "shader_register": 1,
+                            "register_space": 0,
+                            "binding_type": "ConstantBuffer",
+                            "visibility": "Vertex",
+                            "num_values": 16
+                        }
+                    ],
+                    "static_samplers": []
+                },
+                "hash": 2262681932
+            }
+        }
+    },
+    "shaders": {
+        "basic/vs_mesh.vsc": 2233862273,
+        "basic/ps_checkerboard.psc": 2277378182,
+        "basic/ps_wireframe.psc": 2344290471
+    },
+    "depth_stencil_states": {
+        "depth_test_less": {
+            "depth_enabled": true,
+            "depth_write_mask": "All",
+            "depth_func": "Less",
+            "stencil_enabled": false,
+            "stencil_read_mask": 0,
+            "stencil_write_mask": 0,
+            "front_face": {
+                "fail": "Keep",
+                "depth_fail": "Keep",
+                "pass": "Keep",
+                "func": "Always"
+            },
+            "back_face": {
+                "fail": "Keep",
+                "depth_fail": "Keep",
+                "pass": "Keep",
+                "func": "Always"
+            },
+            "hash": 244148036
+        },
+        "depth_test_equal": {
+            "depth_enabled": true,
+            "depth_write_mask": "All",
+            "depth_func": "Equal",
+            "stencil_enabled": false,
+            "stencil_read_mask": 0,
+            "stencil_write_mask": 0,
+            "front_face": {
+                "fail": "Keep",
+                "depth_fail": "Keep",
+                "pass": "Keep",
+                "func": "Always"
+            },
+            "back_face": {
+                "fail": "Keep",
+                "depth_fail": "Keep",
+                "pass": "Keep",
+                "func": "Always"
+            },
+            "hash": 2252236709
+        },
+        "depth_test_always": {
+            "depth_enabled": true,
+            "depth_write_mask": "All",
+            "depth_func": "Less",
+            "stencil_enabled": false,
+            "stencil_read_mask": 0,
+            "stencil_write_mask": 0,
+            "front_face": {
+                "fail": "Keep",
+                "depth_fail": "Keep",
+                "pass": "Keep",
+                "func": "Always"
+            },
+            "back_face": {
+                "fail": "Keep",
+                "depth_fail": "Keep",
+                "pass": "Keep",
+                "func": "Always"
+            },
+            "hash": 244148036
+        }
+    },
+    "sampler_states": {},
+    "render_target_blend_states": {},
+    "blend_states": {},
+    "raster_states": {
+        "wireframe": {
+            "fill_mode": "Wireframe",
+            "cull_mode": "None",
+            "front_ccw": false,
+            "depth_bias": -5,
+            "depth_bias_clamp": 0.0,
+            "slope_scaled_depth_bias": 0.0,
+            "depth_clip_enable": false,
+            "multisample_enable": false,
+            "antialiased_line_enable": false,
+            "forced_sample_count": 0,
+            "conservative_raster_mode": false,
+            "hash": 3249235164
+        },
+        "cull_back": {
+            "fill_mode": "Solid",
+            "cull_mode": "Back",
+            "front_ccw": false,
+            "depth_bias": 0,
+            "depth_bias_clamp": 0.0,
+            "slope_scaled_depth_bias": 0.0,
+            "depth_clip_enable": false,
+            "multisample_enable": false,
+            "antialiased_line_enable": false,
+            "forced_sample_count": 0,
+            "conservative_raster_mode": false,
+            "hash": 2186240740
+        }
+    },
+    "textures": {
+        "main_colour": {
+            "format": "RGBA8n",
+            "width": 1,
+            "height": 1,
+            "depth": 1,
+            "array_levels": 1,
+            "mip_levels": 1,
+            "samples": 8,
+            "usage": [
+                "ShaderResource",
+                "RenderTarget"
+            ],
+            "ratio": {
+                "window": "main_window",
+                "scale": 1.0
+            },
+            "hash": 1223573194
+        },
+        "main_depth": {
+            "format": "D24nS8u",
+            "width": 1,
+            "height": 1,
+            "depth": 1,
+            "array_levels": 1,
+            "mip_levels": 1,
+            "samples": 8,
+            "usage": [
+                "ShaderResource",
+                "DepthStencil"
+            ],
+            "ratio": {
+                "window": "main_window",
+                "scale": 1.0
+            },
+            "hash": 2351906592
+        }
+    },
+    "views": {
+        "main_view": {
+            "viewport": [
+                0.0,
+                0.0,
+                1.0,
+                1.0,
+                0.0,
+                1.0
+            ],
+            "scissor": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+            ],
+            "render_target": [
+                "main_colour"
+            ],
+            "depth_stencil": [
+                "main_depth"
+            ],
+            "clear_colour": [
+                0.45,
+                0.55,
+                0.6,
+                1.0
+            ],
+            "clear_depth": 1.0,
+            "camera": "main_camera",
+            "hash": 2840609343
+        },
+        "main_view_no_clear": {
+            "viewport": [
+                0.0,
+                0.0,
+                1.0,
+                1.0,
+                0.0,
+                1.0
+            ],
+            "scissor": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+            ],
+            "render_target": [
+                "main_colour"
+            ],
+            "depth_stencil": [
+                "main_depth"
+            ],
+            "clear_colour": null,
+            "clear_depth": null,
+            "camera": "main_camera",
+            "hash": 4218044546
+        }
+    },
+    "update_graphs": {},
+    "render_graphs": {
+        "mesh_debug": {
+            "grid": {
+                "view": "main_view",
+                "pipelines": [
+                    "imdraw_3d"
+                ],
+                "function": "render_grid"
+            },
+            "meshes": {
+                "view": "main_view_no_clear",
+                "pipelines": [
+                    "mesh_debug"
+                ],
+                "function": "render_meshes",
+                "depends_on": [
+                    "grid"
+                ]
+            },
+            "wireframe": {
+                "view": "main_view_no_clear",
+                "pipelines": [
+                    "wireframe_overlay"
+                ],
+                "function": "render_meshes",
+                "depends_on": [
+                    "meshes",
+                    "grid"
+                ]
+            }
+        }
+    },
+    "filepath": "C:\\Users\\alex_\\dev\\hotline\\target\\data\\shaders\\basic\\basic.json",
+    "dependencies": [
+        "C:\\Users\\alex_\\dev\\hotline\\hotline-data\\src\\shaders\\basic.hlsl",
+        "C:\\Users\\alex_\\dev\\hotline\\hotline-data\\src\\shaders\\hotline.pmfx",
+        "C:\\Users\\alex_\\dev\\pmfx-shader\\pmfx.py",
+        "C:\\Users\\alex_\\dev\\hotline\\hotline-data\\src\\shaders\\basic.pmfx"
+    ]
+}

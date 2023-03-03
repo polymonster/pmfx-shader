@@ -5,6 +5,7 @@ import json
 import hashlib
 import zlib
 import sys
+import jsn
 
 from multiprocessing.pool import ThreadPool
 
@@ -636,11 +637,36 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
     return (pipeline_name, pemutation_id, output_pipeline)
 
 
+# load a pmfx file into dictionary()
+def load_pmfx_jsn(filepath, root):
+    pmfx = jsn.loads(open(os.path.join(root, filepath), "r").read())
+    all_included_files = []
+    all_shader_source = ""
+    if "include" in pmfx:
+        for include in pmfx["include"]:
+            if include.endswith(".pmfx"):
+                include_pmfx, shader_source, included_files = load_pmfx_jsn(include, root)
+                all_shader_source += "\n" + shader_source
+                all_included_files.extend(included_files)
+                pmfx = merge_dicts(pmfx, include_pmfx)
+            elif include.endswith(".hlsl"):
+                shader_source, included_files = build_pmfx.create_shader_set(include, root)
+                all_shader_source += "\n" + shader_source
+                all_included_files.extend(included_files)
+            all_included_files.append(os.path.join(root, include))
+    return (pmfx, all_shader_source, all_included_files)
+
+
 # new generation of pmfx
 def generate_pmfx(file, root):
     input_pmfx_filepath = os.path.join(root, file)
+
+    # semi similar to v1-path, allows pmfx: {} and hls source code to be mixed in the ame file  
     shader_file_text_full, included_files = build_pmfx.create_shader_set(input_pmfx_filepath, root)
     pmfx_json, shader_source = build_pmfx.find_pmfx_json(shader_file_text_full)
+
+    if not pmfx_json:
+        pmfx_json, shader_source, included_files = load_pmfx_jsn(file, root)
 
     # src (input) pmfx dictionary
     pmfx = dict()
