@@ -70,7 +70,7 @@ commandline arguments:
 
 ## Version 2 (Experimental)
 
-Version 2 is currently work in progress, documentation will be updated in due course. Version 2 will use Microsoft DXC to cross compile to SPIRV and exposes support to specify entire pipeline state objects using jsn compatible with Vulkan, Direct3D 12 and Metal. Currently only HLSL is the only supported platform, others will become available via SPIRV-cross and DXC. Newer GPU features such as mesh shaders and ray tracking will become available in future too.
+Version 2 is currently work in progress, documentation will be updated in due course. Version 2 will use Microsoft DXC to cross compile to SPIRV and exposes support to specify entire pipeline state objects using jsn compatible with Vulkan, Direct3D 12 and Metal. Currently only HLSL is the only supported platform, others will become available via SPIRV-cross and DXC. Newer GPU features such as mesh shaders and ray tracing will become available in future too.
 
 ### Usage
 
