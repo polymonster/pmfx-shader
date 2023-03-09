@@ -1,7 +1,7 @@
 /// this is the full schema for pmfx pipeline specification
-/// members are listed with their default values, possible values for enums and types listed in the comments
+/// members are listed with their default values, possible values for enums and types listed in the comments.
 
-/// depth stencil state: 
+/// depth stencil state.
 depth_stencil_state: {
     /// specifies whether to enable depth testing. set this to `true` to enable depth testing.
     /// type: bool
@@ -51,4 +51,38 @@ depth_stencil_state: {
         /// type: enum [Never, Less, Equal, LessEqual, Greater, NotEqual, GreaterEqual, Always]
         func: Always
     }
+}
+
+/// sampler state
+sampler_states: {
+    /// value that specifies the filtering method to use when sampling a texture.
+    /// type: enum [Point, Linear, Anisotropic]
+    filter: Linear
+    /// value that specifies the method to use for resolving a u texture coordinate that is outside the 0 to 1 range.
+    /// type: enum [Wrap, Mirror, Clamp, Border, MirrorOnce]
+    address_u: Wrap
+    /// value that specifies the method to use for resolving a v texture coordinate that is outside the 0 to 1 range.
+    /// type: enum [Wrap, Mirror, Clamp, Border, MirrorOnce]
+    address_v: Wrap
+    /// value that specifies the method to use for resolving a w texture coordinate that is outside the 0 to 1 range.
+    /// /// type: enum [Wrap, Mirror, Clamp, Border, MirrorOnce]
+    address_w: Wrap
+    /// value that specifies a function that compares sampled data against existing sampled data.
+    /// type: enum [Never, Less, Equal, LessEqual, Greater, NotEqual, GreaterEqual, Always]
+    comparison: None
+    /// RGBA border color to use if `Border` is specified for address_u, address_v, or address_w.
+    /// type: optional u32 integer [None, 0x0000 - 0xFFFFFF]
+    border_colour: None
+    /// offset from the calculated mipmap level.
+    /// type: float 
+    mip_lod_bias: 0.0
+    /// lower end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed.
+    /// type: integer [1 - 16]
+    max_aniso: 1
+    /// lower end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed.
+    /// type: float
+    min_lod: -1.0
+    /// upper end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed.
+    /// type: float
+    max_lod: -1.0
 }
