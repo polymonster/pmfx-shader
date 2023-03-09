@@ -1,0 +1,54 @@
+/// this is the full schema for pmfx pipeline specification
+/// members are listed with their default values, possible values for enums and types listed in the comments
+
+/// depth stencil state: 
+depth_stencil_state: {
+    /// specifies whether to enable depth testing. set this to `true` to enable depth testing.
+    /// type: bool
+    depth_enabled: false
+    /// identifies a portion of the depth-stencil buffer that can be modified by depth data.
+    /// possible values: [Zero, All]
+    depth_write_mask: Zero
+    /// identifies a function that compares depth data against existing depth data.
+    /// type: enum [Never, Less, Equal, LessEqual, Greater, NotEqual, GreaterEqual, Always]
+    depth_func: Always
+    /// specifies whether to enable stencil testing. set this to `true` to enable stencil testing.
+    /// type: bool
+    stencil_enabled: false
+    /// identify a portion of the depth-stencil buffer for reading stencil data.
+    /// type: u8 integer [0-255]
+    stencil_read_mask: 0
+    /// identify a portion of the depth-stencil buffer for writing stencil data.
+    /// type: u8 integer [0-255]
+    stencil_write_mask: 0
+    /// structure that describes how to use the results of the depth test and the stencil test for pixels whose surface normal is facing towards the camera.
+    front_face: {
+        /// value that identifies the stencil operation to perform when stencil testing fails.
+        /// type: enum [Zero, Replace, IncrSat, DecrSat, Invert, Incr, Decr]
+        fail: Keep
+        /// value that identifies the stencil operation to perform when stencil testing passes and depth testing fails.
+        /// type: enum [Zero, Replace, IncrSat, DecrSat, Invert, Incr, Decr]
+        depth_fail: Keep
+        /// typed value that identifies the stencil operation to perform when stencil testing and depth testing both pass.
+        /// type: enum [Zero, Replace, IncrSat, DecrSat, Invert, Incr, Decr]
+        pass: Keep
+        /// typed value that identifies the function that compares stencil data against existing stencil data.
+        /// type: enum [Never, Less, Equal, LessEqual, Greater, NotEqual, GreaterEqual, Always]
+        func: Always
+    }
+    /// structure that describes how to use the results of the depth test and the stencil test for pixels whose surface normal is facing away from the camera.
+    back_face: {
+        /// value that identifies the stencil operation to perform when stencil testing fails.
+        /// type: enum [Zero, Replace, IncrSat, DecrSat, Invert, Incr, Decr]
+        fail: Keep
+        /// value that identifies the stencil operation to perform when stencil testing passes and depth testing fails.
+        /// type: enum [Zero, Replace, IncrSat, DecrSat, Invert, Incr, Decr]
+        depth_fail: Keep
+        /// typed value that identifies the stencil operation to perform when stencil testing and depth testing both pass.
+        /// type: enum [Zero, Replace, IncrSat, DecrSat, Invert, Incr, Decr]
+        pass: Keep
+        /// typed value that identifies the function that compares stencil data against existing stencil data.
+        /// type: enum [Never, Less, Equal, LessEqual, Greater, NotEqual, GreaterEqual, Always]
+        func: Always
+    }
+}
