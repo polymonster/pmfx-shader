@@ -196,12 +196,14 @@ def get_state_with_defaults(state_type, state):
             "dst_blend_alpha": "Zero",
             "blend_op_alpha": "Add",
             "logic_op": "Clear",
-            "write_mask": "ALL",
+            "write_mask": {
+                "bits": (1<<0)|(1<<1)|(1<<2)
+            }
         },
         "blend_states": {
             "alpha_to_coverage_enabled": False,
             "independent_blend_enabled": False,
-            "render_target": []
+            "render_targets": []
         },
         "raster_states": {
             "fill_mode": "Solid",
@@ -233,11 +235,30 @@ def get_state_with_defaults(state_type, state):
             "depth_stencil": list(),
         }
     }
+
+    # converts write_mask: RGBA to bits
+    if state_type == "render_target_blend_states":
+        if "write_mask" in state:
+            bits = 0
+            if state["write_mask"] == "All":
+                bits = (1<<4)-1
+            elif state["write_mask"] != "None":
+                if "R" in state["write_mask"]:
+                    bits |= (1<<0)
+                if "G" in state["write_mask"]:
+                    bits |= (1<<1)
+                if "B" in state["write_mask"]:
+                    bits |= (1<<2)
+                if "A" in state["write_mask"]:
+                    bits |= (1<<3)
+            state["write_mask"] = {
+                "bits": bits
+            }
+
     if state_type in state_defaults:
         default = dict(state_defaults[state_type])
         state = merge_dicts(default, state)
         state["hash"] = pmfx_hash(state)
-
     return state
 
 
@@ -619,7 +640,8 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
         "pipeline": output_pipeline,
     }
 
-    # adds extra hashes
+    # adds extra hashes.. in the final output these are simply named keys so they can be looked up
+    # to reduce file size bloat, but we need the hash of the expanded data for checking reloads
     if "depth_stencil_state" in pipeline:
         expanded["depth_stencil_state"] = output_pmfx["depth_stencil_states"][output_pipeline["depth_stencil_state"]]
     
@@ -628,7 +650,10 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
 
     if "blend_state" in pipeline:
         expanded["blend_state"] = output_pmfx["blend_states"][output_pipeline["blend_state"]]
-    
+        expanded["blend_state"]["exapnded"] = list()
+        for rt in expanded["blend_state"]["render_target"]:
+             expanded["blend_state"]["exapnded"].append(output_pmfx["render_target_blend_states"][rt])
+
     output_pipeline["hash"] = pmfx_hash(expanded)
 
     # need to has the state objects
