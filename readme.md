@@ -2,10 +2,11 @@
 
 [![tests](https://github.com/polymonster/pmfx-shader/actions/workflows/tests.yaml/badge.svg)](https://github.com/polymonster/pmfx-shader/actions/workflows/tests.yaml)[![release](https://github.com/polymonster/pmfx-shader/actions/workflows/release.yaml/badge.svg)](https://github.com/polymonster/pmfx-shader/actions/workflows/release.yaml)  
 
-A cross platform shader language with multi-threaded offline compilation or platform shader source code generation. Output json reflection info and c++ header with your shaders structs, fx-like techniques and compile time branch evaluation via (uber-shader) "permutations". Version 1.0 is now in maintenence mode and version 2.0 is in progress which aims to offer wider support for more modern GPU features.
+A cross platform shader language with multi-threaded offline compilation or platform shader source code generation. Output json reflection info and c++ header with your shaders structs, fx-like techniques and compile time branch evaluation via (uber-shader) "permutations". Version 1.0 is now in maintenence mode and Version 2.0 is in progress which aims to offer wider support for more modern GPU features.
 
 ## Supported Targets
 
+- HLSL Shader Model 6 (pmfx -v2)
 - HLSL Shader Model 3+
 - GLSL 330+
 - GLES 300+ (WebGL 2.0)
