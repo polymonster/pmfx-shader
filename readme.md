@@ -71,7 +71,7 @@ commandline arguments:
 
 ## Versions
 
-There are 2 code paths supported by pmfx, this in an effort to keep up-to-date with moder graphics API's but also offer backward comptibility support to o;der graphics API's and mobile and web platforms.
+There are 2 code paths supported by pmfx, this in an effort to keep up-to-date with moder graphics API's but also offer backward comptibility support to older graphics API's, mobile and web platforms.
 
 - [Version 1]((#Version-1)) - (bindful render model, techniques, macro based cross platform shaders)
 - [Version 2]((#Version-2)) - (bindless render model, descriptor sets, pipelines, SPIR-V based cross-compilation)
