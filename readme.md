@@ -507,6 +507,8 @@ pmfx: {
 }
 ```
 
+Full [documentation](https://github.com/polymonster/pmfx-shader/blob/master/docs/v2.pmfx_doc) for pipeline specification is provided.
+
 ### Building
 
 Compilation is simple with command line args as so:
