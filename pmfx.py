@@ -199,7 +199,6 @@ def parse_args():
         sys.exit(1)
 
 
-
 # display help for args
 def display_help():
     print("commandline arguments:")
@@ -1458,7 +1457,14 @@ def compile_hlsl(_info, pmfx_name, _tp, _shader):
         cmdline += "/Fc /Od /Zi" + " "
     cmdline += "/Fo " + output_file_and_path + " " + temp_file_and_path + " "
 
-    error_code, error_list, output_list = call_wait_subprocess(cmdline)
+    compiled = _info.compiled
+    if not compiled:
+        temp_shader_source = open(output_file_and_path, "w")
+        temp_shader_source.write(shader_source)
+        temp_shader_source.close()
+        return 0
+    else:
+        error_code, error_list, output_list = call_wait_subprocess(cmdline)
 
     if error_code != 0:
         _tp.error_code = error_code

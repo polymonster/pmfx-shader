@@ -54,8 +54,17 @@ ps_output ps_texture_2d(vs_output input) {
     return output;
 }
 
+// sample a 2d texture at a specific mip-level using sample_texture on shader resource tex2d
+ps_output ps_texture_2d_mip_level(vs_output input) {
+    ps_output output;
+    // sample texture, tex2d has a combined texture and sampler on slot 0
+    float level = 0.0; // select which mip level to sample from
+    output.colour = sample_texture_level(tex2d, input.tex_coord.xy, level);
+    return output;
+}
+
 // sample a 2d texture array using sample_texture on shader resource tex2d
-ps_output texture_2d_array(vs_output input) {
+ps_output ps_texture_2d_array(vs_output input) {
     ps_output output;
     // sample texture array, texarray has a combined texture and sampler on slot 0
     float array_slice = 0.0; // this is the slice of the array to sample
@@ -103,9 +112,14 @@ pmfx: {
         ps: "ps_texture_2d",
     }
 
+    texture_2d_mip_level: {
+        vs: "vs_main_2d",
+        ps: "ps_texture_2d_mip_level",
+    }
+
     texture_2d_array: {
         vs: "vs_main_2d",
-        ps: "texture_2d_array",
+        ps: "ps_texture_2d_array",
     }
 
     texture_3d: {
@@ -132,7 +146,6 @@ pmfx: {
 }
 
 // TODO:
-// sample mip
 // sample depth compare
 // atomics
 // permutations
