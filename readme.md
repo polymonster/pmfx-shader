@@ -478,8 +478,10 @@ Version 2 is currently work in progress, currently only HLSL is the only support
 Use `.hlsl` files and hlsl source code, create a `.pmfx` which can create pipelines from small amount of meta data:
 
 ```jsonnet
-#include "imdraw.hlsl"
 pmfx: {
+    include: [
+        "imdraw.hlsl"
+    ]
     pipelines: {
         imdraw_2d: {
             vs: vs_2d
