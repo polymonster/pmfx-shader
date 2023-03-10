@@ -1,4 +1,5 @@
-# pmfx-shader
+# pmfx-shader  
+
 [![tests](https://github.com/polymonster/pmfx-shader/actions/workflows/tests.yaml/badge.svg)](https://github.com/polymonster/pmfx-shader/actions/workflows/tests.yaml)[![release](https://github.com/polymonster/pmfx-shader/actions/workflows/release.yaml/badge.svg)](https://github.com/polymonster/pmfx-shader/actions/workflows/release.yaml)  
 
 A cross platform shader language with multi-threaded offline compilation or platform shader source code generation. Output json reflection info and c++ header with your shaders structs, fx-like techniques and compile time branch evaluation via (uber-shader) "permutations". Version 1.0 is now in maintenence mode and version 2.0 is in progress which aims to offer wider support for more modern GPU features.
@@ -68,118 +69,22 @@ commandline arguments:
     -v_flip (optional) [glsl only] (inserts glsl uniform to conditionally flip verts in the y axis)
 ```
 
-## Version 2 (Experimental)
+## Versions
 
-Version 2 is currently work in progress, documentation will be updated in due course. Version 2 will use Microsoft DXC to cross compile to SPIRV and exposes support to specify entire pipeline state objects using jsn compatible with Vulkan, Direct3D 12 and Metal. Currently only HLSL is the only supported platform, others will become available via SPIRV-cross and DXC. Newer GPU features such as mesh shaders and ray tracing will become available in future too.
+There are 2 code paths supported by pmfx, this in an effort to keep up-to-date with moder graphics API's but also offer backward comptibility support to o;der graphics API's and mobile and web platforms.
 
-### Usage
+- [Version 1]((#Version-1)) - (bindful render model, techniques, macro based cross platform shaders)
+- [Version 2]((#Version-2)) - (bindless render model, descriptor sets, pipelines, SPIR-V based cross-compilation)
 
-Use `.hlsl` files and hlsl source code, create a `.pmfx` which can create pipelines from small amount of meta data:
+## Version 1
 
-```yaml
-#include "imdraw.hlsl"
-pmfx: {
-    pipelines: {
-        imdraw_2d: {
-            vs: vs_2d
-            ps: ps_main
-            push_constants: ["view_push_constants"]
-            topology: "LineList"
-        }
-    }
-```
-
-Pipeline states can be specified and included in `.pmfx` files:
-
-```yaml
-pmfx: {
-    depth_stencil_states: {
-        depth_test_less: {
-            depth_enabled: true
-            depth_write_mask: "All"
-            depth_func: "Less"
-        }
-    }
-    pipelines: {
-        imdraw_mesh: {
-            depth_stencil_state: depth_test_less
-        }
-    }
-}
-```
-
-### Building
-
-Compilation is simple with command line args as so:
-
-```text
-pmfx.py -shader_platform hlsl -shader_version 6_0 -i src/shaders/ -o ${data_dir}/shaders -t ${temp_dir}/shaders -source
-```
-
-### Output
-
-Compiled shaders and reflection information will be emitted to your chosen `-o` outout directory, Each `.pmfx` file will create a directory which it will cpmpile shader binaries into. Shader compilation is minimised and reduced within single `.pmfx` files by sharing and re-using binaries which are identical across different shader permitations or stages.
-
-Descriptor layout and Vertex layout can be automatically generated based on resource usage inside shaders, the whole pipeline is exported as `.json` along with the built shaders. Hashes for the various pieces of the render pipline states are stored so you can quickly check for pipelines that may need rebuilding as part of a hot reloading process.
-
-```json
-"imdraw_2d": {
-    "0": {
-        "vs": "vs_2d.vsc",
-        "ps": "ps_main.psc",
-        "push_constants": [
-            "view_push_constants"
-        ],
-        "topology": "LineList",
-        "vs_hash:": 2752841994,
-        "vertex_layout": [
-            {
-                "name": "position",
-                "semantic": "POSITION",
-                "index": 0,
-                "format": "RG32f",
-                "aligned_byte_offset": 0,
-                "input_slot": 0,
-                "input_slot_class": "PerVertex",
-                "step_rate": 0
-            },
-            {
-                "name": "colour",
-                "semantic": "TEXCOORD",
-                "index": 0,
-                "format": "RGBA32f",
-                "aligned_byte_offset": 8,
-                "input_slot": 0,
-                "input_slot_class": "PerVertex",
-                "step_rate": 0
-        }
-    ],
-    "error_code": 0,
-    "ps_hash:": 2326464525,
-    "descriptor_layout": {
-        "bindings": [],
-        "push_constants": [
-            {
-                "shader_register": 0,
-                "register_space": 0,
-                "binding_type": "ConstantBuffer",
-                "visibility": "Vertex",
-                "num_values": 16
-            }
-        ],
-        "static_samplers": []
-    },
-    "hash": 3046174282
-}
-```
-
-## Version 1 (Maintenance Mode)
+Compile with the `-v1` flag to select version 1.
 
 A single file does all the shader parsing and code generation. Simple syntax changes are handled through macros and defines found in [platform](https://github.com/polymonster/pmfx-shader/tree/master/platform), so it is simple to add new features or change things to behave how you like. More complex differences between shader languages are handled through code-generation.  
 
 This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/wiki/Pmfx) system found in [pmtech](https://github.com/polymonster/pmtech), it has been moved into a separate repository to be used with other projects, if you are interested to see how pmfx shaders are integrated please take a look [here](https://github.com/polymonster/pmtech).
 
-### Compiling Version 1 Examples
+### Compiling Examples
 
 ```text
 // metal macos
@@ -201,7 +106,7 @@ python3 pmfx.py -v1 -shader_platform glsl -shader_version 330 -i examples/v1 -o 
 python3 pmfx.py -v1 -shader_platform gles -shader_version 320 -i examples/v1 -o output/bin -h output/structs -t output/temp
 ```
 
-### V1 Shader language 
+### Version 1 shader language  
 
 Use mostly HLSL syntax for shaders, with some small differences:
 
@@ -258,6 +163,12 @@ shader_resources
 #### Resource types
 
 ```c
+// cbuffers are the same as regular hlsl
+cbuffer per_view : register(b0)
+{
+    float4x4 view_matrix;
+};
+
 // texture types
 texture_2d( sampler_name, layout_index );
 texture_2dms( type, samples, sampler_name, layout_index );
@@ -333,36 +244,6 @@ read3 read_coord = read3(x, y, z);
 read_texture( tex_rw, read_coord );
 ```
 
-### cbuffers
-
-cbuffers are a unique kind of resource, this is just because they are so in HLSL. you can use cbuffers as you normally do in HLSL.
-
-```hlsl
-cbuffer per_view : register(b0)
-{
-    float4x4 view_matrix;
-};
-
-cbuffer per_draw_call : register(b1)
-{
-    float4x4 world_matrix;
-};
-
-vs_output vs_main( vs_input input )
-{
-    vs_output output;
-    
-    float4 world_pos = mul(input.position, world_matrix);
-    output.position = mul(world_pos, view_matrix);
-    
-    return output;
-}
-```
-
-#### GLES 2.0 / GLSL 2.0 cbuffers
-
-cbuffers are emulated for older glsl versions, a cbuffer is packed into a single float4 array. The uniform float4 array (`glUniform4fv`) is named after the cbuffer, you can find the uniform location from this name using `glUniformLocation`. The count of the float4 array is the number of members the cbuffer where float4 and float4x4 are supported and float4x4 count for 4 array elements. You can use the generated c++ structs from pmfx to create a coherent copy of the uniform data on the cpu.
-
 ### Atomic Operations
 
 Support for glsl, hlsl and metal compatible atomics and memory barriers is available. The atomic_counter resource type is a RWStructuredBuffer<uint> in hlsl, a atomic_uint read/write buffer in Metal and a uniform atomic_uint in GLSL.
@@ -421,6 +302,12 @@ To enable glsl extensions you can pass a list of strings to the `-extensions` co
 
 ## Unique pmfx features
 
+### GLES 2.0 / GLSL 2.0 cbuffers
+
+cbuffers are emulated for older glsl versions, a cbuffer is packed into a single float4 array. The uniform float4 array (`glUniform4fv`) is named after the cbuffer, you can find the uniform location from this name using `glUniformLocation`. The count of the float4 array is the number of members the cbuffer where float4 and float4x4 are supported and float4x4 count for 4 array elements. You can use the generated c++ structs from pmfx to create a coherent copy of the uniform data on the cpu. GLES 2.0 / GLSL 2.0 cbuffers
+
+cbuffers are emulated for older glsl versions, a cbuffer is packed into a single float4 array. The uniform float4 array (`glUniform4fv`) is named after the cbuffer, you can find the uniform location from this name using `glUniformLocation`. The count of the float4 array is the number of members the cbuffer where float4 and float4x4 are supported and float4x4 count for 4 array elements. You can use the generated c++ structs from pmfx to create a coherent copy of the uniform data on the cpu.
+
 ### cbuffer_offset / texture_offset
 
 HLSL has different registers for textures, vertex buffers, cbuffers and un-ordered access views. Metal and Vulkan have some differences where the register indices are shared across different resource types. To avoid collisions in different API backends you can supply offsets using the following command line options.
@@ -447,7 +334,7 @@ Single .pmfx file can contain multiple shader functions so you can share functio
 
 Simply specify `vs`, `ps` or `cs` to select which function in the source to use for that shader stage. If no pmfx: json block is found you can still supply `vs_main` and `ps_main` which will be output as a technique named "default".
 
-```yaml
+```jsonnet
 pmfx:
 {    
     gbuffer: {
@@ -464,7 +351,7 @@ pmfx:
 
 You can also use json to specify technique constants with range and ui type.. so you can later hook them into a gui:
 
-```yaml
+```jsonnet
 constants:
 {
     albedo: { 
@@ -489,27 +376,6 @@ ps_output ps_main(vs_output input)
     float4 col = m_albedo;
 }
 ```
-
-### Inherit
-
-You can inherit techniques by using jsn inherit feature.
-
-```yaml
-gbuffer(forward_lit):
-{
-    vs: vs_main
-    ps: ps_gbuffer
-
-    permutations:
-    {
-        SKINNED: [31, [0,1]]
-        INSTANCED: [30, [0,1]]
-        UV_SCALE: [1, [0,1]]
-    }
-}
-```
-
-gbuffer inherits from forward lit, by putting the base clase inside brackets.
 
 ### Permutations
 
@@ -546,7 +412,7 @@ Adding permutations can cause the number of generated shaders to grow exponentia
 
 ### C++ Header
 
-After compilation a header is output for each .pmfx file containing c struct declarations for the cbuffers, technique constant buffers and vertex inputs. You can use these sturcts to fill buffers in your c++ code and use sizeof for buffer update calls in your graphics api. 
+After compilation a header is output for each .pmfx file containing c struct declarations for the cbuffers, technique constant buffers and vertex inputs. You can use these sturcts to fill buffers in your c++ code and use sizeof for buffer update calls in your graphics api.  
 
 It also contains defines for the shader permutation id / flags that you can check and test against to select the correct shader permutations for a draw call (ie. skinned, instanced, etc).
 
@@ -573,6 +439,8 @@ namespace debug
 }
 ```
 
+A full example output c++ header can be viewed [here](https://github.com/polymonster/pmfx-shader/blob/master/examples/outputs/v1_header.json).
+
 ### JSON Reflection Info
 
 Each .pmfx file comes along with a json file containing reflection info. This info contains the locations textures / buffers are bound to, the size of structs, vertex layout description and more, at this point please remember the output reflection info is fully compliant json, and not lightweight jsn.. this is because of the more widespread support of json.
@@ -598,3 +466,110 @@ Each .pmfx file comes along with a json file containing reflection info. This in
         "offset": 0
     }]
 ```
+
+You can take a look at a full example output file included with this repositiory [here](https://github.com/polymonster/pmfx-shader/blob/master/examples/outputs/v1_info.json).
+
+## Version 2 (Experimental)
+
+Version 2 is currently work in progress, currently only HLSL is the only supported platform, others will become available via SPIRV-cross and DXC. Newer GPU features such as mesh shaders and ray tracing will become available in future too.
+
+Use `.hlsl` files and hlsl source code, create a `.pmfx` which can create pipelines from small amount of meta data:
+
+```jsonnet
+#include "imdraw.hlsl"
+pmfx: {
+    pipelines: {
+        imdraw_2d: {
+            vs: vs_2d
+            ps: ps_main
+            push_constants: ["view_push_constants"]
+            topology: "LineList"
+        }
+    }
+```
+
+Pipeline states can be specified and included in `.pmfx` files:
+
+```jsonnet
+pmfx: {
+    depth_stencil_states: {
+        depth_test_less: {
+            depth_enabled: true
+            depth_write_mask: "All"
+            depth_func: "Less"
+        }
+    }
+    pipelines: {
+        imdraw_mesh: {
+            depth_stencil_state: depth_test_less
+        }
+    }
+}
+```
+
+### Building
+
+Compilation is simple with command line args as so:
+
+```text
+pmfx.py -shader_platform hlsl -shader_version 6_0 -i src/shaders/ -o ${data_dir}/shaders -t ${temp_dir}/shaders -source
+```  
+
+### Output
+
+Compiled shaders and reflection information will be emitted to your chosen `-o` outout directory, Each `.pmfx` file will create a directory which it will cpmpile shader binaries into. Shader compilation is minimised and reduced within single `.pmfx` files by sharing and re-using binaries which are identical across different shader permitations or stages.
+
+Descriptor layout and Vertex layout can be automatically generated based on resource usage inside shaders, the whole pipeline is exported as `.json` along with the built shaders. Hashes for the various pieces of the render pipline states are stored so you can quickly check for pipelines that may need rebuilding as part of a hot reloading process.  
+
+```json
+"imdraw_2d": {
+    "0": {
+        "vs": "vs_2d.vsc",
+        "ps": "ps_main.psc",
+        "push_constants": [
+            "view_push_constants"
+        ],
+        "topology": "LineList",
+        "vs_hash:": 2752841994,
+        "vertex_layout": [
+            {
+                "name": "position",
+                "semantic": "POSITION",
+                "index": 0,
+                "format": "RG32f",
+                "aligned_byte_offset": 0,
+                "input_slot": 0,
+                "input_slot_class": "PerVertex",
+                "step_rate": 0
+            },
+            {
+                "name": "colour",
+                "semantic": "TEXCOORD",
+                "index": 0,
+                "format": "RGBA32f",
+                "aligned_byte_offset": 8,
+                "input_slot": 0,
+                "input_slot_class": "PerVertex",
+                "step_rate": 0
+        }
+    ],
+    "error_code": 0,
+    "ps_hash:": 2326464525,
+    "descriptor_layout": {
+        "bindings": [],
+        "push_constants": [
+            {
+                "shader_register": 0,
+                "register_space": 0,
+                "binding_type": "ConstantBuffer",
+                "visibility": "Vertex",
+                "num_values": 16
+            }
+        ],
+        "static_samplers": []
+    },
+    "hash": 3046174282
+}
+```
+
+You can take a look an example output `json` reflection file included in this repository [here](https://github.com/polymonster/pmfx-shader/blob/master/examples/outputs/v2_info.json).

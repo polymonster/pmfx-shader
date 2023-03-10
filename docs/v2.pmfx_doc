@@ -1,6 +1,52 @@
 /// this is the full schema for pmfx pipeline specification
 /// members are listed with their default values, possible values for enums and types listed in the comments.
 
+/// top level structure, you can omit any sub objects if you do not need them. it is ok to have non-existent members.
+pmfx: {
+    /// list of include files
+    include: [
+        /// include hlsl source code
+        "shader_file.hlsl"
+        /// include other pmfx files to share pipelines / render states
+        "pmfx_file.pmfx"
+    ]
+    pipelines: {
+        /// key-value objects of `pipeline`
+        name: {
+            // ..
+        }
+    }
+    depth_stencil_states: {
+        /// key-value objects of `depth_stencil_state`
+        name: {
+            // ..
+        }
+    }
+    sampler_states: {
+        /// key-value objects of `sampler_state`
+        name: {
+            // ..
+        }
+    }
+    render_target_blend_states: {
+        /// key-value objects of `render_target_blend_state`
+        name: {
+            // ..
+        }
+    }
+    blend_states: {
+        /// key-value objects of `blend_state`
+        name: {
+            // ..
+        }
+    }
+}
+
+/// full pipeline-state object specification
+pipeline: {
+
+}
+
 /// depth stencil state.
 depth_stencil_state: {
     /// specifies whether to enable depth testing. set this to `true` to enable depth testing.
@@ -85,4 +131,54 @@ sampler_states: {
     /// upper end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed.
     /// type: float
     max_lod: -1.0
+}
+
+/// specify blend state for a single render target
+render_target_blend_state: {
+    /// specifies whether to enable blending. set this to `true` to enable blending.
+    /// type: bool
+    blend_enabled: false,
+    /// specifies whether to enable a logical operation. set to `true` to enable a logical operation. 
+    /// **note you cannot enable both blend_enabled and logic_op_enabled
+    /// type: bool
+    logic_op_enabled: false,
+    /// value that specifies the operation to perform on the rgb value that the pixel shader outputs. 
+    /// the `blend_op` member defines how to combine the `src_blend` and `dst_blend` operations.
+    /// type: enum [Zero, One, SrcColour, InvSrcColour, SrcAlpha, InvSrcAlpha, DstAlpha, InvDstAlpha, DstColour, InvDstColour, SrcAlphaSat, BlendFactor, InvBlendFactor, Src1Colour, InvSrc1Colour, Src1Alpha, InvSrc1Alpha]
+    src_blend: Zero,
+    /// value that specifies the operation to perform on the rgb value that the pixel shader outputs. 
+    /// the `blend_op` member defines how to combine the `src_blend` and `dst_blend` operations.
+    /// type: enum [Zero, One, SrcColour, InvSrcColour, SrcAlpha, InvSrcAlpha, DstAlpha, InvDstAlpha, DstColour, InvDstColour, SrcAlphaSat, BlendFactor, InvBlendFactor, Src1Colour, InvSrc1Colour, Src1Alpha, InvSrc1Alpha]
+    dst_blend: Zero,
+    /// value that defines how to combine the `src_blend` and `dst_blend` operations.
+    /// type: enum [Add, Subtract, RevSubtract, Min, Max]
+    blend_op: Add,
+    /// value that specifies the operation to perform on the alpha value that the pixel shader outputs. the `blend_op_alpha` member defines how to combine the `src_blend_alpha` and `dst_blend_alpha` operations.
+    /// type: enum [Zero, One, SrcAlpha, InvSrcAlpha, DstAlpha, InvDstAlpha, SrcAlphaSat, BlendFactor, InvBlendFactor, Src1Alpha, InvSrc1Alpha]
+    src_blend_alpha: Zero,
+    /// value that specifies the operation to perform on the alpha value that the pixel shader outputs. the `blend_op_alpha` member defines how to combine the `src_blend_alpha` and `dst_blend_alpha` operations.
+    /// type: enum [Zero, One, SrcAlpha, InvSrcAlpha, DstAlpha, InvDstAlpha, SrcAlphaSat, BlendFactor, InvBlendFactor, Src1Alpha, InvSrc1Alpha]
+    dst_blend_alpha: Zero,
+    /// value that defines how to combine the `src_blend_alpha` and `dst_blend_alpha` operations.
+    /// type: enum [Add, Subtract, RevSubtract, Min, Max]
+    blend_op_alpha: Add,
+    /// value that specifies the logical operation to configure for the render target.
+    /// type: enum [Clear, Set, Copy, CopyInverted, NoOp, Invert, And, Nand, Or, Nor, Xor, Equiv, AndReverse, AndInverted, OrReverse, OrInverted]
+    logic_op: Clear,
+    /// value controls which channels of the render target to write. the chars RGBA are converted to a 4-bit integer mask.
+    /// type: enum [R, G, B, A, None, All]
+    write_mask: RGBA
+}
+
+/// specify blend state for a multiple render targets
+blend_state: {
+    /// specify whether to enable alpha to coverage or not, set to `true` to enable.
+    /// type: bool
+    alpha_to_coverage_enabled: false
+    /// specify whether to enable independent blending set to `true` to enable. 
+    /// if this is true it enables `src_blend_alpha`, `dst_blend_alpha` and `blend_op_alpha` on the `render_target_blend_state`
+    /// type: bool
+    independent_blend_enabled: false
+    /// an array of `render_target_blend_state` to supply different blending controls for multiple render target configurations.
+    render_target: []
 }
