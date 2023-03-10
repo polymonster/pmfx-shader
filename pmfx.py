@@ -2821,7 +2821,7 @@ def parse_pmfx(file, root):
                 p = shader_sub_platform()
                 sp = _tp.technique["supported_platforms"]
                 if p not in sp:
-                    print(_tp.technique_name + " not supported on " + p, flush=True)
+                    print_warning("warning: " + _tp.technique_name + " not supported on " + p)
                     valid = False
                 else:
                     sv = sp[p]
@@ -2829,9 +2829,9 @@ def parse_pmfx(file, root):
                         pass
                     elif _tp.shader_version not in sv:
                         valid = False
-                        print(_tp.technique_name + " not supported on " +
+                        print_warning("warning: " + _tp.technique_name + " not supported on " +
                               p + " " + _info.shader_version +
-                              ", forcing to version " + sv[0], flush=True)
+                              ", forcing to version " + sv[0])
                         # force shader version to specified
                         _tp.shader_version = sv[0]
 
@@ -2935,7 +2935,7 @@ def parse_pmfx(file, root):
         for out in c.output_list:
             print(out, flush=True)
         for err in c.error_list:
-            print_error(err)
+            print_error("    " + err)
         pmfx_output_info["techniques"].append(generate_technique_permutation_info(compile_jobs[i]))
 
     # write a shader info file with timestamp for dependencies
