@@ -19,7 +19,7 @@ shader_resources {
     // texture sampling
     texture_2d(tex2d, 0);
     texture_3d(tex3d, 0);
-    texture_2d(texarray, 0);
+    texture_2d_array(texarray, 0);
     texture_cube(texcube, 0);
 
     // compute rw
