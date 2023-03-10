@@ -14,12 +14,13 @@ struct ps_output {
     float4 colour : SV_Target;
 };
 
-// define textures and structured buffers in here
+// define textures and structured buffers in here, you can alias the same texture units in different shaders
 shader_resources {
     // texture sampling
     texture_2d(tex2d, 0);
     texture_3d(tex3d, 0);
     texture_2d(texarray, 0);
+    texture_cube(texcube, 0);
 
     // compute rw
     texture_2d_r(input_rgb, 0);
@@ -53,6 +54,33 @@ ps_output ps_texture_2d(vs_output input) {
     return output;
 }
 
+// sample a 2d texture array using sample_texture on shader resource tex2d
+ps_output texture_2d_array(vs_output input) {
+    ps_output output;
+    // sample texture array, texarray has a combined texture and sampler on slot 0
+    float array_slice = 0.0; // this is the slice of the array to sample
+    output.colour = sample_texture_array(texarray, input.tex_coord.xy, array_slice);
+    return output;
+}
+
+// sample a 3d texture using sample_texture on shader resource tex3d
+ps_output ps_texture_3d(vs_output input) {
+    ps_output output;
+    // sample texture, tex3d has a combined texture and sampler on slot 0
+    float3 n = float3(0.0, 1.0, 0.0); // sample with a 3d-coordinate
+    output.colour = sample_texture(tex3d, n);
+    return output;
+}
+
+// sample a cube texture using sample_texture on shader resource texcube
+ps_output ps_texture_cube(vs_output input) {
+    ps_output output;
+    // sample texture, texcube has a combined texture and sampler on slot 0
+    float3 n = float3(0.0, 1.0, 0.0); // sample with a 3d-coordinate
+    output.colour = sample_texture(texcube, n);
+    return output;
+}
+
 // read the input texture input_rgb using (read_texture) convert to grescale
 void cs_greyscale(uint3 gid : SV_DispatchThreadID) {
     // read texture in compute shader
@@ -63,8 +91,7 @@ void cs_greyscale(uint3 gid : SV_DispatchThreadID) {
     write_texture(output_l, float4(grey, grey, grey, 1.0), gid.xy);
 }
 
-pmfx:
-{
+pmfx: {
     // supply vs and ps to create a render pipeline technique
     constant_colour: {
         vs: "vs_main_2d",
@@ -74,6 +101,21 @@ pmfx:
     texture_2d: {
         vs: "vs_main_2d",
         ps: "ps_texture_2d",
+    }
+
+    texture_2d_array: {
+        vs: "vs_main_2d",
+        ps: "texture_2d_array",
+    }
+
+    texture_3d: {
+        vs: "vs_main_2d",
+        ps: "ps_texture_3d",
+    }
+
+    texture_cube: {
+        vs: "vs_main_2d",
+        ps: "ps_texture_cube",
     }
 
     // supply cs and threads for compute
@@ -88,3 +130,9 @@ pmfx:
         }
     }
 }
+
+// TODO:
+// sample mip
+// sample depth compare
+// atomics
+// permutations

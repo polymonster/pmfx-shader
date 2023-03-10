@@ -1,5 +1,5 @@
-/// this is the full schema for pmfx pipeline specification
-/// members are listed with their default values, possible values for enums and types listed in the comments.
+/// this is the full schema for pmfx -v2 specification
+/// members are listed with their default values, possible values for enums and type ranges are listed in the comments.
 
 /// top level structure, you can omit any sub objects if you do not need them. it is ok to have non-existent members.
 pmfx: {
@@ -62,12 +62,13 @@ depth_stencil_state: {
     /// type: bool
     stencil_enabled: false
     /// identify a portion of the depth-stencil buffer for reading stencil data.
-    /// type: u8 integer [0-255]
+    /// type: u8 int [0-255]
     stencil_read_mask: 0
     /// identify a portion of the depth-stencil buffer for writing stencil data.
-    /// type: u8 integer [0-255]
+    /// type: u8 int [0-255]
     stencil_write_mask: 0
-    /// structure that describes how to use the results of the depth test and the stencil test for pixels whose surface normal is facing towards the camera.
+    /// structure that describes how to use the results of the depth test and the stencil test for pixels 
+    /// whose surface normal is facing towards the camera.
     front_face: {
         /// value that identifies the stencil operation to perform when stencil testing fails.
         /// type: enum [Zero, Replace, IncrSat, DecrSat, Invert, Incr, Decr]
@@ -82,7 +83,8 @@ depth_stencil_state: {
         /// type: enum [Never, Less, Equal, LessEqual, Greater, NotEqual, GreaterEqual, Always]
         func: Always
     }
-    /// structure that describes how to use the results of the depth test and the stencil test for pixels whose surface normal is facing away from the camera.
+    /// structure that describes how to use the results of the depth test and the stencil test for pixels 
+    /// whose surface normal is facing away from the camera.
     back_face: {
         /// value that identifies the stencil operation to perform when stencil testing fails.
         /// type: enum [Zero, Replace, IncrSat, DecrSat, Invert, Incr, Decr]
@@ -117,18 +119,21 @@ sampler_states: {
     /// type: enum [Never, Less, Equal, LessEqual, Greater, NotEqual, GreaterEqual, Always]
     comparison: None
     /// RGBA border color to use if `Border` is specified for address_u, address_v, or address_w.
-    /// type: optional u32 integer [None, 0x0000 - 0xFFFFFF]
+    /// type: optional u32 int [None, 0x0000 - 0xFFFFFF]
     border_colour: None
     /// offset from the calculated mipmap level.
     /// type: float 
     mip_lod_bias: 0.0
-    /// lower end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed.
-    /// type: integer [1 - 16]
+    /// lower end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level 
+    /// and any level higher than that is less detailed.
+    /// type: int [1 - 16]
     max_aniso: 1
-    /// lower end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed.
+    /// lower end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level 
+    /// and any level higher than that is less detailed.
     /// type: float
     min_lod: -1.0
-    /// upper end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed.
+    /// upper end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level 
+    /// and any level higher than that is less detailed.
     /// type: float
     max_lod: -1.0
 }
@@ -153,10 +158,12 @@ render_target_blend_state: {
     /// value that defines how to combine the `src_blend` and `dst_blend` operations.
     /// type: enum [Add, Subtract, RevSubtract, Min, Max]
     blend_op: Add,
-    /// value that specifies the operation to perform on the alpha value that the pixel shader outputs. the `blend_op_alpha` member defines how to combine the `src_blend_alpha` and `dst_blend_alpha` operations.
+    /// value that specifies the operation to perform on the alpha value that the pixel shader outputs. 
+    /// the `blend_op_alpha` member defines how to combine the `src_blend_alpha` and `dst_blend_alpha` operations.
     /// type: enum [Zero, One, SrcAlpha, InvSrcAlpha, DstAlpha, InvDstAlpha, SrcAlphaSat, BlendFactor, InvBlendFactor, Src1Alpha, InvSrc1Alpha]
     src_blend_alpha: Zero,
-    /// value that specifies the operation to perform on the alpha value that the pixel shader outputs. the `blend_op_alpha` member defines how to combine the `src_blend_alpha` and `dst_blend_alpha` operations.
+    /// value that specifies the operation to perform on the alpha value that the pixel shader outputs. 
+    /// the `blend_op_alpha` member defines how to combine the `src_blend_alpha` and `dst_blend_alpha` operations.
     /// type: enum [Zero, One, SrcAlpha, InvSrcAlpha, DstAlpha, InvDstAlpha, SrcAlphaSat, BlendFactor, InvBlendFactor, Src1Alpha, InvSrc1Alpha]
     dst_blend_alpha: Zero,
     /// value that defines how to combine the `src_blend_alpha` and `dst_blend_alpha` operations.
@@ -182,3 +189,44 @@ blend_state: {
     /// an array of `render_target_blend_state` to supply different blending controls for multiple render target configurations.
     render_target: []
 }
+
+/// specify rasterizer state
+raster_states: {
+    /// value that specifies the fill mode to use when rendering.
+    /// type: enum [Wireframe, Solid]
+    fill_mode: Solid
+    /// value that specifies that triangles facing the specified direction are not drawn.
+    /// type: enum [None, Front, Back]
+    cull_mode: None
+    /// determines if a triangle is front- or back-facing. If this member is `true`, 
+    /// a triangle will be considered front-facing if its vertices are counter-clockwise 
+    /// on the render target and considered back-facing if they are clockwise.
+    /// type: bool
+    front_ccw: false
+    /// depth value added to a given pixel.
+    /// type: int
+    depth_bias: 0
+    /// maximum depth bias of a pixel.
+    /// type: float
+    depth_bias_clamp: 0.0
+    /// scalar on a given pixel's slope.
+    /// type: float
+    slope_scaled_depth_bias: 0.0
+    /// specifies whether to enable clipping based on distance.
+    /// type: bool
+    depth_clip_enable: false
+    /// specifies whether to use the quadrilateral or alpha line anti-aliasing algorithm on multisample antialiasing (MSAA) render targets.
+    /// type: bool
+    multisample_enable: false
+    /// specifies whether to enable line antialiasing; only applies if doing line drawing and `multisample_enable` is false. 
+    /// type: bool
+    antialiased_line_enable: false
+    /// the sample count that is forced while UAV rendering or rasterizing. 
+    /// 0 indicates that the sample count is not forced.
+    /// type: int [0, 1, 4, 8, 16]
+    forced_sample_count: 0
+    /// value that identifies whether conservative rasterization is on or off.
+    /// type: bool
+    conservative_raster_mode: false
+}
+

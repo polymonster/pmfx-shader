@@ -88,10 +88,10 @@ This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/
 
 ```text
 // metal macos
-python3 pmfx.py -v1 -shader_platform metal -metal_sdk macosx -metal_min_os 10.14 -shader_version 2.2 -i examples/v1 -o output/bin -h output/structs -t
+python3 pmfx.py -v1 -shader_platform metal -metal_sdk macosx -metal_min_os 10.14 -shader_version 2.2 -i examples/v1 -o output/bin -h output/structs -t output/temp
 
 // metal ios
-python3 pmfx.py -v1 -shader_platform metal -metal_sdk iphoneos -metal_min_os 0.9 -shader_version 2.2 -i examples/v1 -o output/bin -h output/structs -t 
+python3 pmfx.py -v1 -shader_platform metal -metal_sdk iphoneos -metal_min_os 0.9 -shader_version 2.2 -i examples/v1 -o output/bin -h output/structs -t output/temp
 
 // spir-v vulkan
 python3 pmfx.py -v1 -shader_platform spirv -i examples/v1 -o output/bin -h output/structs -t output/temp

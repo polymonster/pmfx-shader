@@ -12,6 +12,27 @@ import cgu
 import hashlib
 import pmfx_pipeline
 
+# print error with colour
+def print_error(msg):
+    ERROR = '\033[91m'
+    ENDC = '\033[0m'
+    print(ERROR + msg + ENDC, flush=True)
+
+
+# print warning with colour
+def print_warning(msg):
+    WARNING = '\033[93m'
+    ENDC = '\033[0m'
+    print(WARNING + msg + ENDC, flush=True)
+
+
+# print ok with colour
+def print_ok(msg):
+    OK = '\033[92m'
+    ENDC = '\033[0m'
+    print(OK + msg + ENDC, flush=True)
+
+
 # paths and info for current build environment
 class BuildInfo:
     shader_platform = ""                                                # hlsl, glsl, metal, spir-v, pssl
@@ -171,7 +192,7 @@ def parse_args():
     missing = False
     for r in required:
         if r not in sys.argv:
-            print("error: missing rquired argument {}".format(r))
+            print_error("error: missing rquired argument {}".format(r))
             missing = True
     if missing:
         print("exit")
@@ -1222,7 +1243,7 @@ def generate_single_shader(main_func, _tp):
                 main = func
 
     if main == "":
-        print("error: could not find main function " + main_func, flush=True)
+        print_error("error: could not find main function " + main_func)
         return None
 
     # find used functions,
@@ -1332,8 +1353,8 @@ def _hlsl_source(_info, pmfx_name, _tp, _shader):
 def compile_pssl(_info, pmfx_name, _tp, _shader):
     orbis_sdk = os.getenv("SCE_ORBIS_SDK_DIR")
     if not orbis_sdk:
-        print("error: you must have orbis sdk installed, "
-              "'SCE_ORBIS_SDK_DIR' environment variable is set and is added to your PATH.", flush=True)
+        print_error("error: you must have orbis sdk installed, "
+              "'SCE_ORBIS_SDK_DIR' environment variable is set and is added to your PATH.")
         sys.exit(1)
 
     shader_source = _hlsl_source(_info, pmfx_name, _tp, _shader)
@@ -1964,8 +1985,8 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     if _info.shader_sub_platform == "nvn":
         nvn_sdk = os.getenv("NINTENDO_SDK_ROOT")
         if not nvn_sdk:
-            print("error: you must have nintendo switch sdk installed, "
-                "'NINTENDO_SDK_ROOT' environment variable is set and is added to your PATH.", flush=True)
+            print_error("error: you must have nintendo switch sdk installed, "
+                "'NINTENDO_SDK_ROOT' environment variable is set and is added to your PATH.")
             sys.exit(1)
 
         exe = os.path.normpath(_info.nvn_exe)
@@ -2712,7 +2733,7 @@ def compile_single_shader(_tp):
         elif _info.shader_platform == "metal":
             compile_metal(_info, _tp.pmfx_name, _tp, s)
         else:
-            print("error: invalid shader platform " + _info.shader_platform, flush=True)
+            print_error("error: invalid shader platform " + _info.shader_platform)
 
 
 # parse a pmfx file which is a collection of techniques and permutations, made up of vs, ps, cs combinations
@@ -2902,13 +2923,13 @@ def parse_pmfx(file, root):
         if c.error_code == 0:
             print(output_name, flush=True)
         else:
-            print(output_name + " failed to compile", flush=True)
+            print_error(output_name + " failed to compile")
             pmfx_output_info["failures"][c.pmfx_name] = True
             _info.error_code = 1
         for out in c.output_list:
             print(out, flush=True)
         for err in c.error_list:
-            print(err, flush=True)
+            print_error(err)
         pmfx_output_info["techniques"].append(generate_technique_permutation_info(compile_jobs[i]))
 
     # write a shader info file with timestamp for dependencies
@@ -3017,7 +3038,7 @@ def main(parse_function, version):
                         try:
                             parse_function(file, root)
                         except Exception as e:
-                            print("error: while processing", os.path.join(root, file), flush=True)
+                            print_error("error: while processing", os.path.join(root, file))
                             raise e
         else:
             parse_function(source, "")
