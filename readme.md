@@ -528,7 +528,7 @@ Take a look at the example [code](https://github.com/polymonster/pmfx-shader/tre
 
 ### Output
 
-Compiled shaders and reflection information will be emitted to your chosen `-o` outout directory, Each `.pmfx` file will create a directory which it will cpmpile shader binaries into. Shader compilation is minimised and reduced within single `.pmfx` files by sharing and re-using binaries which are identical across different shader permitations or stages.
+Compiled shaders and reflection information will be emitted to your chosen `-o` outout directory, Each `.pmfx` file will create a directory which it will compile shader binaries into. Shader compilation is minimised and reduced within single `.pmfx` files by sharing and re-using binaries which are identical across different shader permitations or stages.
 
 Descriptor layout and Vertex layout can be automatically generated based on resource usage inside shaders, the whole pipeline is exported as `.json` along with the built shaders. Hashes for the various pieces of the render pipline states are stored so you can quickly check for pipelines that may need rebuilding as part of a hot reloading process.  
 
