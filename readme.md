@@ -73,8 +73,9 @@ commandline arguments:
 
 There are 2 code paths supported by pmfx, this in an effort to keep up-to-date with moder graphics API's but also offer backward comptibility support to older graphics API's, mobile and web platforms.
 
-- [Version 1]((#Version-1)) - (bindful render model, techniques, macro based cross platform shaders)
-- [Version 2]((#Version-2)) - (bindless render model, descriptor sets, pipelines, SPIR-V based cross-compilation)
+
+- [Version 1](https://github.com/polymonster/pmfx-shader#version-1) - (bindful render model, techniques, macro based cross platform shaders)
+- [Version 2](https://github.com/polymonster/pmfx-shader#version-2) - (bindless render model, descriptor sets, pipelines, SPIR-V based cross-compilation)
 
 ## Version 1
 
@@ -85,6 +86,8 @@ A single file does all the shader parsing and code generation. Simple syntax cha
 This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/wiki/Pmfx) system found in [pmtech](https://github.com/polymonster/pmtech), it has been moved into a separate repository to be used with other projects, if you are interested to see how pmfx shaders are integrated please take a look [here](https://github.com/polymonster/pmtech).
 
 ### Compiling Examples
+
+Take a look at the example [code](https://github.com/polymonster/pmfx-shader/tree/master/examples/v1).
 
 ```text
 // metal macos
@@ -516,6 +519,10 @@ Compilation is simple with command line args as so:
 ```text
 pmfx.py -shader_platform hlsl -shader_version 6_0 -i src/shaders/ -o ${data_dir}/shaders -t ${temp_dir}/shaders -source
 ```  
+
+### Examples
+
+Take a look at the example [code](https://github.com/polymonster/pmfx-shader/tree/master/examples/v2).
 
 ### Output
 
