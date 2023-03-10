@@ -183,69 +183,74 @@ void cs_atomic(uint3 gid : SV_DispatchThreadID) {
 pmfx: {
     // supply vs and ps to create a render pipeline technique
     constant_colour: {
-        vs: "vs_main_2d",
-        ps: "ps_constant_colour",
+        vs: vs_main_2d
+        ps: ps_constant_colour
     }
 
     texture_2d: {
-        vs: "vs_main_2d",
-        ps: "ps_texture_2d",
+        vs: vs_main_2d
+        ps: ps_texture_2d
     }
 
     texture_2d_mip_level: {
-        vs: "vs_main_2d",
-        ps: "ps_texture_2d_mip_level",
+        vs: vs_main_2d
+        ps: ps_texture_2d_mip_level
     }
 
     texture_2d_array: {
-        vs: "vs_main_2d",
-        ps: "ps_texture_2d_array",
+        vs: vs_main_2d
+        ps: ps_texture_2d_array
     }
 
     texture_3d: {
-        vs: "vs_main_2d",
-        ps: "ps_texture_3d",
+        vs: vs_main_2d
+        ps: ps_texture_3d
     }
 
     texture_cube: {
-        vs: "vs_main_2d",
-        ps: "ps_texture_cube",
+        vs: vs_main_2d
+        ps: ps_texture_cube
     }
 
     depth_texture_compare: {
-        vs: "vs_main_2d",
-        ps: "ps_depth_texture_compare",
+        vs: vs_main_2d
+        ps: ps_depth_texture_compare
     }
 
     depth_texture_compare_array: {
-        vs: "vs_main_2d",
-        ps: "ps_depth_texture_compare_array",
+        vs: vs_main_2d
+        ps: ps_depth_texture_compare_array
+
+        supported_platforms: {
+            hlsl: ["5_0"]
+            metal: ["all"]
+        }
     }
 
     permutation: {
-        vs: "vs_permute"
-        ps: "ps_constant_colour"
+        vs: vs_permute
+        ps: ps_constant_colour
     }
 
     // supply cs and threads for compute
     basic_compute: {
-        cs: "cs_greyscale"
+        cs: cs_greyscale
         threads: [16, 16, 1]
 
         // compute might not be supported on all platforms, you can filter supported platforms as so
         supported_platforms: {
-            hlsl: ["5_0"],
+            hlsl: ["5_0"]
             metal: ["all"]
         }
     }
 
     basic_compute: {
-        cs: "cs_atomic"
+        cs: cs_atomic
         threads: [16, 16, 1]
 
         // compute might not be supported on all platforms, you can filter supported platforms as so
         supported_platforms: {
-            hlsl: ["5_0"],
+            hlsl: ["5_0"]
             metal: ["all"]
         }
     }
