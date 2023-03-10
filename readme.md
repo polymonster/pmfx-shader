@@ -73,7 +73,6 @@ commandline arguments:
 
 There are 2 code paths supported by pmfx, this in an effort to keep up-to-date with moder graphics API's but also offer backward comptibility support to older graphics API's, mobile and web platforms.
 
-
 - [Version 1](https://github.com/polymonster/pmfx-shader#version-1) - (bindful render model, techniques, macro based cross platform shaders)
 - [Version 2](https://github.com/polymonster/pmfx-shader#version-2) - (bindless render model, descriptor sets, pipelines, SPIR-V based cross-compilation)
 
@@ -472,7 +471,7 @@ Each .pmfx file comes along with a json file containing reflection info. This in
 
 You can take a look at a full example output file included with this repositiory [here](https://github.com/polymonster/pmfx-shader/blob/master/examples/outputs/v1_info.json).
 
-## Version 2 (Experimental)
+## Version 2
 
 Version 2 is currently work in progress, currently only HLSL is the only supported platform, others will become available via SPIRV-cross and DXC. Newer GPU features such as mesh shaders and ray tracing will become available in future too.
 
