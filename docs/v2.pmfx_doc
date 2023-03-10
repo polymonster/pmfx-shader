@@ -1,7 +1,8 @@
 /// this is the full schema for pmfx -v2 specification
 /// members are listed with their default values, possible values for enums and type ranges are listed in the comments.
 
-/// top level structure, you can omit any sub objects if you do not need them. it is ok to have non-existent members.
+/// top level structure, you can omit any sub objects if you do not need them.
+/// optional (null) members can be omited entirely
 pmfx: {
     /// list of include files
     include: [
@@ -44,7 +45,63 @@ pmfx: {
 
 /// full pipeline-state object specification
 pipeline: {
+    /// optional - this will be auto-generated, but you can supply extra information to override
+    vertex_layout: {
+        // ..
+    }
+    /// auto-generated (based on shader usage and register bindings)
+    desciptor_layout: {
+        // ..
+    }
+    /// specify the name of a shader entry point inside .hlsl files to use as a vertex shader
+    /// only makes sense on it's own in combination with ps. cs must be null
+    /// type: optional (string or null)
+    vs: null
+    /// specify the name of a shader entry point inside .hlsl files to use as a pixel shader
+    /// only makes sense in combination with vs, vs must be non-null and cs must be null
+    /// type: optional (string or null)
+    ps: null
+    /// specify the name of a shader entry point inside .hlsl files to use as a compute shader
+    /// only makes sense in on it's own (vs and ps must be null)
+    /// type: optional (string or null)
+    cs: null
+    // specify a named depth_stencil_state
+    // type: optional (string or null) if null or omitted defaults for depth_stencil_state are used.
+    depth_stencil_state: null
+    // specify a named blend_state
+    // type: optional (string or null) if null or omitted defaults for blend_state are used.
+    blend_state: null
+    // specify a named raster_state
+    // type: optional (string or null) if null or omitted defaults for raster_state are used.
+    raster_state: null
+    /// specify the name of cbuffers inside .hlsl shader code which should be used as push constants in the pipeline
+    /// type: array [string]
+    push_constants: []
+    /// key-value object of `static_samplers`
+    static_samplers: null
+    /// specify the mesh topology to use for this pipeline
+    /// type: enum [Undefined, PointList, LineList, LineStrip, TriangleList, TriangleStrip, LineListAdj, LineStripAdj, TriangleListAdj, TriangleStripAdj, PatchList]
+    topology: TriangleList
+}
 
+/// vertex layout, the following settings are applied to all members of a vertex input struct
+/// a vertex layout will be generated automatically for all inputs, use this to control instance and step rate
+vertex_layout: {
+    /// slot to bind the buffer on
+    /// type: in
+    input_slot: 2
+    /// specifies the type of input 
+    /// type: enum [PerVertex, PerInstance]
+    input_slot_class: PerVertex
+    /// the rate at which to step elements in this vertex buffer
+    /// type: int
+    step_rate: 0
+}
+
+/// specify named sampler states to use as static samplers on this pipeline
+static_samplers: {
+    /// sampler name (in hlsl): sampler state name in pmfx
+    sampler0: wrap_linear
 }
 
 /// depth stencil state.
@@ -229,4 +286,3 @@ raster_states: {
     /// type: bool
     conservative_raster_mode: false
 }
-

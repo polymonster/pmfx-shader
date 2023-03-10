@@ -2890,9 +2890,10 @@ def parse_pmfx(file, root):
             for s in shader_types:
                 if s in _tp.technique.keys():
                     single_shader = generate_single_shader(_tp.technique[s], _tp)
-                    single_shader.shader_type = s
                     if single_shader:
-                        _tp.shader.append(single_shader)
+                        single_shader.shader_type = s
+                        if single_shader:
+                            _tp.shader.append(single_shader)
             compile_jobs.append(copy.copy(_tp))
 
     # find duplicated / redundant permutation combinations

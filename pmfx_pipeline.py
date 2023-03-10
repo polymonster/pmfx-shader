@@ -635,6 +635,8 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
     # topology
     if "topology" in pipeline:
         output_pipeline["topology"] = pipeline["topology"]
+    else:
+        output_pipeline["topology"] = "TriangleList"
     # hash the whole thing
     expanded = {
         "pipeline": output_pipeline,

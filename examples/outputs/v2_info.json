@@ -410,11 +410,11 @@
             }
         }
     },
-    "filepath": "C:\\Users\\alex_\\dev\\hotline\\target\\data\\shaders\\basic\\basic.json",
+    "filepath": "dev\\hotline\\target\\data\\shaders\\basic\\basic.json",
     "dependencies": [
-        "C:\\Users\\alex_\\dev\\hotline\\hotline-data\\src\\shaders\\basic.hlsl",
-        "C:\\Users\\alex_\\dev\\hotline\\hotline-data\\src\\shaders\\hotline.pmfx",
-        "C:\\Users\\alex_\\dev\\pmfx-shader\\pmfx.py",
-        "C:\\Users\\alex_\\dev\\hotline\\hotline-data\\src\\shaders\\basic.pmfx"
+        "dev\\hotline\\hotline-data\\src\\shaders\\basic.hlsl",
+        "dev\\hotline\\hotline-data\\src\\shaders\\hotline.pmfx",
+        "dev\\pmfx-shader\\pmfx.py",
+        "dev\\hotline\\hotline-data\\src\\shaders\\basic.pmfx"
     ]
 }

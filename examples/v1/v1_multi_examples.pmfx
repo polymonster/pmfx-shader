@@ -9,6 +9,19 @@ struct vs_output {
     float2 tex_coord: TEXCOORD0;
 };
 
+struct vs_input_multi {
+    float4 position : POSITION;
+    float4 normal : TEXCOORD0;
+    float4 texcoord : TEXCOORD1;
+    float4 tangent : TEXCOORD2;
+    float4 bitangent : TEXCOORD3;
+    
+    if:(SKINNED) {
+        float4 blend_indices : TEXCOORD4;
+        float4 blend_weights : TEXCOORD5;
+    }
+};
+
 // pixel shader output with hlsl pixel shader semantics
 struct ps_output {
     float4 colour : SV_Target;
@@ -25,6 +38,14 @@ shader_resources {
     // compute rw
     texture_2d_r(input_rgb, 0);
     texture_2d_w(output_l, 1);
+
+    // tex compare sampling
+    // assumes you will bind a sampler with comparison state in your graphics api.
+    depth_2d(depth_tex2d, 7);
+    depth_2d_array(depth_texarray, 15);
+
+    // atomic
+    structured_buffer_rw(atomic_uint, atomic_buffer, 0);
 };
 
 // basic 2d shader taking screen space input coordinates
@@ -90,6 +111,58 @@ ps_output ps_texture_cube(vs_output input) {
     return output;
 }
 
+// sample a cube texture using sample_texture on shader resource texcube
+ps_output ps_depth_texture_compare(vs_output input) {
+    ps_output output;
+    // sample texture and compare a depth texture
+    float3 sp = float3(0.0, 0.0, 0.0); // assumes you would project and calculate shadow map position and depth
+    float shadow = sample_depth_compare(depth_tex2d, sp.xy, sp.z);
+    output.colour = float4(shadow, shadow, shadow, 1.0);
+    return output;
+}
+
+// sample a cube texture using sample_texture on shader resource texcube
+ps_output ps_depth_texture_compare_array(vs_output input) {
+    ps_output output;
+    // sample texture and compare a depth texture
+    float3 sp = float3(0.0, 0.0, 0.0); // assumes you would project and calculate shadow map position and depth
+    float array_slice = 0.0; // use this to index into the array
+    float shadow = sample_depth_compare_array(depth_texarray, sp.xy, array_slice, sp.z);
+    output.colour = float4(shadow, shadow, shadow, 1.0);
+    return output;
+}
+
+cbuffer per_pass_view : register(b0) {
+    float4x4 vp_matrix;
+    float4x4 view_matrix;
+};
+
+cbuffer per_draw_call : register(b1) {
+    float4x4 world_matrix;    
+};
+
+vs_output vs_permute(vs_input_multi input)
+{
+    vs_output output;
+    
+    float4x4 wvp = mul(world_matrix, vp_matrix);
+    float4x4 wm = world_matrix;
+    
+    output.tex_coord = float2(input.texcoord.x, 1.0 - input.texcoord.y);
+        
+    if:(SKINNED){
+        // .. do something different for skinning     
+        float4 sp =  input.position;
+        output.position = mul(sp, vp_matrix);
+        output.world_pos = sp;
+    }
+    else:{
+        output.position = mul(input.position, wvp);
+    }
+         
+    return output;
+}
+
 // read the input texture input_rgb using (read_texture) convert to grescale
 void cs_greyscale(uint3 gid : SV_DispatchThreadID) {
     // read texture in compute shader
@@ -98,6 +171,13 @@ void cs_greyscale(uint3 gid : SV_DispatchThreadID) {
     float  grey = dot(col.rgb, float3(0.2126, 0.7152, 0.0722));
     // write the result back
     write_texture(output_l, float4(grey, grey, grey, 1.0), gid.xy);
+}
+
+// example of an atomic
+void cs_atomic(uint3 gid : SV_DispatchThreadID) {
+    /// reads current value into index, and increments
+    uint index;
+    atomic_increment(atomic_buffer[0], index);
 }
 
 pmfx: {
@@ -132,6 +212,21 @@ pmfx: {
         ps: "ps_texture_cube",
     }
 
+    depth_texture_compare: {
+        vs: "vs_main_2d",
+        ps: "ps_depth_texture_compare",
+    }
+
+    depth_texture_compare_array: {
+        vs: "vs_main_2d",
+        ps: "ps_depth_texture_compare_array",
+    }
+
+    permutation: {
+        vs: "vs_permute"
+        ps: "ps_constant_colour"
+    }
+
     // supply cs and threads for compute
     basic_compute: {
         cs: "cs_greyscale"
@@ -143,9 +238,15 @@ pmfx: {
             metal: ["all"]
         }
     }
-}
 
-// TODO:
-// sample depth compare
-// atomics
-// permutations
+    basic_compute: {
+        cs: "cs_atomic"
+        threads: [16, 16, 1]
+
+        // compute might not be supported on all platforms, you can filter supported platforms as so
+        supported_platforms: {
+            hlsl: ["5_0"],
+            metal: ["all"]
+        }
+    }
+}
