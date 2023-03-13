@@ -41,6 +41,21 @@ pmfx: {
             // ..
         }
     }
+    textures: {
+        name: {
+            // ..
+        }
+    }
+    views: {
+        name: {
+            // ..
+        }
+    }
+    render_graphs: {
+        name: {
+            // ..
+        }
+    }
 }
 
 /// full pipeline-state object specification
@@ -285,4 +300,19 @@ raster_states: {
     /// value that identifies whether conservative rasterization is on or off.
     /// type: bool
     conservative_raster_mode: false
+}
+
+/// specify a texture or render target
+texture: {
+
+}
+
+/// specify a view (a render pass into a render target)
+view: {
+
+}
+
+/// specify a render graph (collection of views with dependencies)
+render_graph: {
+
 }

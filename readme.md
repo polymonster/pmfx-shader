@@ -500,17 +500,97 @@ pmfx: {
     depth_stencil_states: {
         depth_test_less: {
             depth_enabled: true
-            depth_write_mask: "All"
-            depth_func: "Less"
+            depth_write_mask: All
+            depth_func: Less
+        }
+    }
+    raster_states: {
+        wireframe: {
+            fill_mode: Wireframe
+            depth_bias: -5
+        }
+        cull_back: {
+            cull_mode: Back
         }
     }
     pipelines: {
         imdraw_mesh: {
-            depth_stencil_state: depth_test_less
+            depth_stencil_state: "depth_test_less"
         }
     }
 }
 ```
+
+You can specify textures or render targets:
+
+```jsonnet
+textures: {
+    main_colour: {
+        ratio: {
+            window: "main_window",
+            scale: 1.0
+        }
+        format: RGBA8n
+        usage: [ShaderResource, RenderTarget]
+        samples: 8
+    }
+    main_depth(main_colour): {
+        format: D24nS8u
+        usage: [ShaderResource, DepthStencil]
+    }
+}
+```
+
+You can `views` that can act as a render pass with custom data, you can extend these objects to contain custom data such as cameras or render functions to hook into your own engines or entity component systems:
+
+```jsonnet
+views: {
+    main_view: {
+        render_target: [
+            "main_colour"
+        ]
+        clear_colour: [0.45, 0.55, 0.60, 1.0]
+        depth_stencil: [
+            "main_depth"
+        ]
+        clear_depth: 1.0
+        viewport: [0.0, 0.0, 1.0, 1.0, 0.0, 1.0]
+        camera: "main_camera"
+    }
+    main_view_no_clear(main_view): {
+        clear_colour: null
+        clear_depth: null
+    }
+}
+```
+
+`render_graphs` can be used to supply a collection of views with dependencies which can then be used to generate execution order and resource state transitions.
+
+```jsonnet
+render_graphs: {
+    mesh_debug: {
+        grid: {
+            view: "main_view"
+            pipelines: ["imdraw_3d"]
+            function: "render_grid"
+        }
+        meshes: {
+            view: "main_view_no_clear"
+            pipelines: ["mesh_debug"]
+            function: "render_meshes"
+            depends_on: ["grid"]
+        }
+        wireframe: {
+            view: "main_view_no_clear"
+            pipelines: ["wireframe_overlay"]
+            function: "render_meshes"
+            depends_on: ["meshes", "grid"]
+        }
+    }
+}
+```
+
+`pmfx` supplies a framework and a schema to configure render state, it will still be down to you to implement that data in a graphics API or engine. If you want to take a look at an example project of how to use these features my graphics engine [hotline](https://github.com/polymonster/hotline) implemenents the feature set and utilises [serde](https://github.com/serde-rs/serde) to deserialise the output `json` directly into rust structures.  
 
 Full [documentation](https://github.com/polymonster/pmfx-shader/blob/master/docs/v2.pmfx_doc) for pipeline specification is provided.
 
