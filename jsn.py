@@ -8,6 +8,27 @@ import traceback
 import platform
 
 
+# print error with colour
+def print_error(msg):
+    ERROR = '\033[91m'
+    ENDC = '\033[0m'
+    print(ERROR + msg + ENDC, flush=True)
+
+
+# print wanring with colour
+def print_warning(msg):
+    WARNING = '\033[93m'
+    ENDC = '\033[0m'
+    print(WARNING + msg + ENDC, flush=True)
+
+
+# print error with colour
+def print_ok(msg):
+    OK = '\033[92m'
+    ENDC = '\033[0m'
+    print(OK + msg + ENDC, flush=True)
+
+
 # struct to store the build info for jobs from parsed commandline args
 class BuildInfo:
     inputs = []         # list of files
@@ -539,7 +560,7 @@ def inherit_dict_recursive(d, d2):
             if i in d2.keys():
                 inherit_dict(d, d2[i])
             else:
-                print("[jsn error] missing key `" + i + "` used by jsn_inherit")
+                print_error("[jsn error] missing key `" + i + "` used by jsn_inherit")
                 sys.exit(1)
     for k, v in d.items():
         if type(v) == dict:
@@ -571,7 +592,7 @@ def get_imports(jsn, import_dirs):
                     found = True
                     break
             if not found:
-                print("[jsn error]: cannot find import file " + stripped)
+                print_error("[jsn error]: cannot find import file " + stripped)
                 sys.exit(1)
     return jsn[bp:], imports
 
@@ -616,7 +637,7 @@ def resolve_vars(value, vars):
                 else:
                     return vars[var_name]
         else:
-            print("[jsn error] undefined variable '" + var_name + "'")
+            print_error("[jsn error] undefined variable '" + var_name + "'")
             sys.exit(1)
         count += 1
     return None
@@ -681,7 +702,7 @@ def resolve_platform_keys(d):
     if platform.system() in name_lookup:
         platform_name = name_lookup[platform.system()]
     else:
-        print("[jsn warning] unknown platform system " + platform.system())
+        print_warning("[jsn warning] unknown platform system " + platform.system())
     resolve_platform_keys_recursive(d, platform_name)
 
 

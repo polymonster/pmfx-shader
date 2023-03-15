@@ -1,15 +1,16 @@
 /// this is the full schema for pmfx -v2 specification
 /// members are listed with their default values, possible values for enums and type ranges are listed in the comments.
 
+/// you can import other .pmfx files, and utilise jsn merging and inheritence
+import other_files.pmfx
+
 /// top level structure, you can omit any sub objects if you do not need them.
 /// optional (null) members can be omited entirely
-pmfx: {
+{
     /// list of include files
     include: [
         /// include hlsl source code
         "shader_file.hlsl"
-        /// include other pmfx files to share pipelines / render states
-        "pmfx_file.pmfx"
     ]
     pipelines: {
         /// key-value objects of `pipeline`
@@ -313,9 +314,21 @@ raster_states: {
     conservative_raster_mode: false
 }
 
-/// specify a texture or render target
+/// specify a texture or render target.. spec is still work in progress, but here is a current example
 texture: {
-
+    main_colour: {
+        ratio: {
+            window: "main_window",
+            scale: 1.0
+        }
+        format: RGBA8n
+        usage: [ShaderResource, RenderTarget]
+        samples: 8
+    }
+    main_depth(main_colour): {
+        format: D24nS8u
+        usage: [ShaderResource, DepthStencil]
+    }
 }
 
 /// specify a view (a render pass into a render target)
@@ -340,7 +353,25 @@ view: {
     camera: ""
 }
 
-/// specify a render graph (collection of views with dependencies)
+/// specify a render graph (collection of views with dependencies).. spec is still work in progress, but here is a current example
 render_graph: {
-
+    mesh_debug: {
+        grid: {
+            view: "main_view"
+            pipelines: ["imdraw_3d"]
+            function: "render_grid"
+        }
+        meshes: {
+            view: "main_view_no_clear"
+            pipelines: ["mesh_debug"]
+            function: "render_meshes"
+            depends_on: ["grid"]
+        }
+        wireframe: {
+            view: "main_view_no_clear"
+            pipelines: ["wireframe_overlay"]
+            function: "render_meshes"
+            depends_on: ["meshes", "grid"]
+        }
+    }
 }

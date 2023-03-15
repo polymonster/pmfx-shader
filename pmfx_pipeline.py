@@ -527,6 +527,9 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
     # resource categories
     resource_categories = get_resource_categories()
     # start with entry point src code
+    if entry_point not in pmfx["functions"]:
+        build_pmfx.print_error("  error: {} missing shader entry point: {}".format(entry_point))
+        return None
     src = pmfx["functions"][entry_point]["source"]
     resources = dict()
     vertex_elements = None
@@ -594,7 +597,8 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
 # generate shader info permutations
 def generate_shader_info_permutation(pmfx, entry_point, stage, permute, define_list):
     info = generate_shader_info(pmfx, entry_point, stage, permute)
-    info["permutation_id"] = build_pmfx.generate_permutation_id(define_list, permute)
+    if info:
+        info["permutation_id"] = build_pmfx.generate_permutation_id(define_list, permute)
     return stage, entry_point, info
 
 
@@ -637,6 +641,9 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
     for stage in get_shader_stages():
         if stage in pipeline:
             entry_point = pipeline[stage]
+            if entry_point not in shaders[stage]:
+                output_pipeline["error_code"] = 1
+                continue
             # lookup shader info, and redirect to shared shaders
             shader_info = shaders[stage][entry_point][pemutation_id]
             if "lookup" in shader_info:
@@ -689,7 +696,7 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
 
 # load a pmfx file into dictionary()
 def load_pmfx_jsn(filepath, root):
-    pmfx = jsn.loads(open(os.path.join(root, filepath), "r").read())
+    pmfx = jsn.load_from_file(os.path.join(root, filepath), [], False)
     all_included_files = []
     all_shader_source = ""
     if "include" in pmfx:
@@ -833,6 +840,8 @@ def generate_pmfx(file, root):
     added_hashes = dict()
     for job in permutation_jobs:
         stage, entry_point, info = job.get()
+        if not info:
+            continue
         # add an entry
         if entry_point not in shaders[stage]:
             shaders[stage][entry_point] = dict()

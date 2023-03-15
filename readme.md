@@ -479,10 +479,14 @@ Version 2 is currently work in progress, currently only HLSL is the only support
 Use `.hlsl` files and hlsl source code, create a `.pmfx` which can create pipelines from small amount of meta data:
 
 ```jsonnet
-pmfx: {
+import other_files.pmfx
+{
+    // include shader source files
     include: [
         "imdraw.hlsl"
     ]
+
+    // create pipelines
     pipelines: {
         imdraw_2d: {
             vs: vs_2d
@@ -491,32 +495,31 @@ pmfx: {
             topology: "LineList"
         }
     }
+}
 ```
 
 Pipeline states can be specified and included in `.pmfx` files:
 
 ```jsonnet
-pmfx: {
-    depth_stencil_states: {
-        depth_test_less: {
-            depth_enabled: true
-            depth_write_mask: All
-            depth_func: Less
-        }
+depth_stencil_states: {
+    depth_test_less: {
+        depth_enabled: true
+        depth_write_mask: All
+        depth_func: Less
     }
-    raster_states: {
-        wireframe: {
-            fill_mode: Wireframe
-            depth_bias: -5
-        }
-        cull_back: {
-            cull_mode: Back
-        }
+}
+raster_states: {
+    wireframe: {
+        fill_mode: Wireframe
+        depth_bias: -5
     }
-    pipelines: {
-        imdraw_mesh: {
-            depth_stencil_state: "depth_test_less"
-        }
+    cull_back: {
+        cull_mode: Back
+    }
+}
+pipelines: {
+    imdraw_mesh: {
+        depth_stencil_state: "depth_test_less"
     }
 }
 ```
