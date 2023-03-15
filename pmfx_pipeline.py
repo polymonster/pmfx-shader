@@ -262,6 +262,22 @@ def get_state_with_defaults(state_type, state):
     return state
 
 
+# get pipeline with defaults
+def get_pipeline_with_defaults(output_pipeline, pipeline):
+    # topology
+    if "topology" in pipeline:
+        output_pipeline["topology"] = pipeline["topology"]
+    else:
+        output_pipeline["topology"] = "TriangleList"
+    # sample mask
+    if "sample_mask" in pipeline:
+        output_pipeline["sample_mask"] = pipeline["sample_mask"]
+    else:
+        output_pipeline["sample_mask"] = int("0xffffffff", 16)
+        
+    return output_pipeline
+
+
 # return identifier names of valid vertex semantics
 def get_vertex_semantics():
     return [
@@ -640,11 +656,10 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
                 output_pipeline["error_code"] = shader_info["error_code"]
     # build descriptor set
     output_pipeline["descriptor_layout"] = generate_descriptor_layout(output_pmfx, pipeline, resources)
-    # topology
-    if "topology" in pipeline:
-        output_pipeline["topology"] = pipeline["topology"]
-    else:
-        output_pipeline["topology"] = "TriangleList"
+
+    # fill in any useful defaults
+    output_pipeline = get_pipeline_with_defaults(output_pipeline, pipeline)
+
     # hash the whole thing
     expanded = {
         "pipeline": output_pipeline,

@@ -104,6 +104,9 @@ pipeline: {
     /// specify the mesh topology to use for this pipeline
     /// type: enum [Undefined, PointList, LineList, LineStrip, TriangleList, TriangleStrip, LineListAdj, LineStripAdj, TriangleListAdj, TriangleStripAdj, PatchList]
     topology: TriangleList
+    /// specify a sample mask for which fragments to write in MSAA scenarios
+    /// type: u32
+    sample_mask: 0xffffffff
 }
 
 /// vertex layout, the following settings are applied to all members of a vertex input struct
