@@ -332,6 +332,12 @@ def generate_vertex_layout_slot(members):
     for member in members:
         semantic_name, semantic_index = cgu.separate_alpha_numeric(member["semantic"])
         _, _, size = get_type_size_info(member["data_type"])
+
+        # pers instance step rate default is 0 and per instance is 1
+        default_step = member["step_rate"]
+        if member["input_slot_class"] == "PerInstance" and default_step == 0:
+            default_step = 1
+
         input = {
             "name": member["name"],
             "semantic": semantic_name,
@@ -340,7 +346,7 @@ def generate_vertex_layout_slot(members):
             "aligned_byte_offset": offset,
             "input_slot": member["input_slot"],
             "input_slot_class": member["input_slot_class"],
-            "step_rate": 0
+            "step_rate": default_step
         }
         offset += size
         layout.append(input)
@@ -387,6 +393,7 @@ def get_vertex_elements(pmfx, entry_point):
                     member_input["parent"] = t
                     member_input["input_slot"] = slot
                     member_input["input_slot_class"] = "PerVertex"
+                    member_input["step_rate"] = 0
                     elements.append(member_input)
                 slot += 1
         else:
@@ -398,6 +405,7 @@ def get_vertex_elements(pmfx, entry_point):
                 arg_input["data_type"] = arg_input["type"]
                 arg_input["input_slot"] = slot
                 arg_input["input_slot_class"] = "PerVertex"
+                arg_input["step_rate"] = 0
                 elements.append(arg_input)
     return elements
 

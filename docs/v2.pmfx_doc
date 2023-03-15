@@ -62,7 +62,14 @@ pmfx: {
 pipeline: {
     /// optional - this will be auto-generated, but you can supply extra information to override
     vertex_layout: {
-        // ..
+        // use the name of the input structure to set settings on an entire set of vertex input
+        vs_input_instance: {
+            // .. vertex_layout options (see below)
+        }
+        // use the name of a single arg or struct member to set individually
+        normal: {
+            // .. vertex_layout options (see below)
+        }
     }
     /// auto-generated (based on shader usage and register bindings)
     desciptor_layout: {
@@ -108,7 +115,8 @@ vertex_layout: {
     /// specifies the type of input 
     /// type: enum [PerVertex, PerInstance]
     input_slot_class: PerVertex
-    /// the rate at which to step elements in this vertex buffer
+    /// the rate at which to step instance elements in this vertex buffer, 
+    /// not: default for vertex will be 0, for instances it will be 1
     /// type: int
     step_rate: 0
 }
@@ -309,7 +317,24 @@ texture: {
 
 /// specify a view (a render pass into a render target)
 view: {
-
+    /// array of render targets to bind
+    /// type: array
+    render_target: []
+    /// clear colour to clear targets
+    /// type: array of 4 floats (RGBA) for single channel
+    /// or array of array of 4 floats (RGBA) for MRT clears
+    clear_colour: []
+    /// array of depth stencils to bind
+    depth_stencil: []
+    /// value to clear the depth buffer to
+    /// type: float
+    clear_depth: 1.0
+    /// normalized viewport scaling, this in ratio to the render target size
+    /// type: array of floats [left, top, right, bottom, near, far]
+    viewport: [0.0, 0.0, 1.0, 1.0, 0.0, 1.0]
+    /// custom data to pass a named camera for engine specific use
+    /// type: string
+    camera: ""
 }
 
 /// specify a render graph (collection of views with dependencies)
