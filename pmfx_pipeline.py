@@ -526,10 +526,11 @@ def add_used_shader_resource(resource, stage):
 def generate_shader_info(pmfx, entry_point, stage, permute=None):
     # resource categories
     resource_categories = get_resource_categories()
-    # start with entry point src code
+    # validate entry point
     if entry_point not in pmfx["functions"]:
         build_pmfx.print_error("  error: {} missing shader entry point: {}".format(entry_point))
         return None
+    # start with entry point src code
     src = pmfx["functions"][entry_point]["source"]
     resources = dict()
     vertex_elements = None
@@ -572,6 +573,11 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
                     break
     # create resource src code
     res = ""
+    # pragmas
+    for pragma in pmfx["pragmas"]:
+        res += "{}\n".format(pragma)
+
+    # resources input structs, textures, buffers etc
     for resource in resources:
         res += resources[resource]["declaration"] + ";\n"
     # extract vs_input (input layout)
@@ -771,6 +777,9 @@ def generate_pmfx(file, root):
             print("{}: up-to-date".format(file))
             return
     print("building: {}".format(build_pmfx.sanitize_file_path(file)))
+
+    # find pragmas
+    pmfx["pragmas"] = cgu.find_pragma_statements(pmfx["source"])
     
     # parse functions
     pmfx["functions"] = dict()

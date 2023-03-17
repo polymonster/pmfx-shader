@@ -521,6 +521,15 @@ def find_include_statements(source):
     return includes
 
 
+# find pragma statements
+def find_pragma_statements(source):
+    pragmas = []
+    for line in source.splitlines():
+        if line.strip().startswith("#pragma"):
+            pragmas.append(line)
+    return pragmas
+
+
 # finds the next token ignoring white space
 def next_token(source, start):
     white_space = [" ", "\n"]
