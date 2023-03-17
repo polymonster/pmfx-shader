@@ -50,7 +50,7 @@ commandline arguments:
         gles: 100, 300, 310, 350
         spirv: 420 (default), 450
         metal: 2.0 (default)
-        nvn: (glslc)
+        nvn: (glsl)
     -metal_sdk [metal only] <iphoneos, macosx, appletvos>
     -metal_min_os (optional) [metal only] <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>
     -nvn_exe [nvn only] <path to execulatble that can compile glsl to nvn glslc>
