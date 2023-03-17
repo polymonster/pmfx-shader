@@ -61,6 +61,7 @@ class BuildInfo:
     num_threads = 4                                                     # number of threadsto distribute work over
     v_flip = False                                                      # glsl only (flip-y coord in vertex shader for consistency with other platforms)
     args = ""                                                           # anything passed after -args is concatonated into a string and forwarded to other executables (fxc, glsl validator etc)
+    force = False                                                       # force compilation even if dependecies are up-to-date
 
 
 # info and contents of a .pmfx file
@@ -152,6 +153,8 @@ def parse_args():
             _info.struct_dir = sys.argv[i + 1]
         elif sys.argv[i] == "-t":
             _info.temp_dir = sys.argv[i + 1]
+        elif sys.argv[i] == "-f":
+            _info.force = True
         elif sys.argv[i] == "-source":
             _info.compiled = False
         elif sys.argv[i] == "-cbuffer_offset":
@@ -232,6 +235,7 @@ def display_help():
     print("    -t <output dir for temp files>")
     print("    -h (optional) <output dir header file with shader structs>")
     print("    -d (optional) generate debuggable shader")
+    print("    -f (optional) force build / compile even if dependencies are up-to-date")
     print("    -root_dir (optional) <directory> sets working directory here")
     print("    -source (optional) (generates platform source into -o no compilation)")
     print("    -stage_in <0, 1> (optional) [metal only] (default 1) ")

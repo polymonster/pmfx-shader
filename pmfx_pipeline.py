@@ -772,8 +772,7 @@ def generate_pmfx(file, root):
             pmfx["compiled_shaders"] = existing["compiled_shaders"]
     
     # return if file not out of date
-    check_deps = False
-    if check_deps:
+    if not build_info.force:
         if not out_of_date:
             print("{}: up-to-date".format(file))
             return
