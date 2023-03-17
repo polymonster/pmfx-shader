@@ -494,6 +494,7 @@ def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_fil
     exe = os.path.join(info.tools_dir, "bin", "dxc", "dxc")
     open(temp_filepath, "w+").write(src)
     cmdline = "{} -T {}_{} -E {} -Fo {} {}".format(exe, stage, info.shader_version, entry_point, output_filepath, temp_filepath)
+    cmdline += " " + build_pmfx.get_info().args
     error_code, error_list, output_list = build_pmfx.call_wait_subprocess(cmdline)
     output = ""
     if error_code:

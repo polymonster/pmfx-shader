@@ -61,13 +61,16 @@ commandline arguments:
     -d (optional) generate debuggable shader
     -root_dir (optional) <directory> sets working directory here
     -source (optional) (generates platform source into -o no compilation)
-    -stage_in <0, 1> (optional) [metal only] (default 1) 
+    -stage_in <0, 1> (optional) [metal only] (default 1)
         uses stage_in for metal vertex buffers, 0 uses raw buffers
-    -cbuffer_offset (optional) [metal only] (default 4) 
+    -cbuffer_offset (optional) [metal only] (default 4)
         specifies an offset applied to cbuffer locations to avoid collisions with vertex buffers
-    -texture_offset (optional) [vulkan only] (default 32) 
+    -texture_offset (optional) [vulkan only] (default 32)
         specifies an offset applied to texture locations to avoid collisions with buffers
     -v_flip (optional) [glsl only] (inserts glsl uniform to conditionally flip verts in the y axis)
+    -args (optional) anything passed after this will be forward to the platform specific compiler
+         for example for fxc.exe /Zpr or dxc.exe -Zpr etc.. check the compiler help for options
+--------------------------------------------------------------------------------
 ```
 
 ## Versions

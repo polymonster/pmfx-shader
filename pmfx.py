@@ -59,6 +59,8 @@ class BuildInfo:
     nvn_exe = ""                                                        # optional executable path for nvn
     cmdline_string = ""                                                 # stores the full cmdline passed
     num_threads = 4                                                     # number of threadsto distribute work over
+    v_flip = False                                                      # glsl only (flip-y coord in vertex shader for consistency with other platforms)
+    args = ""                                                           # anything passed after -args is concatonated into a string and forwarded to other executables (fxc, glsl validator etc)
 
 
 # info and contents of a .pmfx file
@@ -124,6 +126,7 @@ def parse_args():
     _info.stage_in = 1
     _info.v_flip = False
     _info.debug = False
+    _info.args = ""
     if len(sys.argv) == 1:
         display_help()
     for arg in sys.argv:
@@ -181,6 +184,13 @@ def parse_args():
                 _info.nvn_extensions.append(sys.argv[j])
                 j = j + 1
             i = j
+        elif sys.argv[i] == "-args":
+            j = i + 1
+            _info.args = ""
+            while j < len(sys.argv):
+                _info.args += sys.argv[j] + " "
+                j = j + 1
+            i = j
     required = [
         "-shader_platform",
         "-i",
@@ -230,7 +240,9 @@ def display_help():
     print("        specifies an offset applied to cbuffer locations to avoid collisions with vertex buffers")
     print("    -texture_offset (optional) [vulkan only] (default 32) ")
     print("        specifies an offset applied to texture locations to avoid collisions with buffers")
-    print("    -v_flip (optional) [glsl only] (inserts glsl uniform to conditionally flip verts in the y axis)") 
+    print("    -v_flip (optional) [glsl only] (inserts glsl uniform to conditionally flip verts in the y axis)")
+    print("    -args (optional) anything passed after this will be forward to the platform specific compiler") 
+    print("         for example for fxc.exe /Zpr or dxc.exe -Zpr etc.. check the compiler help for options") 
     sys.stdout.flush()
     sys.exit(0)
 
@@ -1405,7 +1417,8 @@ def compile_pssl(_info, pmfx_name, _tp, _shader):
     temp_shader_source.close()
 
     cmdline = "orbis-wave-psslc" + " -profile " + profile[_shader.shader_type] + \
-              " -entry " + _shader.main_func_name + " " + temp_file_and_path + " -o " + output_file_and_path
+              " -entry " + _shader.main_func_name + " " + temp_file_and_path + " -o " + output_file_and_path + " "
+    cmdline += _info.args
 
     error_code, error_list, output_list = call_wait_subprocess(cmdline)
 
@@ -1456,6 +1469,7 @@ def compile_hlsl(_info, pmfx_name, _tp, _shader):
     if _info.debug:
         cmdline += "/Fc /Od /Zi" + " "
     cmdline += "/Fo " + output_file_and_path + " " + temp_file_and_path + " "
+    cmdline += _info.args
 
     compiled = _info.compiled
     if not compiled:
@@ -2005,6 +2019,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         cmd = "-input " + sanitize_file_path(temp_file_and_path) + " "
         cmd += nvn_type[_shader.shader_type] + " " + sanitize_file_path(temp_file_and_path) + " "
         cmd += "-output " + sanitize_file_path(output_file_and_path) + " "
+        cmd += _info.args
 
         error_code, error_list, output_list = call_wait_subprocess(exe + " " + cmd)
         _tp.error_code = error_code
@@ -2542,7 +2557,8 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
         if error_code == 0:
             cmdline = "xcrun -sdk " + metal_sdk + " metallib "
             cmdline += intermediate_file_and_path + " "
-            cmdline += "-o " + output_file_and_path
+            cmdline += "-o " + output_file_and_path + " "
+            cmdline += _info.args
 
             error_code, error_list_2, output_list_2 = call_wait_subprocess(cmdline)
             error_list.extend(error_list_2)
