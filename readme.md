@@ -25,7 +25,7 @@ Windows users need [vcredist 2013](https://www.microsoft.com/en-us/download/conf
 
 ## Console Platforms
 
-Compilation for Orbis but you will need the SDK's installed and the environment variables set.
+Compilation for Orbis is supported but you will need the SDK's installed and the environment variables set.
 
 For NVN there is an [executable](https://github.com/polymonster/pmfx-shader/tree/master/bin/nvn) included to compile to `nvn_glsc` but it will reuire the `NvnGlslc32.dll` to be installed along with the SDK.
 
@@ -77,7 +77,7 @@ commandline arguments:
 
 ## Versions
 
-There are 2 code paths supported by pmfx, this in an effort to keep up-to-date with moder graphics API's but also offer backward comptibility support to older graphics API's, mobile and web platforms.
+There are 2 code paths supported by pmfx, this is in an effort to keep up-to-date with modern graphics API's but also offer backward comptibility support to older graphics API's, mobile and web platforms.
 
 - [Version 1](https://github.com/polymonster/pmfx-shader#version-1) - (bindful render model, techniques, macro based cross platform shaders)
 - [Version 2](https://github.com/polymonster/pmfx-shader#version-2) - (bindless render model, descriptor sets, pipelines, SPIR-V based cross-compilation)
