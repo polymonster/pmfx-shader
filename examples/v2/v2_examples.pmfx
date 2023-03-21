@@ -1,6 +1,7 @@
-#include "v2_examples.hlsl"
-
-pmfx: {
+{
+    include: [
+        "v2_examples.hlsl"
+    ]
     depth_stencil_states: {
         depth_test_less: {
         }

@@ -607,7 +607,7 @@ Full [documentation](https://github.com/polymonster/pmfx-shader/blob/master/docs
 Compilation is simple with command line args as so:
 
 ```text
-pmfx.py -shader_platform hlsl -shader_version 6_0 -i src/shaders/ -o ${data_dir}/shaders -t ${temp_dir}/shaders -source
+python3 pmfx.py -shader_platform hlsl -shader_version 6_0 -i examples/v2/ -o ${data_dir}/shaders -t ${temp_dir}/shaders
 ```  
 
 ### Examples

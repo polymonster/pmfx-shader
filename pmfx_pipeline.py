@@ -120,7 +120,19 @@ def vertex_format_from_type(type):
         "float": "R32f",
         "float2": "RG32f",
         "float3": "RGB32f",
-        "float4": "RGBA32f"
+        "float4": "RGBA32f",
+        "half": "R16f",
+        "half2": "RG16f",
+        "half3": "RGB16f",
+        "half4": "RGBA16f",
+        "int": "R32i",
+        "int2": "RG32i",
+        "int3": "RGB32i",
+        "int4": "RGBA32i",
+        "uint": "R32u",
+        "uint2": "RG32u",
+        "uint3": "RGB32u",
+        "uint4": "RGBA32u",
     }
     if type in lookup:
         return lookup[type]
@@ -489,6 +501,22 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
     return descriptor_layout
 
 
+# wrtie out c++ header from the json info
+def write_header(path, pmfx_name, resources):
+    src_h = cgu.src_line("namespace pmfx_{} {{".format(pmfx_name))
+    if "structs" in resources:
+        for struct_name, struct in resources["structs"].items():
+            if "members" in struct:
+                src_h += cgu.src_line("struct {} {{".format(struct_name))
+                for member in struct["members"]:
+                    src_h += cgu.src_line("{} {};".format(member["data_type"], member["name"]))
+                src_h += cgu.src_line("};")
+    src_h += cgu.src_line("}")
+    src_h = cgu.format_source(src_h, 4)
+    os.makedirs(path, exist_ok=True)
+    open(os.path.join(path, "{}.h".format(pmfx_name)), "w+").write(src_h)
+
+
 # compile a hlsl version 2
 def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_filepath):
     exe = os.path.join(info.tools_dir, "bin", "dxc", "dxc")
@@ -529,7 +557,7 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
     resource_categories = get_resource_categories()
     # validate entry point
     if entry_point not in pmfx["functions"]:
-        build_pmfx.print_error("  error: {} missing shader entry point: {}".format(entry_point))
+        build_pmfx.print_error("  error: missing shader entry point: {}".format(entry_point))
         return None
     # start with entry point src code
     src = pmfx["functions"][entry_point]["source"]
@@ -572,6 +600,7 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
                 if cgu.find_token(token, src) != -1:
                     resources[r] = add_used_shader_resource(resource, stage)
                     break
+
     # create resource src code
     res = ""
     # pragmas
@@ -636,7 +665,7 @@ def generate_shader_permutation(build_info, shader_info, stage, entry_point, pmf
     return (stage, entry_point, shader_info)
 
 
-# generate a pipeline and metadat for permutation
+# generate a pipeline and metadata for permutation
 def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders, pemutation_id):
     permutation_name = ""
     if pemutation_id > 0:
@@ -727,10 +756,9 @@ def generate_pmfx(file, root):
 
     # semi similar to v1-path, allows pmfx: {} and hls source code to be mixed in the ame file  
     shader_file_text_full, included_files = build_pmfx.create_shader_set(input_pmfx_filepath, root)
-    pmfx_json, shader_source = build_pmfx.find_pmfx_json(shader_file_text_full)
+    # pmfx_json, shader_source = build_pmfx.find_pmfx_json(shader_file_text_full)
 
-    if not pmfx_json:
-        pmfx_json, shader_source, included_files = load_pmfx_jsn(file, root)
+    pmfx_json, shader_source, included_files = load_pmfx_jsn(file, root)
 
     # src (input) pmfx dictionary
     pmfx = dict()
@@ -882,6 +910,10 @@ def generate_pmfx(file, root):
         if pipeline_name not in output_pmfx["pipelines"]:
             output_pmfx["pipelines"][pipeline_name] = dict()
         output_pmfx["pipelines"][pipeline_name][permutation_id] = pipeline_info
+
+    # write c-header
+    if build_info.struct_dir and len(build_info.struct_dir) > 0:
+        write_header(build_info.struct_dir, pmfx["pmfx_name"], pmfx["resources"])
     
     # timestamp / dependency info
     dependency_set = list()
@@ -904,7 +936,7 @@ def generate_pmfx(file, root):
 
     return 0
 
-""
+
 # entry point wrangling
 def main():
     build_pmfx.main(generate_pmfx, "2.0")
