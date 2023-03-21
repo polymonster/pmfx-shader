@@ -45,7 +45,7 @@ commandline arguments:
     -num_threads 4 (default) <supply threadpool size>
     -shader_platform <hlsl, glsl, gles, spirv, metal, pssl, nvn>
     -shader_version (optional) <shader version unless overridden in technique>
-        hlsl: 3_0, 4_0 (default), 5_0, 6_0 (-v2)
+        hlsl: 3_0, 4_0 (default), 5_0, 6_0 [-v2]
         glsl: 200, 330 (default), 420, 450
         gles: 100, 300, 310, 350
         spirv: 420 (default), 450
@@ -61,13 +61,15 @@ commandline arguments:
     -t <output dir for temp files>
     -h (optional) <output dir header file with shader structs>
     -d (optional) generate debuggable shader
+    -f (optional) force build / compile even if dependencies are up-to-date
+    -rs (optional) <output dir for rust crate with shader structs> [-v2]
     -root_dir (optional) <directory> sets working directory here
     -source (optional) (generates platform source into -o no compilation)
-    -stage_in <0, 1> (optional) [metal only] (default 1)
+    -stage_in <0, 1> (optional) [metal only] (default 1) 
         uses stage_in for metal vertex buffers, 0 uses raw buffers
-    -cbuffer_offset (optional) [metal only] (default 4)
+    -cbuffer_offset (optional) [metal only] (default 4) 
         specifies an offset applied to cbuffer locations to avoid collisions with vertex buffers
-    -texture_offset (optional) [vulkan only] (default 32)
+    -texture_offset (optional) [vulkan only] (default 32) 
         specifies an offset applied to texture locations to avoid collisions with buffers
     -v_flip (optional) [glsl only] (inserts glsl uniform to conditionally flip verts in the y axis)
     -args (optional) anything passed after this will be forward to the platform specific compiler
