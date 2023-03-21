@@ -670,6 +670,7 @@ Descriptor layout and Vertex layout can be automatically generated based on reso
         "static_samplers": []
     },
     "hash": 3046174282
+    }
 }
 ```
 
