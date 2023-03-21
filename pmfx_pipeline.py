@@ -969,7 +969,11 @@ def generate_pmfx(file, root):
         abs_file = os.path.abspath(file)
         if abs_file not in dependency_set:
             dependency_set.append(abs_file)
-    dependency_set.append(os.path.realpath(__file__))
+
+    # add this file as a dep for non frozen builds (.py not .exe)
+    if not getattr(sys, 'frozen', False):
+        dependency_set.append(os.path.realpath(__file__))
+
     output_pmfx["filepath"] = os.path.abspath(json_filepath)
     output_pmfx["dependencies"] = dependency_set
 
