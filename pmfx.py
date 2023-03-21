@@ -50,6 +50,7 @@ class BuildInfo:
     tools_dir = ""                                                      # location of pmtech/tools
     output_dir = ""                                                     # dir to build shader binaries
     struct_dir = ""                                                     # dir to output the shader structs
+    crate_dir = ""                                                      # dir to output the shader structs (rust crate)
     temp_dir = ""                                                       # dir to put temp shaders
     this_file = ""                                                      # the file u are reading
     macros_file = ""                                                    # pmfx.h
@@ -151,6 +152,8 @@ def parse_args():
             _info.output_dir = sys.argv[i + 1]
         elif sys.argv[i] == "-h":
             _info.struct_dir = sys.argv[i + 1]
+        elif sys.argv[i] == "-rs":
+            _info.crate_dir = sys.argv[i + 1]
         elif sys.argv[i] == "-t":
             _info.temp_dir = sys.argv[i + 1]
         elif sys.argv[i] == "-f":
@@ -219,7 +222,7 @@ def display_help():
     print("    -num_threads 4 (default) <supply threadpool size>")
     print("    -shader_platform <hlsl, glsl, gles, spirv, metal, pssl, nvn>")
     print("    -shader_version (optional) <shader version unless overridden in technique>")
-    print("        hlsl: 3_0, 4_0 (default), 5_0")
+    print("        hlsl: 3_0, 4_0 (default), 5_0, 6_0 [-v2]")
     print("        glsl: 200, 330 (default), 420, 450")
     print("        gles: 100, 300, 310, 350")
     print("        spirv: 420 (default), 450")
@@ -236,6 +239,7 @@ def display_help():
     print("    -h (optional) <output dir header file with shader structs>")
     print("    -d (optional) generate debuggable shader")
     print("    -f (optional) force build / compile even if dependencies are up-to-date")
+    print("    -rs (optional) <output dir for rust crate with shader structs> [-v2]")
     print("    -root_dir (optional) <directory> sets working directory here")
     print("    -source (optional) (generates platform source into -o no compilation)")
     print("    -stage_in <0, 1> (optional) [metal only] (default 1) ")
@@ -245,8 +249,8 @@ def display_help():
     print("    -texture_offset (optional) [vulkan only] (default 32) ")
     print("        specifies an offset applied to texture locations to avoid collisions with buffers")
     print("    -v_flip (optional) [glsl only] (inserts glsl uniform to conditionally flip verts in the y axis)")
-    print("    -args (optional) anything passed after this will be forward to the platform specific compiler") 
-    print("         for example for fxc.exe /Zpr or dxc.exe -Zpr etc.. check the compiler help for options") 
+    print("    -args (optional) anything passed after this will be forward to the platform specific compiler")
+    print("         for example for fxc.exe /Zpr or dxc.exe -Zpr etc.. check the compiler help for options")
     sys.stdout.flush()
     sys.exit(0)
 

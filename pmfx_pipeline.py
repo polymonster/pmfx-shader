@@ -517,6 +517,23 @@ def write_header(path, pmfx_name, resources):
     open(os.path.join(path, "{}.h".format(pmfx_name)), "w+").write(src_h)
 
 
+# wrtie out rust crate from the json info
+def write_rs_crate(path, pmfx_name, resources):
+    src_h = cgu.src_line("pub mod pmfx_{} {{".format(pmfx_name))
+    if "structs" in resources:
+        for struct_name, struct in resources["structs"].items():
+            if "members" in struct:
+                src_h += cgu.src_line("#[repr(C)]")
+                src_h += cgu.src_line("pub struct {} {{".format(struct_name))
+                for member in struct["members"]:
+                    src_h += cgu.src_line("{}: {},".format(member["name"], member["data_type"]))
+                src_h += cgu.src_line("}")
+    src_h += cgu.src_line("}")
+    src_h = cgu.format_source(src_h, 4)
+    os.makedirs(path, exist_ok=True)
+    open(os.path.join(path, "{}.rs".format(pmfx_name)), "w+").write(src_h)
+
+
 # compile a hlsl version 2
 def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_filepath):
     exe = os.path.join(info.tools_dir, "bin", "dxc", "dxc")
@@ -914,6 +931,10 @@ def generate_pmfx(file, root):
     # write c-header
     if build_info.struct_dir and len(build_info.struct_dir) > 0:
         write_header(build_info.struct_dir, pmfx["pmfx_name"], pmfx["resources"])
+
+    # write rs-crate
+    if build_info.crate_dir and len(build_info.crate_dir) > 0:
+        write_rs_crate(build_info.crate_dir, pmfx["pmfx_name"], pmfx["resources"])
     
     # timestamp / dependency info
     dependency_set = list()
