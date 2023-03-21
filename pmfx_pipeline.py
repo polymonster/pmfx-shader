@@ -110,6 +110,14 @@ def get_num_32bit_values(type):
         "float3x4": 12,
         "float4x3": 12,
         "float4x4": 16,
+        "int": 1,
+        "int2": 2,
+        "int3": 3,
+        "int4": 4,
+        "uint": 1,
+        "uint2": 2,
+        "uint3": 3,
+        "uint4": 4,
     }
     return lookup[type]
 
@@ -749,7 +757,8 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
 
 # load a pmfx file into dictionary()
 def load_pmfx_jsn(filepath, root):
-    pmfx = jsn.load_from_file(os.path.join(root, filepath), [], False)
+    filepath = os.path.join(root, filepath)
+    pmfx = jsn.load_from_file(filepath, [], False)
     all_included_files = []
     all_shader_source = ""
     if "include" in pmfx:
@@ -764,6 +773,23 @@ def load_pmfx_jsn(filepath, root):
                 all_shader_source += "\n" + shader_source
                 all_included_files.extend(included_files)
             all_included_files.append(os.path.join(root, include))
+    # search through imports and recurively add them to the dependecy list
+    import_searched = set()
+    to_search = set()
+    to_search.add(filepath)
+    while len(to_search) > 0:
+        fp = to_search.pop()
+        import_searched.add(fp)
+        file = open(fp, "r").read()
+        lines = file.splitlines()
+        for line in lines:
+            if line.startswith("import"):
+                import_name = os.path.join(root, line[line.find(" ")+1:].strip())
+                all_included_files.append(import_name)
+                if import_name not in import_searched:
+                    to_search.add(import_name)
+            if line.startswith("{"):
+                break
     return (pmfx, all_shader_source, all_included_files)
 
 
@@ -773,9 +799,10 @@ def generate_pmfx(file, root):
 
     # semi similar to v1-path, allows pmfx: {} and hls source code to be mixed in the ame file  
     shader_file_text_full, included_files = build_pmfx.create_shader_set(input_pmfx_filepath, root)
-    # pmfx_json, shader_source = build_pmfx.find_pmfx_json(shader_file_text_full)
+    pmfx_json, shader_source = build_pmfx.find_pmfx_json(shader_file_text_full)
 
-    pmfx_json, shader_source, included_files = load_pmfx_jsn(file, root)
+    if not pmfx_json:
+        pmfx_json, shader_source, included_files = load_pmfx_jsn(file, root)
 
     # src (input) pmfx dictionary
     pmfx = dict()
@@ -942,6 +969,7 @@ def generate_pmfx(file, root):
         abs_file = os.path.abspath(file)
         if abs_file not in dependency_set:
             dependency_set.append(abs_file)
+    dependency_set.append(os.path.realpath(__file__))
     output_pmfx["filepath"] = os.path.abspath(json_filepath)
     output_pmfx["dependencies"] = dependency_set
 
