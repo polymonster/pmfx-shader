@@ -107,7 +107,7 @@ python3 pmfx.py -v1 -shader_platform metal -metal_sdk iphoneos -metal_min_os 0.9
 python3 pmfx.py -v1 -shader_platform spirv -i examples/v1 -o output/bin -h output/structs -t output/temp
 
 // hlsl d3d11
-python3 pmfx.py -v1 -shader_platform hlsl -shader_version 4_0 -i examples/v1 -o output/bin -h output/structs -t output/temp
+py -3 pmfx.py -v1 -shader_platform hlsl -shader_version 5_0 -i examples/v1 -o output/bin -h output/structs -t output/temp
 
 // glsl
 python3 pmfx.py -v1 -shader_platform glsl -shader_version 330 -i examples/v1 -o output/bin -h output/structs -t output/temp
@@ -609,7 +609,7 @@ Full [documentation](https://github.com/polymonster/pmfx-shader/blob/master/docs
 Compilation is simple with command line args as so:
 
 ```text
-python3 pmfx.py -shader_platform hlsl -shader_version 6_0 -i examples/v2/ -o ${data_dir}/shaders -t ${temp_dir}/shaders
+py -3 pmfx.py -shader_platform hlsl -shader_version 6_0 -i examples/v2/ -o build/data/shaders -t build/temp/shaders
 ```  
 
 ### Examples

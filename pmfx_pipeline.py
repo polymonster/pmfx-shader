@@ -799,7 +799,7 @@ def generate_pmfx(file, root):
 
     # semi similar to v1-path, allows pmfx: {} and hls source code to be mixed in the ame file  
     shader_file_text_full, included_files = build_pmfx.create_shader_set(input_pmfx_filepath, root)
-    pmfx_json, shader_source = build_pmfx.find_pmfx_json(shader_file_text_full)
+    pmfx_json, shader_source = build_pmfx.find_pmfx_json(shader_file_text_full, False)
 
     if not pmfx_json:
         pmfx_json, shader_source, included_files = load_pmfx_jsn(file, root)

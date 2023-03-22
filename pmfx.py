@@ -1097,7 +1097,7 @@ def inherit_technique(technique, pmfx_json):
 
 
 # parse pmfx file to find the json block pmfx: { }
-def find_pmfx_json(shader_file_text):
+def find_pmfx_json(shader_file_text, create_default=True):
     pmfx_loc = shader_file_text.find("pmfx:")
     if pmfx_loc != -1:
         # pmfx json exists, return the block
@@ -1106,7 +1106,7 @@ def find_pmfx_json(shader_file_text):
         pmfx_json = jsn.loads(shader_file_text[json_loc:pmfx_end + json_loc])
         shader_text_removed = shader_file_text[:pmfx_loc] + shader_file_text[pmfx_loc + pmfx_end:].strip()
         return pmfx_json, shader_text_removed
-    else:
+    elif create_default:
         # shader can have no pmfx, provided it supplies vs_main and ps_main
         if find_function(shader_file_text, "vs_main") and find_function(shader_file_text, "ps_main"):
             pmfx_json = dict()
