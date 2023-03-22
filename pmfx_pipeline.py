@@ -203,8 +203,8 @@ def get_state_with_defaults(state_type, state):
             "border_colour": None,
             "mip_lod_bias": 0.0,
             "max_aniso": 0,
-            "min_lod": -1.0,
-            "max_lod": -1.0
+            "min_lod": 0.0,
+            "max_lod": sys.float_info.max
         },
         "render_target_blend_states": {
             "blend_enabled": False,

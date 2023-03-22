@@ -215,11 +215,11 @@ sampler_states: {
     /// lower end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level 
     /// and any level higher than that is less detailed.
     /// type: float
-    min_lod: -1.0
+    min_lod: 0.0
     /// upper end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level 
     /// and any level higher than that is less detailed.
     /// type: float
-    max_lod: -1.0
+    max_lod: float.max
 }
 
 /// specify blend state for a single render target
