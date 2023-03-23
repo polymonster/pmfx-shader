@@ -44,12 +44,24 @@ def get_bindable_resource_keys():
         "cbuffer",
         "ConstantBuffer",
         "StructuredBuffer",
+        "ByteAddressBuffer",
         "RWStructuredBuffer",
+        "RWByteAddressBuffer",
+        "AppendStructuredBuffer",
+        "ConsumeStructuredBuffer",
         "Texture1D",
+        "Texture1DArray",
         "Texture2D",
+        "Texture2DArray",
+        "Texture2DMS",
+        "Texture2DMSArray",
+        "TextureCube"
+        "TextureCubeArray"
         "Texture3D",
         "RWTexture1D",
+        "RWTexture1DArray",
         "RWTexture2D",
+        "RWTexture2DArray",
         "RWTexture3D",
         "SamplerState"
     ]
@@ -63,12 +75,24 @@ def get_resource_mappings():
         {"category": "cbuffers", "identifier": "ConstantBuffer"},
         {"category": "samplers", "identifier": "SamplerState"},
         {"category": "structured_buffers", "identifier": "StructuredBuffer"},
+        {"category": "structured_buffers", "identifier": "ByteAddressBuffer"},
+        {"category": "structured_buffers", "identifier": "AppendStructuredBuffer"},
+        {"category": "structured_buffers", "identifier": "ConsumeStructuredBuffer"},
         {"category": "structured_buffers", "identifier": "RWStructuredBuffer"},
+        {"category": "structured_buffers", "identifier": "RWByteAddressBuffer"},
         {"category": "textures", "identifier": "Texture1D"},
+        {"category": "textures", "identifier": "Texture1DArray"},
         {"category": "textures", "identifier": "Texture2D"},
+        {"category": "textures", "identifier": "Texture2DArray"},
+        {"category": "textures", "identifier": "Texture2DMS"},
+        {"category": "textures", "identifier": "Texture2DMSArray"},
+        {"category": "textures", "identifier": "TextureCube"},
+        {"category": "textures", "identifier": "TextureCubeArray"},
         {"category": "textures", "identifier": "Texture3D"},
         {"category": "textures", "identifier": "RWTexture1D"},
+        {"category": "textures", "identifier": "RWTexture1DArray"},
         {"category": "textures", "identifier": "RWTexture2D"},
+        {"category": "textures", "identifier": "RWTexture2DArray"},
         {"category": "textures", "identifier": "RWTexture3D"},
     ]
 
@@ -464,7 +488,6 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
                 num_values = 0
                 for member in resource["members"]:
                     num_values += get_num_32bit_values(member["data_type"])
-                # todo: fold
                 push_constants = {
                     "shader_register": resource["shader_register"],
                     "register_space": resource["register_space"],
@@ -477,7 +500,6 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
         if "static_samplers" in pmfx_pipeline:
             if r in pmfx_pipeline["static_samplers"]:
                 lookup = pmfx_pipeline["static_samplers"][r]
-                 # todo: fold
                 static_sampler = {
                     "shader_register": resource["shader_register"],
                     "register_space": resource["register_space"],
@@ -488,7 +510,6 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
                 continue
         # fall trhough and add as a bindable resource
         if resource_type in bindable_resources:
-             # todo: fold
             binding = {
                 "shader_register": resource["shader_register"],
                 "register_space": resource["register_space"],
