@@ -8,6 +8,15 @@
         depth_test_never: {
         }
     }
+    render_target_blend_states: {
+        additive: {
+        }
+    }
+    blend_states: {
+        additive: {
+            render_target: ["additive"]
+        }
+    }
     pipelines: {
         basic_lit: {
             vs: vs_main
@@ -41,6 +50,11 @@
                 SKINNED: [31, [0,1]],
                 INSTANCED: [30, [0,1]]
             }
+        }
+        blend: {
+            vs: vs_main
+            ps: ps_main
+            blend_state: additive
         }
     }
 }
