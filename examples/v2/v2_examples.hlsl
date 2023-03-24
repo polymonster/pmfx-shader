@@ -34,6 +34,10 @@ cbuffer per_pass_vs : register(b1) {
     float4   test;
 };
 
+struct cbuffer_data {
+    float4 data2;
+};
+
 SamplerState decl_sampler : register(s0);
 
 ConstantBuffer<sb_sb> decl_cbuffer_array[] : register(b2);
@@ -45,6 +49,13 @@ RWStructuredBuffer<sb_sb> decl_structured_buffer_rw : register(u1, space0);
 Texture1D decl_texture1d : register(t0);
 Texture2D decl_texture2d : register(t1);
 Texture3D decl_texture3d : register(t2);
+
+// alias resource types types on t0
+Texture2D textures[] : register(t0);
+TextureCube cubemaps[] : register(t0);
+Texture2DArray texture_arrays[] : register(t0);
+Texture3D volume_textures[] : register(t0);
+ConstantBuffer<cbuffer_data> cbuffers[] : register(b0);
 
 void test_func() {
     decl_texture1d;
@@ -103,5 +114,22 @@ vs_output vs_main_separate_elements(float4 pos : POSITION, float4 tex : TEXCOORD
 
 ps_output ps_main() {
     test_func2();
+    return ps_output_default();
+}
+
+vs_output vs_test_bindless_aliasing(vs_input input) {
+    return vs_output_default();
+}
+
+ps_output ps_test_bindless_aliasing() {
+    test_func();
+    // using this void cast touches the resources so they are detected by pmfx and compiled in
+    (textures);
+    (cubemaps);
+    (texture_arrays);
+    (volume_textures);
+
+    // cbuffers go on a different slot
+    (cbuffers);
     return ps_output_default();
 }

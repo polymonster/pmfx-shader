@@ -518,14 +518,41 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
                 "num_descriptors": get_descriptor_array_size(resource)
             }
             descriptor_layout["bindings"].append(binding)
+
+    # combine bindings on the same slot (allow resource type aliasing)
+    combined_bindings = dict()
+    for binding in  descriptor_layout["bindings"]:
+        bh = pmfx_hash({
+            "shader_register": binding["shader_register"],
+            "register_space": binding["register_space"],
+            "register_space": binding["register_space"],
+            "binding_type": binding["binding_type"]
+        })
+        if bh not in combined_bindings:
+            combined_bindings[bh] = binding
+        else:
+            cur = combined_bindings[bh]
+            # extend visibility
+            if binding["visibility"] != cur["visibility"]:
+                cur["visibility"] = "All"
+
     # sort bindings in index order
     sorted_bindings = list()
-    for binding in descriptor_layout["bindings"]:
-        insert_pos = 0
-        for i in range(0, len(sorted_bindings)):
-            if binding["shader_register"] < sorted_bindings[i]["shader_register"]:
-                insert_pos = i
-        sorted_bindings.insert(insert_pos, binding)
+    for binding in combined_bindings.values():
+        sorted_bindings.append(binding)
+    
+    # bubble sort sort them
+    sorted = False
+    while not sorted:
+        sorted = True
+        for i in range(0, len(sorted_bindings) - 1):
+            j = i + 1
+            if sorted_bindings[j]["shader_register"] < sorted_bindings[i]["shader_register"]:
+                temp = sorted_bindings[j]["shader_register"]
+                sorted_bindings[j]["shader_register"] = sorted_bindings[i]["shader_register"]
+                sorted_bindings[i]["shader_register"] = temp
+                sorted = False
+
     descriptor_layout["bindings"] = sorted_bindings
     return descriptor_layout
 

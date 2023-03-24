@@ -56,5 +56,9 @@
             ps: ps_main
             blend_state: additive
         }
+        bindless: {
+            vs: vs_test_bindless_aliasing
+            ps: ps_test_bindless_aliasing
+        }
     }
 }
