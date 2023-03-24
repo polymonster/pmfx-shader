@@ -55,8 +55,8 @@ def get_bindable_resource_keys():
         "Texture2DArray",
         "Texture2DMS",
         "Texture2DMSArray",
-        "TextureCube"
-        "TextureCubeArray"
+        "TextureCube",
+        "TextureCubeArray",
         "Texture3D",
         "RWTexture1D",
         "RWTexture1DArray",
@@ -734,7 +734,7 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
             output_pipeline[stage] = shader_info["filename"]
             output_pipeline["{}_hash:".format(stage)] = pmfx_hash(shader_info["src_hash"])
             shader = shader_info
-            resources = merge_dicts(resources, shader["resources"], ["visibility"])
+            resources = merge_dicts(resources, dict(shader["resources"]), ["visibility"])
             if stage == "vs":
                 pmfx_vertex_layout = dict()
                 if "vertex_layout" in pipeline:
@@ -769,6 +769,8 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
              expanded["blend_state"]["exapnded"].append(output_pmfx["render_target_blend_states"][rt])
 
     output_pipeline["hash"] = pmfx_hash(expanded)
+    
+    # output_pipeline["resources"] = resources
 
     # need to has the state objects
     output_pmfx
@@ -863,6 +865,9 @@ def generate_pmfx(file, root):
         existing = json.loads(open(json_filepath, "r").read())
         if "compiled_shaders" in existing:
             pmfx["compiled_shaders"] = existing["compiled_shaders"]
+        # if we have errors, we are also still out of date
+        if "error_pipelines" in existing:
+            out_of_date = True
     
     # return if file not out of date
     if not build_info.force:
@@ -998,15 +1003,23 @@ def generate_pmfx(file, root):
     output_pmfx["filepath"] = os.path.abspath(json_filepath)
     output_pmfx["dependencies"] = dependency_set
 
-    # write info per pmfx, containing multiple pipelines
-    open(json_filepath, "w+").write(json.dumps(output_pmfx, indent=4))
-
-    # return errors
+    # find any error pipelines and record them so we can trigger rebuilds
+    error_pipelines = []
     build_info.error_code = 0
     for pipeline in output_pmfx["pipelines"]:
         for permutation in output_pmfx["pipelines"][pipeline]:
             if "error_code" in output_pmfx["pipelines"][pipeline][permutation]:
-                sys.exit(output_pmfx["pipelines"][pipeline][permutation]["error_code"])
+                build_info.error_code = output_pmfx["pipelines"][pipeline][permutation]["error_code"]
+                error_pipelines.append(pipeline)
+                continue
+
+    # write info per pmfx, containing multiple pipelines
+    output_pmfx["error_pipelines"] = error_pipelines
+    open(json_filepath, "w+").write(json.dumps(output_pmfx, indent=4))
+
+    # return errors
+    if build_info.error_code != 0:
+        sys.exit(build_info.error_code)
 
     return 0
 
