@@ -267,7 +267,7 @@ def get_state_with_defaults(state_type, state):
             "width": 1,
             "height": 1,
             "depth": 1,
-            "array_levels": 1,
+            "array_layers": 1,
             "mip_levels": 1,
             "samples": 1,
             "usage": ["ShaderResource"]

@@ -127,7 +127,7 @@ vertex_layout: {
 
 /// specify named sampler states to use as static samplers on this pipeline
 static_samplers: {
-    /// sampler name (in hlsl): sampler state name in pmfx
+    /// sampler name (in hlsl = sampler0): sampler state name in pmfx
     sampler0: wrap_linear
 }
 
