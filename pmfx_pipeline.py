@@ -738,6 +738,22 @@ def generate_shader_permutation(build_info, shader_info, stage, entry_point, pmf
     return (stage, entry_point, shader_info)
 
 
+# auto generates a blend state from a render target blend state, with the default of a single render target blend
+# separate alpha is inferred from usage of src_blend_alpha etc and alpha_to_coverage_enabled is default to false 
+def generate_blend_state(output_pmfx, blend_state_name):
+    if blend_state_name in output_pmfx["render_target_blend_states"]:
+        rtb = output_pmfx["render_target_blend_states"][blend_state_name]
+        independant = False
+        if any(x in rtb for x in ["src_blend_alpha", "dst_blend_alpha", "blend_op_alpha"]):
+            independant = True
+        return {
+            "alpha_to_coverage_enabled": False,
+            "independent_blend_enabled": independant,
+            "render_target": [blend_state_name]
+        }
+    return None
+
+
 # generate a pipeline and metadata for permutation
 def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders, pemutation_id):
     permutation_name = ""
@@ -778,7 +794,7 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
 
     # hash the whole thing
     expanded = {
-        "pipeline": output_pipeline,
+        "pipeline": dict(output_pipeline),
     }
 
     # adds extra hashes.. in the final output these are simply named keys so they can be looked up
@@ -789,11 +805,28 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
     if "raster_state" in pipeline:
         expanded["raster_state"] = output_pmfx["raster_states"][output_pipeline["raster_state"]]
 
+    # we may need to generate some states on the fly for convenience
+    added_pmfx = dict()
+    added_pmfx["blend_states"] = dict()
+
     if "blend_state" in pipeline:
-        expanded["blend_state"] = output_pmfx["blend_states"][output_pipeline["blend_state"]]
-        expanded["blend_state"]["exapnded"] = list()
-        for rt in expanded["blend_state"]["render_target"]:
-             expanded["blend_state"]["exapnded"].append(output_pmfx["render_target_blend_states"][rt])
+        blend_state_name = output_pipeline["blend_state"]
+        if blend_state_name not in output_pmfx["blend_states"]:
+            blend_state = generate_blend_state(output_pmfx, blend_state_name)
+            if blend_state:
+                added_pmfx["blend_states"][blend_state_name] = blend_state
+                expanded["blend_state"] = dict(blend_state)
+                expanded["blend_state"]["exapnded"] = list()
+                for rt in expanded["blend_state"]["render_target"]:
+                    expanded["blend_state"]["exapnded"].append(blend_state)
+            else:
+                build_pmfx.print_error("  [error] missing blend_state or render_target_blend_state {}".format(blend_state_name))
+                output_pipeline["error_code"] = 219
+        else:
+            expanded["blend_state"] = output_pmfx["blend_states"][blend_state_name]
+            expanded["blend_state"]["exapnded"] = list()
+            for rt in expanded["blend_state"]["render_target"]:
+                expanded["blend_state"]["exapnded"].append(output_pmfx["render_target_blend_states"][rt])
 
     output_pipeline["hash"] = pmfx_hash(expanded)
     
@@ -802,7 +835,7 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
     # need to has the state objects
     output_pmfx
 
-    return (pipeline_name, pemutation_id, output_pipeline)
+    return (pipeline_name, pemutation_id, output_pipeline, dict(added_pmfx))
 
 
 # load a pmfx file into dictionary()
@@ -888,13 +921,17 @@ def generate_pmfx(file, root):
             if mtime > last_built:
                 out_of_date = True
                 break
-        # get hashes from compiled shaders
-        existing = json.loads(open(json_filepath, "r").read())
-        if "compiled_shaders" in existing:
-            pmfx["compiled_shaders"] = existing["compiled_shaders"]
-        # if we have errors, we are also still out of date
-        if "error_pipelines" in existing:
+        # get hashes from compiled 
+        try:
+            existing = json.loads(open(json_filepath, "r").read())
+            if "compiled_shaders" in existing:
+                pmfx["compiled_shaders"] = existing["compiled_shaders"]
+            # if we have errors, we are also still out of date
+            if "error_pipelines" in existing:
+                out_of_date = True
+        except:
             out_of_date = True
+
     
     # return if file not out of date
     if not build_info.force:
@@ -1003,10 +1040,11 @@ def generate_pmfx(file, root):
 
     # wait on pipeline jobs and gather results
     for job in pipeline_compile_jobs:
-        (pipeline_name, permutation_id, pipeline_info) = job.get()
+        (pipeline_name, permutation_id, pipeline_info, added_pmfx) = job.get()
         if pipeline_name not in output_pmfx["pipelines"]:
             output_pmfx["pipelines"][pipeline_name] = dict()
-        output_pmfx["pipelines"][pipeline_name][permutation_id] = pipeline_info
+        output_pmfx["pipelines"][pipeline_name][permutation_id] = pipeline_info        
+        output_pmfx = merge_dicts(dict(output_pmfx), dict(added_pmfx))
 
     # write c-header
     if build_info.struct_dir and len(build_info.struct_dir) > 0:

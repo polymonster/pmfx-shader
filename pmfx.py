@@ -3069,7 +3069,7 @@ def main(parse_function, version):
                         try:
                             parse_function(file, root)
                         except Exception as e:
-                            print_error("error: while processing", os.path.join(root, file))
+                            print_error("error: while processing {}".format(os.path.join(root, file)))
                             raise e
         else:
             parse_function(source, "")
