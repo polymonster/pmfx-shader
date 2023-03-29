@@ -927,7 +927,7 @@ def generate_pmfx(file, root):
             if "compiled_shaders" in existing:
                 pmfx["compiled_shaders"] = existing["compiled_shaders"]
             # if we have errors, we are also still out of date
-            if "error_pipelines" in existing:
+            if "error_pipelines" in existing and len(existing["error_pipelines"]) > 0:
                 out_of_date = True
         except:
             out_of_date = True
