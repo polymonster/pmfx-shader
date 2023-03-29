@@ -9,12 +9,26 @@
         }
     }
     render_target_blend_states: {
+        disabled: {
+            blend_enabled: false
+        }
         additive: {
+            blend_enabled: true
+            src_blend: One
+            dst_blend: One
+        }
+        alpha: {
+            blend_enabled: true
+            src_blend: SrcAlpha
+            dst_blend: InvSrcAlpha
         }
     }
     blend_states: {
-        additive: {
-            render_target: ["additive"]
+        mrt_blend: {
+            render_target: [
+                "additive"
+                "alpha"
+            ]
         }
     }
     pipelines: {
@@ -54,7 +68,12 @@
         blend: {
             vs: vs_main
             ps: ps_main
-            blend_state: additive
+            blend_state: mrt_blend
+        }
+        blend_without_mrt: {
+            vs: vs_main
+            ps: ps_main
+            blend_state: alpha
         }
         bindless: {
             vs: vs_test_bindless_aliasing
