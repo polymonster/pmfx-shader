@@ -91,11 +91,14 @@ pipeline: {
     // specify a named depth_stencil_state
     // type: optional (string or null) if null or omitted defaults for depth_stencil_state are used.
     depth_stencil_state: null
-    // specify a named blend_state
-    // type: optional (string or null) if null or omitted defaults for blend_state are used.
+    /// specify a named blend_state or a render_target_blend_state.
+    /// if a render_target_blend_state is specified, independent_blend_enabled wil be inferred from the usage
+    /// alpha_to_coverage_enabled: False and the render_target will consist of a single rneder target referecing the
+    /// named render_target_blend_state.
+    /// type: optional (string or null) if null or omitted defaults for blend_state are used.
     blend_state: null
-    // specify a named raster_state
-    // type: optional (string or null) if null or omitted defaults for raster_state are used.
+    /// specify a named raster_state
+    /// type: optional (string or null) if null or omitted defaults for raster_state are used.
     raster_state: null
     /// specify the name of cbuffers inside .hlsl shader code which should be used as push constants in the pipeline
     /// type: array [string]
