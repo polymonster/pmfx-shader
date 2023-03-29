@@ -817,8 +817,9 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
                 added_pmfx["blend_states"][blend_state_name] = blend_state
                 expanded["blend_state"] = dict(blend_state)
                 expanded["blend_state"]["exapnded"] = list()
-                for rt in expanded["blend_state"]["render_target"]:
-                    expanded["blend_state"]["exapnded"].append(blend_state)
+                expanded["blend_state"]["exapnded"].append(blend_state)
+                for rt in blend_state["render_target"]:
+                    expanded["blend_state"]["exapnded"].append(output_pmfx["render_target_blend_states"][rt])
             else:
                 build_pmfx.print_error("  [error] missing blend_state or render_target_blend_state {}".format(blend_state_name))
                 output_pipeline["error_code"] = 219
