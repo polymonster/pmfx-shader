@@ -119,6 +119,14 @@ def get_type_size_info(type):
         "float3x4": (12, 4, 48),
         "float4x3": (12, 4, 48),
         "float4x4": (16, 4, 64),
+        "int": (1, 4, 4),
+        "int2": (2, 4, 8),
+        "int3": (3, 4, 12),
+        "int4": (4, 4, 16),
+        "uint": (1, 4, 4),
+        "uint2": (2, 4, 8),
+        "uint3": (3, 4, 12),
+        "uint4": (4, 4, 16),
     }
     return lookup[type]
 
@@ -383,6 +391,15 @@ def parse_register(type_dict):
                 type_dict["register_space"] = cgu.separate_alpha_numeric(r)[1]
             else:
                 type_dict["register_type"], type_dict["shader_register"] = cgu.separate_alpha_numeric(r)
+
+
+# local resource decl will not contain a register mapping, structs do not bind to registers but they declare members
+def is_local_resource_decl(type_dict):
+    parse_register(type_dict)
+    if type_dict["register_type"] == None:
+        if len(type_dict["members"]) == 0:
+            return True
+    return False
 
 
 # parses a type and generates a vertex layout, array of elements with sizes and offsets
@@ -959,6 +976,8 @@ def generate_pmfx(file, root):
             pmfx["resources"][map["category"]] = dict()
         for decl in decls:
             parse_register(decl)
+            if is_local_resource_decl(decl):
+                continue
             pmfx["resources"][map["category"]][decl["name"]] = decl
 
     # fill state default parameters
