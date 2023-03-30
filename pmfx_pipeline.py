@@ -510,7 +510,8 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
                     "register_space": resource["register_space"],
                     "binding_type": get_binding_type(resource["register_type"]),
                     "visibility": get_shader_visibility(resource["visibility"]),
-                    "num_values": num_values
+                    "num_values": num_values,
+                    "name": resource["name"]
                 }
                 descriptor_layout["push_constants"].append(push_constants)
                 continue
@@ -521,7 +522,8 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
                     "shader_register": resource["shader_register"],
                     "register_space": resource["register_space"],
                     "visibility": get_shader_visibility(resource["visibility"]),
-                    "sampler_info": pmfx["sampler_states"][lookup]
+                    "sampler_info": pmfx["sampler_states"][lookup],
+                    "name": resource["name"]
                 }
                 descriptor_layout["static_samplers"].append(static_sampler)
                 continue
@@ -532,13 +534,14 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
                 "register_space": resource["register_space"],
                 "binding_type": get_binding_type(resource["register_type"]),
                 "visibility": get_shader_visibility(resource["visibility"]),
-                "num_descriptors": get_descriptor_array_size(resource)
+                "num_descriptors": get_descriptor_array_size(resource),
+                "name": resource["name"]
             }
             descriptor_layout["bindings"].append(binding)
 
     # combine bindings on the same slot (allow resource type aliasing)
     combined_bindings = dict()
-    for binding in  descriptor_layout["bindings"]:
+    for binding in descriptor_layout["bindings"]:
         bh = pmfx_hash({
             "shader_register": binding["shader_register"],
             "register_space": binding["register_space"],
@@ -546,7 +549,7 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
             "binding_type": binding["binding_type"]
         })
         if bh not in combined_bindings:
-            combined_bindings[bh] = binding
+            combined_bindings[bh] = dict(binding)
         else:
             cur = combined_bindings[bh]
             # extend visibility
@@ -557,7 +560,7 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
     sorted_bindings = list()
     for binding in combined_bindings.values():
         sorted_bindings.append(binding)
-    
+
     # bubble sort sort them
     sorted = False
     while not sorted:
@@ -565,12 +568,13 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
         for i in range(0, len(sorted_bindings) - 1):
             j = i + 1
             if sorted_bindings[j]["shader_register"] < sorted_bindings[i]["shader_register"]:
-                temp = sorted_bindings[j]["shader_register"]
-                sorted_bindings[j]["shader_register"] = sorted_bindings[i]["shader_register"]
-                sorted_bindings[i]["shader_register"] = temp
-                sorted = False
+                temp = sorted_bindings[j]
+                sorted_bindings[j] = dict(sorted_bindings[i])
+                sorted_bindings[i] = dict(temp)
+                sorted = False      
 
-    descriptor_layout["bindings"] = sorted_bindings
+    descriptor_layout["bindings"] = list(sorted_bindings)
+
     return descriptor_layout
 
 
@@ -947,6 +951,12 @@ def generate_pmfx(file, root):
             # if we have errors, we are also still out of date
             if "error_pipelines" in existing and len(existing["error_pipelines"]) > 0:
                 out_of_date = True
+            if "dependencies" in existing:
+                for dep in existing["dependencies"]:
+                    mtime = os.path.getmtime(dep)
+                    if mtime > last_built:
+                        out_of_date = True
+                        break
         except:
             out_of_date = True
 
