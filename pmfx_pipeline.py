@@ -505,6 +505,14 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
                 num_values = 0
                 for member in resource["members"]:
                     num_values += get_num_32bit_values(member["data_type"])
+                # we need to lookup a templated data type
+                if num_values == 0:
+                    if "template_type" in resource:
+                        t = resource["template_type"]
+                        if t in resources:
+                            tres = resources[t]
+                            for member in tres["members"]:
+                                num_values += get_num_32bit_values(member["data_type"])
                 push_constants = {
                     "shader_register": resource["shader_register"],
                     "register_space": resource["register_space"],
@@ -807,6 +815,7 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
             # set non zero error codes to track failures
             if shader_info["error_code"] != 0:
                 output_pipeline["error_code"] = shader_info["error_code"]
+
     # build descriptor set
     output_pipeline["descriptor_layout"] = generate_descriptor_layout(output_pmfx, pipeline, resources)
 
@@ -818,13 +827,23 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
         "pipeline": dict(output_pipeline),
     }
 
-    # adds extra hashes.. in the final output these are simply named keys so they can be looked up
+    # adds extra hashes and validates.. in the final output these are simply named keys so they can be looked up
     # to reduce file size bloat, but we need the hash of the expanded data for checking reloads
     if "depth_stencil_state" in pipeline:
-        expanded["depth_stencil_state"] = output_pmfx["depth_stencil_states"][output_pipeline["depth_stencil_state"]]
-    
+        dss = output_pipeline["depth_stencil_state"]
+        if dss in output_pmfx["depth_stencil_states"]:
+            expanded["depth_stencil_state"] = output_pmfx["depth_stencil_states"][dss]
+        else:
+            build_pmfx.print_error("  [error] missing depth stencil state '{}'".format(dss))
+            output_pipeline["error_code"] = 219
+        
     if "raster_state" in pipeline:
-        expanded["raster_state"] = output_pmfx["raster_states"][output_pipeline["raster_state"]]
+        rs = output_pipeline["raster_state"]
+        if rs in output_pmfx["raster_states"]:
+            expanded["raster_state"] = output_pmfx["raster_states"][rs]
+        else:
+            build_pmfx.print_error("  [error] missing raster state '{}'".format(rs))
+            output_pipeline["error_code"] = 219
 
     # we may need to generate some states on the fly for convenience
     added_pmfx = dict()
@@ -842,13 +861,19 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
                 for rt in blend_state["render_target"]:
                     expanded["blend_state"]["exapnded"].append(output_pmfx["render_target_blend_states"][rt])
             else:
-                build_pmfx.print_error("  [error] missing blend_state or render_target_blend_state {}".format(blend_state_name))
+                build_pmfx.print_error("  [error] missing blend_state or render_target_blend_state '{}'".format(blend_state_name))
                 output_pipeline["error_code"] = 219
         else:
             expanded["blend_state"] = output_pmfx["blend_states"][blend_state_name]
             expanded["blend_state"]["exapnded"] = list()
             for rt in expanded["blend_state"]["render_target"]:
                 expanded["blend_state"]["exapnded"].append(output_pmfx["render_target_blend_states"][rt])
+
+    if "static_samplers" in pipeline:
+        for (src, sampler) in pipeline["static_samplers"].items():
+            if sampler not in output_pmfx["sampler_states"]:
+                build_pmfx.print_error("  [error] missing sampler state for static sampler '{}': '{}'".format(src, sampler))
+                output_pipeline["error_code"] = 219
 
     output_pipeline["hash"] = pmfx_hash(expanded)
     
@@ -1107,6 +1132,24 @@ def generate_pmfx(file, root):
                 build_info.error_code = output_pmfx["pipelines"][pipeline][permutation]["error_code"]
                 error_pipelines.append(pipeline)
                 continue
+
+    # validate render graphs
+    if False:
+        for graph_name, graph in output_pmfx["render_graphs"].items():
+            for node_name, node in graph.items():
+                if "view" in node:
+                    v = node["view"]
+                    if node["view"] not in output_pmfx["views"]:
+                        build_pmfx.print_warning("  [warning] missing view: '{}' in render graph {}: {}".format(v, graph_name, node_name))
+                if "pipelines" in node:
+                    for p in node["pipelines"]:
+                        if p not in output_pmfx["pipelines"]:
+                            build_pmfx.print_warning("  [warning] missing pipeline: '{}' in render graph {}: {}".format(p, graph_name, node_name))
+                if "depends_on" in node:
+                    for d in node["depends_on"]:
+                        if d not in graph:
+                            build_pmfx.print_warning("  [warning] missing depends_on: '{}' in render graph {}: {}".format(d, graph_name, node_name))
+
 
     # write info per pmfx, containing multiple pipelines
     output_pmfx["error_pipelines"] = error_pipelines
