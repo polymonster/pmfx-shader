@@ -27,7 +27,7 @@ Windows users need [vcredist 2013](https://www.microsoft.com/en-us/download/conf
 
 Compilation for Orbis is supported but you will need the SDK's installed and the environment variables set.
 
-For NVN there is an [executable](https://github.com/polymonster/pmfx-shader/tree/master/bin/nvn) included to compile to `nvn_glsc` but it will reuire the `NvnGlslc32.dll` to be installed along with the SDK.
+For NVN there is an [executable](https://github.com/polymonster/pmfx-shader/tree/master/bin/nvn) included to compile to `nvn_glsc` but it will require the `NvnGlslc32.dll` to be installed along with the SDK.
 
 ## Usage
 
