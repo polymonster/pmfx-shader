@@ -258,6 +258,32 @@ def find_all_tokens(token, source):
     return locations
 
 
+# return true if source[pos] is a whitespace char
+def is_whitespace(source, pos):
+    whitespace = [' ', '\n', '\t']
+    return source[pos] in whitespace
+
+
+# finds the previous non whitespace 
+def find_prev_non_whitespace(source, pos):
+    pos -= 1
+    while pos >= 0 and is_whitespace(source, pos):
+        pos -= 1
+    if pos >= 0 and pos < len(source):
+        return source[pos]
+    return None
+
+
+# finds the previous non whitespace 
+def find_next_non_whitespace(source, pos):
+    pos += 1
+    while pos < len(source) and is_whitespace(source, pos):
+        pos += 1
+    if pos >= 0 and pos < len(source):
+        return source[pos]
+    return None
+
+
 # find all string literals in source
 def find_string_literals(source):
     pos = 0

@@ -133,3 +133,29 @@ ps_output ps_test_bindless_aliasing() {
     (cbuffers);
     return ps_output_default();
 }
+
+// test using a raw cbuffer member vs a scoped member and test
+// ambiguity 
+
+cbuffer cbuffer_unscoped : register(b0) {
+    float4x4 world_matrix;
+};
+
+struct cbuffer_struct {
+    float4x4 world_matrix;
+};
+
+ConstantBuffer<cbuffer_struct> cbuffer_scoped : register(b0);
+
+vs_output vs_test_use_cbuffer_unscoped() {
+    vs_output output = vs_output_default();
+    output.position = mul(world_matrix, output.position);
+}
+
+vs_output vs_test_use_cbuffer_scoped() {
+    vs_output output = vs_output_default();
+    output.position = mul(cbuffer_scoped.world_matrix, output.position);
+
+    // test member 
+    float4x4 mat = cbuffer_scoped. world_matrix;
+}

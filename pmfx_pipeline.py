@@ -623,9 +623,14 @@ def write_rs_crate(path, pmfx_name, resources):
 def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_filepath):
     exe = os.path.join(info.tools_dir, "bin", "dxc", "dxc")
     open(temp_filepath, "w+").write(src)
-    cmdline = "{} -T {}_{} -E {} -Fo {} {}".format(exe, stage, info.shader_version, entry_point, output_filepath, temp_filepath)
-    cmdline += " " + build_pmfx.get_info().args
-    error_code, error_list, output_list = build_pmfx.call_wait_subprocess(cmdline)
+    # compile... or skip
+    error_code = 0
+    error_list = []
+    output_list = []
+    if info.compiled:
+        cmdline = "{} -T {}_{} -E {} -Fo {} {}".format(exe, stage, info.shader_version, entry_point, output_filepath, temp_filepath)
+        cmdline += " " + build_pmfx.get_info().args
+        error_code, error_list, output_list = build_pmfx.call_wait_subprocess(cmdline)
     output = ""
     if error_code:
         # build output string from error
@@ -668,6 +673,7 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
     # recursively insert used functions
     complete = False
     added_functions = [entry_point]
+    forward_decls = []
     while not complete:
         if permute:
             # evaluate permutations each iteration to remove all dead code
@@ -676,6 +682,8 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
         for func in pmfx["functions"]:
             if func not in added_functions:
                 if cgu.find_token(func, src) != -1:
+                    fwd = pmfx["functions"][func]["source"].replace(pmfx["functions"][func]["body"], ";")
+                    forward_decls.append(fwd)
                     added_functions.append(func)
                     # add attributes
                     src = pmfx["functions"][func]["source"] + "\n" + src
@@ -692,19 +700,27 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
                 for member in resource["members"]:
                     tokens.append(member["name"])
             # types with templates need to include structs
-            if resource["template_type"]:
-                template_typeame = resource["template_type"]
-                if template_typeame in pmfx["resources"]["structs"]:
-                    struct_resource = pmfx["resources"]["structs"][template_typeame]
-                    resources[template_typeame] = add_used_shader_resource(struct_resource, stage)
+            if cgu.find_token(resource["name"], src) != -1:
+                if resource["template_type"] and resource["type"] != "struct":
+                    template_typeame = resource["template_type"]
+                    if template_typeame in pmfx["resources"]["structs"]:
+                        struct_resource = pmfx["resources"]["structs"][template_typeame]
+                        resources[template_typeame] = add_used_shader_resource(struct_resource, stage)
             # add resource and append resource src code
             for token in tokens:
-                if cgu.find_token(token, src) != -1:
-                    resources[r] = add_used_shader_resource(resource, stage)
-                    break
+                p = cgu.find_token(token, src)
+                if p != -1:
+                    if resource["type"] == "cbuffer":
+                        if cgu.find_prev_non_whitespace(src, p) != ".":
+                            resources[r] = add_used_shader_resource(resource, stage)
+                            break
+                    else:
+                        resources[r] = add_used_shader_resource(resource, stage)
+                        break
 
     # create resource src code
     res = ""
+
     # pragmas
     for pragma in pmfx["pragmas"]:
         res += "{}\n".format(pragma)
@@ -712,9 +728,15 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
     # resources input structs, textures, buffers etc
     for resource in resources:
         res += resources[resource]["declaration"] + ";\n"
+        pass
+
     # extract vs_input (input layout)
     if stage == "vs":
         vertex_elements = get_vertex_elements(pmfx, entry_point)
+
+    # add fwd function decls
+    for fwd in forward_decls:
+        res += fwd + "\n" 
 
     # join resource src and src
     src = cgu.format_source(res, 4) + "\n" + cgu.format_source(src, 4)
