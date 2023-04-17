@@ -150,6 +150,7 @@ ConstantBuffer<cbuffer_struct> cbuffer_scoped : register(b0);
 vs_output vs_test_use_cbuffer_unscoped() {
     vs_output output = vs_output_default();
     output.position = mul(world_matrix, output.position);
+    return output;
 }
 
 vs_output vs_test_use_cbuffer_scoped() {
@@ -158,4 +159,6 @@ vs_output vs_test_use_cbuffer_scoped() {
 
     // test member 
     float4x4 mat = cbuffer_scoped. world_matrix;
+
+    return output;
 }
