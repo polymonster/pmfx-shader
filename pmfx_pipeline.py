@@ -715,6 +715,13 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
                             resources[r] = add_used_shader_resource(resource, stage)
                             break
                     else:
+                        # add nested members
+                        if resource["type"] == "cbuffer" or resource["type"] == "struct":
+                            for member in resource["members"]:
+                                ty = member["data_type"]
+                                if ty in pmfx["resources"]["structs"] and ty not in resources:
+                                    resources[ty] = add_used_shader_resource(pmfx["resources"]["structs"][ty], stage)
+                        # add the resource itself
                         resources[r] = add_used_shader_resource(resource, stage)
                         break
 
@@ -722,24 +729,33 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
     res = ""
 
     # pragmas
-    for pragma in pmfx["pragmas"]:
-        res += "{}\n".format(pragma)
+    if len(pmfx["pragmas"]) > 0:
+        res += "// pragmas\n"
+        for pragma in pmfx["pragmas"]:
+            res += "{}\n".format(pragma)
 
     # resources input structs, textures, buffers etc
-    for resource in resources:
-        res += resources[resource]["declaration"] + ";\n"
-        pass
+    if len(resources) > 0:
+        res += "// forward resource declarations\n"
+        for resource in resources:
+            res += "{} {};\n".format(resources[resource]["type"], resources[resource]["name"])
+
+        res += "// resource declarations\n"
+        for resource in resources:
+            res += resources[resource]["declaration"] + ";\n"
 
     # extract vs_input (input layout)
     if stage == "vs":
         vertex_elements = get_vertex_elements(pmfx, entry_point)
 
     # add fwd function decls
-    for fwd in forward_decls:
-        res += fwd + "\n" 
+    if len(forward_decls) > 0:
+        res += "// function foward declarations\n"
+        for fwd in forward_decls:
+            res += fwd + "\n" 
 
     # join resource src and src
-    src = cgu.format_source(res, 4) + "\n" + cgu.format_source(src, 4)
+    src = cgu.format_source(res, 4) + "\n // source\n" + cgu.format_source(src, 4)
 
     if permute:
         # evaluate permutations on the full source including resources

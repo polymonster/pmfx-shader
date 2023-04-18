@@ -87,5 +87,9 @@
             vs: vs_test_use_cbuffer_scoped
             ps: ps_main
         }
+        test_nested_structures: {
+            vs: vs_test_nested_structures
+            ps: ps_main
+        }
     }
 }

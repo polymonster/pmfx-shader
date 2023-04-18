@@ -121,6 +121,10 @@ vs_output vs_test_bindless_aliasing(vs_input input) {
     return vs_output_default();
 }
 
+//
+// test that different textures can alias and bind on the same register / 
+//
+
 ps_output ps_test_bindless_aliasing() {
     test_func();
     // using this void cast touches the resources so they are detected by pmfx and compiled in
@@ -134,6 +138,7 @@ ps_output ps_test_bindless_aliasing() {
     return ps_output_default();
 }
 
+//
 // test using a raw cbuffer member vs a scoped member and test
 // ambiguity 
 
@@ -162,3 +167,28 @@ vs_output vs_test_use_cbuffer_scoped() {
 
     return output;
 }
+
+//
+// test nested structures 
+//
+
+struct buffer_view {
+    uint2 location;
+    uint  size;
+    uint  strude;
+};
+
+struct indirect_args {
+    buffer_view ib;
+    buffer_view vb;
+};
+
+vs_output vs_test_nested_structures() {
+    vs_output output = vs_output_default();
+
+    pmfx_touch(indirect_args);
+
+    return output;
+}
+
+
