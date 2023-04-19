@@ -23,6 +23,20 @@ def replace_error(msg):
     return msg.replace("error:", ERROR + "error:" + ENDC)
 
 
+# colour code the squiggles as warnings
+def squiggle_warning(msg):
+    WARNING = '\033[93m'
+    ENDC = '\033[0m'
+    return WARNING + msg + ENDC
+
+
+# colour code the squiggles as errors
+def squiggle_error(msg):
+    ERROR = '\033[91m'
+    ENDC = '\033[0m'
+    return ERROR + msg + ENDC
+
+
 # return a 32 bit hash from objects which can cast to str
 def pmfx_hash(src):
     return zlib.adler32(bytes(str(src).encode("utf8")))
@@ -649,9 +663,25 @@ def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_fil
     if len(error_list) > 0:
         # build output string from error
         output = "\n"
+        msg_type = ""
         for err in error_list:
+            # highlight errors
             err = replace_error(err)
             err = replace_warning(err)
+
+            # switch between wanring and error colour coding
+            if err.find("warning:") != -1:
+                msg_type = "warning:"
+            elif err.find("error:") != -1:
+                msg_type = "error:"
+
+            # add squiggles
+            if err.find("^") != -1:
+                if msg_type == "error:":
+                    err = squiggle_error(err)
+                if msg_type == "warning:":
+                    err = squiggle_warning(err)
+
             output += "  " + err + "\n"
         output = output.strip("\n").strip()
     elif len(output_list) > 0:
