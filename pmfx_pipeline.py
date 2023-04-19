@@ -736,9 +736,13 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
 
     # resources input structs, textures, buffers etc
     if len(resources) > 0:
-        res += "// forward resource declarations\n"
         for resource in resources:
-            res += "{} {};\n".format(resources[resource]["type"], resources[resource]["name"])
+            if resources[resource]["type"] == "struct":
+                res += "// forward resource declarations\n"
+                break
+        for resource in resources:
+            if resources[resource]["type"] == "struct":
+                res += "{} {};\n".format(resources[resource]["type"], resources[resource]["name"])
 
         res += "// resource declarations\n"
         for resource in resources:
