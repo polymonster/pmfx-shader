@@ -58,15 +58,15 @@ Texture3D volume_textures[] : register(t0);
 ConstantBuffer<cbuffer_data> cbuffers[] : register(b0);
 
 void test_func() {
-    decl_texture1d;
-    decl_cbuffer_array;
-    decl_cbuffer_array_bounded;
+    pmfx_touch(decl_texture1d);
+    pmfx_touch(decl_cbuffer_array);
+    pmfx_touch(decl_cbuffer_array_bounded);
 }
 
 void test_func2() {
-    decl_texture1d;
-    decl_cbuffer_array;
-    decl_cbuffer_array_bounded;
+    pmfx_touch(decl_texture1d);
+    pmfx_touch(decl_cbuffer_array);
+    pmfx_touch(decl_cbuffer_array_bounded);
 }
 
 vs_output vs_main_permutations(vs_input input) {
@@ -84,10 +84,10 @@ vs_output vs_output_default() {
     vs_output output;
     output.position = float4(0.0, 0.0, 0.0, 1.0);
     output.world_pos = float4(0.0, 0.0, 0.0, 1.0);
-    output.normal = float4(0.0, 0.0, 0.0, 1.0);
-    output.tangent = float4(0.0, 0.0, 0.0, 1.0);
-    output.bitangent = float4(0.0, 0.0, 0.0, 1.0);
     output.texcoord = float4(0.0, 0.0, 0.0, 1.0);
+    output.normal = float3(0.0, 0.0, 0.0);
+    output.tangent = float3(0.0, 0.0, 0.0);
+    output.bitangent = float3(0.0, 0.0, 0.0);
     return output;
 }
 
@@ -128,13 +128,13 @@ vs_output vs_test_bindless_aliasing(vs_input input) {
 ps_output ps_test_bindless_aliasing() {
     test_func();
     // using this void cast touches the resources so they are detected by pmfx and compiled in
-    (textures);
-    (cubemaps);
-    (texture_arrays);
-    (volume_textures);
+    pmfx_touch(textures);
+    pmfx_touch(cubemaps);
+    pmfx_touch(texture_arrays);
+    pmfx_touch(volume_textures);
 
     // cbuffers go on a different slot
-    (cbuffers);
+    pmfx_touch(cbuffers);
     return ps_output_default();
 }
 
@@ -185,10 +185,5 @@ struct indirect_args {
 
 vs_output vs_test_nested_structures() {
     vs_output output = vs_output_default();
-
-    pmfx_touch(indirect_args);
-
     return output;
 }
-
-

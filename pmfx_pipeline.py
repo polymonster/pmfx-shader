@@ -9,6 +9,20 @@ import jsn
 
 from multiprocessing.pool import ThreadPool
 
+# replace warning string with colour coded warning:
+def replace_warning(msg):
+    WARNING = '\033[93m'
+    ENDC = '\033[0m'
+    return msg.replace("warning:", WARNING + "warning:" + ENDC)
+
+
+# replace error string with colour coded error:
+def replace_error(msg):
+    ERROR = '\033[91m'
+    ENDC = '\033[0m'
+    return msg.replace("error:", ERROR + "error:" + ENDC)
+
+
 # return a 32 bit hash from objects which can cast to str
 def pmfx_hash(src):
     return zlib.adler32(bytes(str(src).encode("utf8")))
@@ -632,20 +646,25 @@ def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_fil
         cmdline += " " + build_pmfx.get_info().args
         error_code, error_list, output_list = build_pmfx.call_wait_subprocess(cmdline)
     output = ""
-    if error_code:
+    if len(error_list) > 0:
         # build output string from error
         output = "\n"
         for err in error_list:
+            err = replace_error(err)
+            err = replace_warning(err)
             output += "  " + err + "\n"
-        output = output.strip("\n")
+        output = output.strip("\n").strip()
     elif len(output_list) > 0:
         # build output string from output message
         output = "\n"
         for out in output_list:
             output += "  " + out + "\n"
-        output = output.strip("\n")
+        output = output.strip("\n").strip()
     basename = os.path.basename(output_filepath)
-    print("  compiling: {}{}".format(basename, output), flush=True)
+    if len(output) > 0:
+        print("compiling: {}\n{}".format(basename, output), flush=True)
+    else:
+        print("compiling: {}".format(basename), flush=True)
     return error_code
 
 
@@ -656,6 +675,18 @@ def add_used_shader_resource(resource, stage):
         output["visibility"] = list()
     output["visibility"].append(stage)
     return output
+
+
+# add somesbuilt in defines for convenience
+def add_built_in_defines(src):
+    defines = [
+        "#define pmfx_touch(value) (void)(value)"
+    ]
+    define_src = ""
+    for define in defines:
+        define_src += define + "\n"
+    src = define_src + "\n" + src
+    return src
 
 
 # given an entry point generate src code and resource meta data for the shader
@@ -727,6 +758,9 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
 
     # create resource src code
     res = ""
+
+    # adds built in pmfx defines
+    res = add_built_in_defines(res)
 
     # pragmas
     if len(pmfx["pragmas"]) > 0:
