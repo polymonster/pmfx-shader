@@ -9,6 +9,34 @@ import jsn
 
 from multiprocessing.pool import ThreadPool
 
+# replace warning string with colour coded warning:
+def replace_warning(msg):
+    WARNING = '\033[93m'
+    ENDC = '\033[0m'
+    return msg.replace("warning:", WARNING + "warning:" + ENDC)
+
+
+# replace error string with colour coded error:
+def replace_error(msg):
+    ERROR = '\033[91m'
+    ENDC = '\033[0m'
+    return msg.replace("error:", ERROR + "error:" + ENDC)
+
+
+# colour code the squiggles as warnings
+def squiggle_warning(msg):
+    WARNING = '\033[93m'
+    ENDC = '\033[0m'
+    return WARNING + msg + ENDC
+
+
+# colour code the squiggles as errors
+def squiggle_error(msg):
+    ERROR = '\033[91m'
+    ENDC = '\033[0m'
+    return ERROR + msg + ENDC
+
+
 # return a 32 bit hash from objects which can cast to str
 def pmfx_hash(src):
     return zlib.adler32(bytes(str(src).encode("utf8")))
@@ -623,24 +651,50 @@ def write_rs_crate(path, pmfx_name, resources):
 def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_filepath):
     exe = os.path.join(info.tools_dir, "bin", "dxc", "dxc")
     open(temp_filepath, "w+").write(src)
-    cmdline = "{} -T {}_{} -E {} -Fo {} {}".format(exe, stage, info.shader_version, entry_point, output_filepath, temp_filepath)
-    cmdline += " " + build_pmfx.get_info().args
-    error_code, error_list, output_list = build_pmfx.call_wait_subprocess(cmdline)
+    # compile... or skip
+    error_code = 0
+    error_list = []
+    output_list = []
+    if info.compiled:
+        cmdline = "{} -T {}_{} -E {} -Fo {} {}".format(exe, stage, info.shader_version, entry_point, output_filepath, temp_filepath)
+        cmdline += " " + build_pmfx.get_info().args
+        error_code, error_list, output_list = build_pmfx.call_wait_subprocess(cmdline)
     output = ""
-    if error_code:
+    if len(error_list) > 0:
         # build output string from error
         output = "\n"
+        msg_type = ""
         for err in error_list:
+            # highlight errors
+            err = replace_error(err)
+            err = replace_warning(err)
+
+            # switch between wanring and error colour coding
+            if err.find("warning:") != -1:
+                msg_type = "warning:"
+            elif err.find("error:") != -1:
+                msg_type = "error:"
+
+            # add squiggles
+            if err.find("^") != -1:
+                if msg_type == "error:":
+                    err = squiggle_error(err)
+                if msg_type == "warning:":
+                    err = squiggle_warning(err)
+
             output += "  " + err + "\n"
-        output = output.strip("\n")
+        output = output.strip("\n").strip()
     elif len(output_list) > 0:
         # build output string from output message
         output = "\n"
         for out in output_list:
             output += "  " + out + "\n"
-        output = output.strip("\n")
+        output = output.strip("\n").strip()
     basename = os.path.basename(output_filepath)
-    print("  compiling: {}{}".format(basename, output), flush=True)
+    if len(output) > 0:
+        print("compiling: {}\n{}".format(basename, output), flush=True)
+    else:
+        print("compiling: {}".format(basename), flush=True)
     return error_code
 
 
@@ -651,6 +705,18 @@ def add_used_shader_resource(resource, stage):
         output["visibility"] = list()
     output["visibility"].append(stage)
     return output
+
+
+# add somesbuilt in defines for convenience
+def add_built_in_defines(src):
+    defines = [
+        "#define pmfx_touch(value) (void)(value)"
+    ]
+    define_src = ""
+    for define in defines:
+        define_src += define + "\n"
+    src = define_src + "\n" + src
+    return src
 
 
 # given an entry point generate src code and resource meta data for the shader
@@ -668,6 +734,7 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
     # recursively insert used functions
     complete = False
     added_functions = [entry_point]
+    forward_decls = []
     while not complete:
         if permute:
             # evaluate permutations each iteration to remove all dead code
@@ -676,6 +743,8 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
         for func in pmfx["functions"]:
             if func not in added_functions:
                 if cgu.find_token(func, src) != -1:
+                    fwd = pmfx["functions"][func]["source"].replace(pmfx["functions"][func]["body"], ";")
+                    forward_decls.append(fwd)
                     added_functions.append(func)
                     # add attributes
                     src = pmfx["functions"][func]["source"] + "\n" + src
@@ -692,32 +761,69 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
                 for member in resource["members"]:
                     tokens.append(member["name"])
             # types with templates need to include structs
-            if resource["template_type"]:
-                template_typeame = resource["template_type"]
-                if template_typeame in pmfx["resources"]["structs"]:
-                    struct_resource = pmfx["resources"]["structs"][template_typeame]
-                    resources[template_typeame] = add_used_shader_resource(struct_resource, stage)
+            if cgu.find_token(resource["name"], src) != -1:
+                if resource["template_type"] and resource["type"] != "struct":
+                    template_typeame = resource["template_type"]
+                    if template_typeame in pmfx["resources"]["structs"]:
+                        struct_resource = pmfx["resources"]["structs"][template_typeame]
+                        resources[template_typeame] = add_used_shader_resource(struct_resource, stage)
             # add resource and append resource src code
             for token in tokens:
-                if cgu.find_token(token, src) != -1:
-                    resources[r] = add_used_shader_resource(resource, stage)
-                    break
+                p = cgu.find_token(token, src)
+                if p != -1:
+                    if resource["type"] == "cbuffer":
+                        if cgu.find_prev_non_whitespace(src, p) != ".":
+                            resources[r] = add_used_shader_resource(resource, stage)
+                            break
+                    else:
+                        # add nested members
+                        if resource["type"] == "cbuffer" or resource["type"] == "struct":
+                            for member in resource["members"]:
+                                ty = member["data_type"]
+                                if ty in pmfx["resources"]["structs"] and ty not in resources:
+                                    resources[ty] = add_used_shader_resource(pmfx["resources"]["structs"][ty], stage)
+                        # add the resource itself
+                        resources[r] = add_used_shader_resource(resource, stage)
+                        break
 
     # create resource src code
     res = ""
+
+    # adds built in pmfx defines
+    res = add_built_in_defines(res)
+
     # pragmas
-    for pragma in pmfx["pragmas"]:
-        res += "{}\n".format(pragma)
+    if len(pmfx["pragmas"]) > 0:
+        res += "// pragmas\n"
+        for pragma in pmfx["pragmas"]:
+            res += "{}\n".format(pragma)
 
     # resources input structs, textures, buffers etc
-    for resource in resources:
-        res += resources[resource]["declaration"] + ";\n"
+    if len(resources) > 0:
+        for resource in resources:
+            if resources[resource]["type"] == "struct":
+                res += "// forward resource declarations\n"
+                break
+        for resource in resources:
+            if resources[resource]["type"] == "struct":
+                res += "{} {};\n".format(resources[resource]["type"], resources[resource]["name"])
+
+        res += "// resource declarations\n"
+        for resource in resources:
+            res += resources[resource]["declaration"] + ";\n"
+
     # extract vs_input (input layout)
     if stage == "vs":
         vertex_elements = get_vertex_elements(pmfx, entry_point)
 
+    # add fwd function decls
+    if len(forward_decls) > 0:
+        res += "// function foward declarations\n"
+        for fwd in forward_decls:
+            res += fwd + "\n" 
+
     # join resource src and src
-    src = cgu.format_source(res, 4) + "\n" + cgu.format_source(src, 4)
+    src = cgu.format_source(res, 4) + "\n // source\n" + cgu.format_source(src, 4)
 
     if permute:
         # evaluate permutations on the full source including resources

@@ -1,0 +1,6 @@
+import v2_examples.pmfx
+{
+    include: [
+        "v2_examples.hlsl"
+    ]
+}

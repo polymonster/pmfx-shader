@@ -79,5 +79,17 @@
             vs: vs_test_bindless_aliasing
             ps: ps_test_bindless_aliasing
         }
+        test_cbuffer_unscoped: {
+            vs: vs_test_use_cbuffer_unscoped
+            ps: ps_main
+        }
+        test_cbuffer_scoped: {
+            vs: vs_test_use_cbuffer_scoped
+            ps: ps_main
+        }
+        test_nested_structures: {
+            vs: vs_test_nested_structures
+            ps: ps_main
+        }
     }
 }

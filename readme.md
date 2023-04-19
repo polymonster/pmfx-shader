@@ -675,3 +675,24 @@ Descriptor layout and Vertex layout can be automatically generated based on reso
 ```
 
 You can take a look an example output `json` reflection file included in this repository [here](https://github.com/polymonster/pmfx-shader/blob/master/examples/outputs/v2_info.json).
+
+### Touch
+
+When building descriptor or vertex layouts, `pmfx` will detect which resources you are using, when debugging you may comment out or remove references to used resources and this may cause knock on issues with the associated slots and layouts you expect in your graphics engine. You can use the `pmfx_touch` macro to ensure that a reosurce type is included in a descriptor or vertex layout to avoid this issue without throwing a warning.
+
+```hlsl
+struct cbuffer_struct {
+    float4x4 world_matrix;
+};
+ConstantBuffer<cbuffer_struct> unused_cbuffer : register(b0);
+
+vs_output vs_test_use_cbuffer_unscoped() {
+    vs_output output = vs_output_default();
+
+    // ..
+
+    pmfx_touch(unused_cbuffer);
+
+    return output;
+}
+```
