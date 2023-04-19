@@ -682,19 +682,19 @@ def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_fil
                 if msg_type == "warning:":
                     err = squiggle_warning(err)
 
-            output += "  " + err + "\n"
+            output += "    " + err + "\n"
         output = output.strip("\n").strip()
     elif len(output_list) > 0:
         # build output string from output message
         output = "\n"
         for out in output_list:
-            output += "  " + out + "\n"
+            output += "    " + out + "\n"
         output = output.strip("\n").strip()
     basename = os.path.basename(output_filepath)
     if len(output) > 0:
-        print("compiling: {}\n{}".format(basename, output), flush=True)
+        print("  compiling: {}\n    {}".format(basename, output), flush=True)
     else:
-        print("compiling: {}".format(basename), flush=True)
+        print("  compiling: {}".format(basename), flush=True)
     return error_code
 
 
