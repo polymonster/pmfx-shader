@@ -1026,6 +1026,14 @@ def load_pmfx_jsn(filepath, root):
                     to_search.add(import_name)
             if line.startswith("{"):
                 break
+    # strip rouge includes
+    if all_shader_source.find("#include") != -1:
+        src = all_shader_source.splitlines()
+        strip_src = ""
+        for line in src:
+            if line.find("#include") == -1:
+                strip_src += line + "\n"
+        all_shader_source = strip_src
     return (pmfx, all_shader_source, all_included_files)
 
 

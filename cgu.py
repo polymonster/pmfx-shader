@@ -158,9 +158,15 @@ def format_source(source, indent_size):
 
 # returns the name of a type.. ie struct <name>, enum <name>
 def type_name(type_declaration):
-    pos = type_declaration.find("{")
-    name = type_declaration[:pos].strip().split()[1]
-    return name
+    # skip past templates (allow multiple template parameters)
+    if type_declaration.find("<") != -1:
+        template_end = enclose("<", ">", type_declaration, 0)
+        return type_declaration[template_end:].strip().split()[0]
+    else:
+        # assume the type name is the second token
+        pos = type_declaration.find("{")
+        name = type_declaration[:pos].strip().split()[1]
+        return name
 
 
 # get the typename stripping resource_array[21] arrays and return (resource_array, 21)
