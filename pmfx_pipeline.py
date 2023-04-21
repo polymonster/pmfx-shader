@@ -136,6 +136,13 @@ def get_resource_categories():
     ]
 
 
+# return global types we want to check for within source
+def get_global_types():
+    return [
+        "groupshared"
+    ]
+
+
 # returns info for types, (num_elements, element_size, total_size)
 def get_type_size_info(type):
     lookup = {
@@ -727,7 +734,8 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
     if entry_point not in pmfx["functions"]:
         build_pmfx.print_error("  error: missing shader entry point: {}".format(entry_point))
         return None
-    # start with entry point src code
+
+    # start globals then with entry point src code
     src = pmfx["functions"][entry_point]["source"]
     resources = dict()
     vertex_elements = None
@@ -786,6 +794,11 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
                         resources[r] = add_used_shader_resource(resource, stage)
                         break
 
+    # add any globals..
+    globals = ""
+    for g in pmfx["globals"]:
+        globals += g + "\n"
+
     # create resource src code
     res = ""
 
@@ -823,7 +836,7 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
             res += fwd + "\n" 
 
     # join resource src and src
-    src = cgu.format_source(res, 4) + "\n // source\n" + cgu.format_source(src, 4)
+    src = cgu.format_source(res, 4) + "\n // source\n" + globals + "\n" + cgu.format_source(src, 4)
 
     if permute:
         # evaluate permutations on the full source including resources
@@ -1128,6 +1141,14 @@ def generate_pmfx(file, root):
             if is_local_resource_decl(decl):
                 continue
             pmfx["resources"][map["category"]][decl["name"]] = decl
+
+    # parse globals
+    pmfx["globals"] = set()
+    src_lines = pmfx["source"].splitlines()
+    for global_type in get_global_types():
+        for line in src_lines:
+            if line.startswith(global_type):
+                pmfx["globals"].add(line)
 
     # fill state default parameters
     for state_type in get_states():

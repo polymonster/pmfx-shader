@@ -187,3 +187,21 @@ vs_output vs_test_nested_structures() {
     vs_output output = vs_output_default();
     return output;
 }
+
+//
+// global types / compute sync
+//
+
+groupshared uint4 accumulated;
+
+void cs_mip_chain_texture2d(uint2 did: SV_DispatchThreadID) {
+
+    accumulated = uint4(0, 0, 0, 0);
+
+    GroupMemoryBarrierWithGroupSync();
+
+    uint original;
+    InterlockedAdd(accumulated.x, 1, original);
+
+    GroupMemoryBarrierWithGroupSync();
+}
