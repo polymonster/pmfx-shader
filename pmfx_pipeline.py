@@ -166,7 +166,7 @@ def get_type_size_info(type):
     return lookup[type]
 
 
-# returnnumber of 32 bit values for a member of a push constants cbuffer
+# return number of 32 bit values for a member of a push constants cbuffer
 def get_num_32bit_values(type):
     lookup = {
         "float": 1, 
@@ -186,7 +186,9 @@ def get_num_32bit_values(type):
         "uint3": 3,
         "uint4": 4,
     }
-    return lookup[type]
+    if type in lookup:
+        return lookup[type]
+    return 0
 
 
 # returns a vertex format type from the data type
@@ -522,10 +524,27 @@ def get_vertex_elements(pmfx, entry_point):
     return elements
 
 
+# recurses through nested structure to reach and sum the number of 32bit values from primitive types
+def structure_get_num_32_bit_values(typename, structs):
+    if typename in structs:
+        total = 0
+        for member in structs[typename]["members"]:
+            
+            total += structure_get_num_32_bit_values(member["data_type"], structs)
+        return total
+    else:
+        value = get_num_32bit_values(typename)
+        if value == 0:
+            print(json.dumps(structs, indent=4))
+            print("mssing member {}".format(typename))
+            assert(0)
+        return value
+
+
 # builds a descriptor set from resources used in the pipeline
-def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
+def generate_pipeline_layout(pmfx, pmfx_pipeline, resources):
     bindable_resources = get_bindable_resource_keys()
-    descriptor_layout = {
+    pipeline_layout = {
         "bindings": [],
         "push_constants": [],
         "static_samplers": []
@@ -544,10 +563,7 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
                 if num_values == 0:
                     if "template_type" in resource:
                         t = resource["template_type"]
-                        if t in resources:
-                            tres = resources[t]
-                            for member in tres["members"]:
-                                num_values += get_num_32bit_values(member["data_type"])
+                        num_values = structure_get_num_32_bit_values(t, resources)                            
                 push_constants = {
                     "shader_register": resource["shader_register"],
                     "register_space": resource["register_space"],
@@ -556,7 +572,7 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
                     "num_values": num_values,
                     "name": resource["name"]
                 }
-                descriptor_layout["push_constants"].append(push_constants)
+                pipeline_layout["push_constants"].append(push_constants)
                 continue
         if "static_samplers" in pmfx_pipeline:
             if r in pmfx_pipeline["static_samplers"]:
@@ -568,7 +584,7 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
                     "sampler_info": pmfx["sampler_states"][lookup],
                     "name": resource["name"]
                 }
-                descriptor_layout["static_samplers"].append(static_sampler)
+                pipeline_layout["static_samplers"].append(static_sampler)
                 continue
         # fall trhough and add as a bindable resource
         if resource_type in bindable_resources:
@@ -580,14 +596,13 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
                 "num_descriptors": get_descriptor_array_size(resource),
                 "name": resource["name"]
             }
-            descriptor_layout["bindings"].append(binding)
+            pipeline_layout["bindings"].append(binding)
 
     # combine bindings on the same slot (allow resource type aliasing)
     combined_bindings = dict()
-    for binding in descriptor_layout["bindings"]:
+    for binding in pipeline_layout["bindings"]:
         bh = pmfx_hash({
             "shader_register": binding["shader_register"],
-            "register_space": binding["register_space"],
             "register_space": binding["register_space"],
             "binding_type": binding["binding_type"]
         })
@@ -616,9 +631,9 @@ def generate_descriptor_layout(pmfx, pmfx_pipeline, resources):
                 sorted_bindings[i] = dict(temp)
                 sorted = False      
 
-    descriptor_layout["bindings"] = list(sorted_bindings)
+    pipeline_layout["bindings"] = list(sorted_bindings)
 
-    return descriptor_layout
+    return pipeline_layout
 
 
 # wrtie out c++ header from the json info
@@ -726,6 +741,15 @@ def add_built_in_defines(src):
     return src
 
 
+# adds structs to respurces recursively
+def add_struct_members_recursive(typename, stage, structs, resources, depth):
+    if typename in structs and typename not in resources:
+        resources[typename] = add_used_shader_resource(structs[typename], stage)
+        resources[typename]["depth"] = depth
+        for member in structs[typename]["members"]:
+            add_struct_members_recursive(member["data_type"], stage, structs, resources, depth + 1)
+
+
 # given an entry point generate src code and resource meta data for the shader
 def generate_shader_info(pmfx, entry_point, stage, permute=None):
     # resource categories
@@ -737,7 +761,12 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
 
     # start globals then with entry point src code
     src = pmfx["functions"][entry_point]["source"]
+
+    # grab any attributes
+    attribs = pmfx["functions"][entry_point]["attributes"]
+
     resources = dict()
+    recursive_resources = dict()
     vertex_elements = None
     # recursively insert used functions
     complete = False
@@ -775,24 +804,25 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
                     if template_typeame in pmfx["resources"]["structs"]:
                         struct_resource = pmfx["resources"]["structs"][template_typeame]
                         resources[template_typeame] = add_used_shader_resource(struct_resource, stage)
+                        add_struct_members_recursive(template_typeame, stage, pmfx["resources"]["structs"], recursive_resources, 0)
+
             # add resource and append resource src code
             for token in tokens:
                 p = cgu.find_token(token, src)
                 if p != -1:
+                    # ignore struct member refernces with names which collide with cbuffer members
                     if resource["type"] == "cbuffer":
-                        if cgu.find_prev_non_whitespace(src, p) != ".":
-                            resources[r] = add_used_shader_resource(resource, stage)
-                            break
-                    else:
-                        # add nested members
-                        if resource["type"] == "cbuffer" or resource["type"] == "struct":
-                            for member in resource["members"]:
-                                ty = member["data_type"]
-                                if ty in pmfx["resources"]["structs"] and ty not in resources:
-                                    resources[ty] = add_used_shader_resource(pmfx["resources"]["structs"][ty], stage)
-                        # add the resource itself
-                        resources[r] = add_used_shader_resource(resource, stage)
-                        break
+                        if cgu.find_prev_non_whitespace(src, p) == ".":
+                            continue
+
+                    # add nested members
+                    if resource["type"] == "cbuffer" or resource["type"] == "struct":
+                        for member in resource["members"]:
+                            add_struct_members_recursive(member["data_type"], stage, pmfx["resources"]["structs"], recursive_resources, 1)
+                            
+                    # add the resource itself
+                    resources[r] = add_used_shader_resource(resource, stage)
+                    break
 
     # add any globals..
     globals = ""
@@ -813,15 +843,11 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
 
     # resources input structs, textures, buffers etc
     if len(resources) > 0:
-        for resource in resources:
-            if resources[resource]["type"] == "struct":
-                res += "// forward resource declarations\n"
-                break
-        for resource in resources:
-            if resources[resource]["type"] == "struct":
-                res += "{} {};\n".format(resources[resource]["type"], resources[resource]["name"])
-
         res += "// resource declarations\n"
+        for resource in recursive_resources:
+            if recursive_resources[resource]["depth"] > 0:
+                res += recursive_resources[resource]["declaration"] + ";\n"
+                    
         for resource in resources:
             res += resources[resource]["declaration"] + ";\n"
 
@@ -846,8 +872,9 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
     return {
         "src": src,
         "src_hash": hashlib.md5(src.encode("utf-8")).hexdigest(),
-        "resources": dict(resources),
-        "vertex_elements": vertex_elements
+        "resources": merge_dicts(dict(resources), dict(recursive_resources)),
+        "vertex_elements": vertex_elements,
+        "attributes": attribs
     }
 
 
@@ -926,17 +953,29 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
             output_pipeline["{}_hash:".format(stage)] = pmfx_hash(shader_info["src_hash"])
             shader = shader_info
             resources = merge_dicts(resources, dict(shader["resources"]), ["visibility"])
+            # generate vertex layout
             if stage == "vs":
                 pmfx_vertex_layout = dict()
                 if "vertex_layout" in pipeline:
                     pmfx_vertex_layout = pipeline["vertex_layout"]
                 output_pipeline["vertex_layout"] = generate_vertex_layout(shader["vertex_elements"], pmfx_vertex_layout)
+            # extract numthreads
+            if stage == "cs":
+                for attrib in shader["attributes"]:
+                    if attrib.find("numthreads") != -1:
+                        start, end = cgu.enclose_start_end("(", ")", attrib, 0)
+                        xyz = attrib[start:end].split(",")
+                        numthreads = []
+                        for a in xyz:
+                            numthreads.append(int(a.strip()))
+                        output_pipeline["numthreads"] = numthreads
+
             # set non zero error codes to track failures
             if shader_info["error_code"] != 0:
                 output_pipeline["error_code"] = shader_info["error_code"]
 
-    # build descriptor set
-    output_pipeline["descriptor_layout"] = generate_descriptor_layout(output_pmfx, pipeline, resources)
+    # build pipeline layout
+    output_pipeline["pipeline_layout"] = generate_pipeline_layout(output_pmfx, pipeline, resources)
 
     # fill in any useful defaults
     output_pipeline = get_pipeline_with_defaults(output_pipeline, pipeline)
@@ -995,7 +1034,6 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
                 output_pipeline["error_code"] = 219
 
     output_pipeline["hash"] = pmfx_hash(expanded)
-    
     # output_pipeline["resources"] = resources
 
     # need to has the state objects

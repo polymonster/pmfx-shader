@@ -161,11 +161,11 @@ def type_name(type_declaration):
     # skip past templates (allow multiple template parameters)
     if type_declaration.find("<") != -1:
         template_end = enclose("<", ">", type_declaration, 0)
-        return type_declaration[template_end:].strip().split()[0]
+        return type_declaration[template_end:].strip().split()[0].strip(":")
     else:
         # assume the type name is the second token
         pos = type_declaration.find("{")
-        name = type_declaration[:pos].strip().split()[1]
+        name = type_declaration[:pos].strip().split()[1].strip(":")
         return name
 
 

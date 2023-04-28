@@ -82,7 +82,7 @@ commandline arguments:
 There are 2 code paths supported by pmfx, this is in an effort to keep up-to-date with modern graphics API's but also offer backward comptibility support to older graphics API's, mobile and web platforms.
 
 - [Version 1](https://github.com/polymonster/pmfx-shader#version-1) - (bindful render model, techniques, macro based cross platform shaders)
-- [Version 2](https://github.com/polymonster/pmfx-shader#version-2) - (bindless render model, descriptor sets, pipelines, SPIR-V based cross-compilation)
+- [Version 2](https://github.com/polymonster/pmfx-shader#version-2) - (bindless render model, pipelines, descriptors, SPIR-V based cross-compilation)
 
 ## Version 1
 
@@ -620,7 +620,7 @@ Take a look at the example [code](https://github.com/polymonster/pmfx-shader/tre
 
 Compiled shaders and reflection information will be emitted to your chosen `-o` outout directory, Each `.pmfx` file will create a directory which it will compile shader binaries into. Shader compilation is minimised and reduced within single `.pmfx` files by sharing and re-using binaries which are identical across different shader permitations or stages.
 
-Descriptor layout and Vertex layout can be automatically generated based on resource usage inside shaders, the whole pipeline is exported as `.json` along with the built shaders. Hashes for the various pieces of the render pipline states are stored so you can quickly check for pipelines that may need rebuilding as part of a hot reloading process.  
+Pipeline layout, descriptor bindings and vertex layout can be automatically generated based on resource usage inside shaders, the whole pipeline is exported as `.json` along with the built shaders. Hashes for the various pieces of the render pipline states are stored so you can quickly check for pipelines that may need rebuilding as part of a hot reloading process.  
 
 ```json
 "imdraw_2d": {
@@ -656,7 +656,7 @@ Descriptor layout and Vertex layout can be automatically generated based on reso
     ],
     "error_code": 0,
     "ps_hash:": 2326464525,
-    "descriptor_layout": {
+    "pipeline_layout": {
         "bindings": [],
         "push_constants": [
             {
@@ -678,7 +678,7 @@ You can take a look an example output `json` reflection file included in this re
 
 ### Touch
 
-When building descriptor or vertex layouts, `pmfx` will detect which resources you are using, when debugging you may comment out or remove references to used resources and this may cause knock on issues with the associated slots and layouts you expect in your graphics engine. You can use the `pmfx_touch` macro to ensure that a reosurce type is included in a descriptor or vertex layout to avoid this issue without throwing a warning.
+When building pipeline, descriptor or vertex layouts, `pmfx` will detect which resources you are using, when debugging you may comment out or remove references to used resources and this may cause knock on issues with the associated slots and layouts you expect in your graphics engine. You can use the `pmfx_touch` macro to ensure that a reosurce type is included in a particular layout to avoid this issue without throwing a warning.
 
 ```hlsl
 struct cbuffer_struct {
