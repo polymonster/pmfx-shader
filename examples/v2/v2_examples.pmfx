@@ -91,5 +91,13 @@
             vs: vs_test_nested_structures
             ps: ps_main
         }
+        test_desriptor_layout: {
+            vs: vs_test_pipeline_layout
+            ps: ps_test_pipeline_layout
+        }
+        test_output_sematic: {
+            vs: vs_main
+            ps: ps_output_semantic
+        }
     }
 }

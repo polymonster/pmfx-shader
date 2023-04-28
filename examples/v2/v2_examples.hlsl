@@ -205,3 +205,52 @@ void cs_mip_chain_texture2d(uint2 did: SV_DispatchThreadID) {
 
     GroupMemoryBarrierWithGroupSync();
 }
+
+//
+// testing valid possible combinations of descriptor layouts
+//
+
+// extent data
+struct extent_data {
+    float3 pos;
+    float3 extent;
+};
+
+// draw data
+struct draw_data {
+    float3x4 world_matrix;
+};
+
+// structures of arrays for indriect / bindless lookups
+StructuredBuffer<draw_data> draws[] : register(t0, space0);
+StructuredBuffer<extent_data> extents[] : register(t0, space2);
+
+Texture2D textures : register(t1, space0);
+TextureCube volume_textures : register(t1, space1);
+
+vs_output vs_test_pipeline_layout(vs_input input) {
+    vs_output output =  vs_output_default();
+
+    pmfx_touch(draws);
+    
+    return output;
+}
+
+ps_output ps_test_pipeline_layout(vs_output input) {
+    ps_output output;
+
+    pmfx_touch(extents);
+    pmfx_touch(textures);
+    pmfx_touch(volume_textures);
+
+    output.colour = float4(0.0, 0.0, 0.0, 0.0);
+    return output;
+}
+
+//
+// test output to SV_Target without struct
+//
+
+float4 ps_output_semantic(vs_output input) : SV_Target {
+    return float4(0.0, 0.0, 0.0, 0.0);
+}
