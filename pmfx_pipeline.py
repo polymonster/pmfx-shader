@@ -408,8 +408,9 @@ def get_descriptor_array_size(resource):
         if resource["array_size"] == -1:
             return None
         else:
-            return resource["array_size"]
-    return None
+            if resource["array_size"] != None:
+                return resource["array_size"]
+    return 1
 
 
 # parses the register for the resource unit, ie. : register(t0)
