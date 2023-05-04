@@ -91,7 +91,8 @@ def get_bindable_resource_keys():
         "RWTexture2D",
         "RWTexture2DArray",
         "RWTexture3D",
-        "SamplerState"
+        "SamplerState",
+        "SamplerComparisonState"
     ]
 
 
@@ -102,6 +103,7 @@ def get_resource_mappings():
         {"category": "cbuffers", "identifier": "cbuffer"},
         {"category": "cbuffers", "identifier": "ConstantBuffer"},
         {"category": "samplers", "identifier": "SamplerState"},
+        {"category": "samplers", "identifier": "SamplerComparisonState"},
         {"category": "structured_buffers", "identifier": "StructuredBuffer"},
         {"category": "structured_buffers", "identifier": "ByteAddressBuffer"},
         {"category": "structured_buffers", "identifier": "AppendStructuredBuffer"},
