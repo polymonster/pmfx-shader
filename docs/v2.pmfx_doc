@@ -327,20 +327,33 @@ raster_states: {
 }
 
 /// specify a texture or render target.. spec is still work in progress, but here is a current example
-texture: {
-    main_colour: {
-        ratio: {
-            window: "main_window",
-            scale: 1.0
-        }
-        format: RGBA8n
-        usage: [ShaderResource, RenderTarget]
-        samples: 8
-    }
-    main_depth(main_colour): {
-        format: D24nS8u
-        usage: [ShaderResource, DepthStencil]
-    }
+textures: {
+    /// specify texture format
+    /// type: enum [gfx::Format]
+    format: RGBA8n,
+    /// width of texture in pixels
+    /// type: int
+    width: 1,
+    /// height of texture in pixels
+    /// type: int
+    height: 1,
+    /// depth of texture in pixels / slices
+    /// type: int
+    depth: 1,
+    /// depth of texture in pixels / slices for texture arrays
+    /// type: int
+    array_layers: 1,
+    /// number of mip levels in the mip chain
+    /// type: int
+    mip_levels: 1,
+    /// number of samples for msaa
+    /// type: int
+    samples: 1,
+    /// signify this texture is a cubemap
+    cubemap: False,
+    /// indicate how this texture will be used
+    /// type: enum [RenderTarget, DepthStencil, DepthStencilReadOnly, UnorderedAccess, ShaderResource]
+    usage: ShaderResource
 }
 
 /// specify a view (a render pass into a render target)
