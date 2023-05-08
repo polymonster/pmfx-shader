@@ -317,6 +317,7 @@ def get_state_with_defaults(state_type, state):
             "array_layers": 1,
             "mip_levels": 1,
             "samples": 1,
+            "cubemap": False,
             "usage": ["ShaderResource"]
         },
         "views": {
