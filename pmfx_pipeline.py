@@ -710,6 +710,20 @@ def metal_compile_options(info):
     return metal_sdk, metal_min_os, metal_version
 
 
+# convert msl version (ie. 2.1) to spriv msl version 201000 <MMmmpp>
+def to_spirv_msl_version(metal_version):
+    # spirv msl versions
+    msl_version = metal_version.split(".")
+    if len(msl_version) < 3:
+        msl_version.append("00")
+    spirv_msl_version = ""
+    for v in msl_version:
+        if len(v) < 2:
+            v += "0"
+        spirv_msl_version += v
+    return spirv_msl_version
+
+
 # cross compile hlsl -> spirv -> metal
 def cross_compile_hlsl_metal(info, src, stage, entry_point, temp_filepath, output_filepath):
     exe = os.path.join(info.tools_dir, "bin", "macos", "dxc")
@@ -727,18 +741,9 @@ def cross_compile_hlsl_metal(info, src, stage, entry_point, temp_filepath, outpu
     error_list += el
     output_list += ol
 
-    msl_version = info.metal_version.split(".")
-    if len(msl_version) < 3:
-        msl_version.append("00")
-    spirv_msl_version = ""
-    for v in msl_version:
-        if len(v) < 2:
-            v += "0"
-        spirv_msl_version += v
-
+    spirv_msl_version = to_spirv_msl_version(info.metal_version)
     metal_filepath = os.path.splitext(temp_filepath)[0] + ".metal"
     cmdline = "{} --msl --msl-version {} {} --output {}".format(spirv_cross, spirv_msl_version, spirv_filepath, metal_filepath)
-    print(cmdline)
 
     ec, el, ol = build_pmfx.call_wait_subprocess(cmdline)
     error_list += el
