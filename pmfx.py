@@ -40,6 +40,7 @@ class BuildInfo:
     shader_version = "0"                                                # 4_0, 5_0 (hlsl), 330, 420 (glsl), 1.1, 2.0 (metal)
     metal_sdk = ""                                                      # macosx, iphoneos, appletvos
     metal_min_os = ""                                                   # iOS (9.0 - 13.0), macOS (10.11 - 10.15)
+    metal_version = "2.0"                                               # MSL version
     debug = False                                                       # generate shader with debug info
     inputs = []                                                         # array of input files or directories
     extensions = []                                                     # array of shader extension currently for glsl/gles
@@ -172,6 +173,8 @@ def parse_args():
             _info.debug = False
         elif sys.argv[i] == "-metal_min_os":
             _info.metal_min_os = sys.argv[i+1]
+        elif sys.argv[i] == "-metal_version":
+            _info.metal_version = sys.argv[i+1]
         elif sys.argv[i] == "-metal_sdk":
             _info.metal_sdk = sys.argv[i+1]
         elif sys.argv[i] == "-nvn_exe":
@@ -1733,7 +1736,7 @@ def replace_token_pasting(shader):
         new_decl_str = new_decl_str.replace("atomic_uint", "uint")
         new_shader += new_decl_str + ";\n"
     return new_shader
-    
+
 
 # compile glsl
 def compile_glsl(_info, pmfx_name, _tp, _shader):
@@ -1758,7 +1761,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     use_uniform_pack = False
     uniform_pack = None
     if _info.shader_sub_platform == "gles":
-        if shader_version_float("gles", _tp.shader_version) <= 200: 
+        if shader_version_float("gles", _tp.shader_version) <= 200:
             attribute_stage_in = True
             varying_in = True
             gl_frag_color = True
@@ -1803,7 +1806,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     # header and macros
     shader_source = ""
     if _info.shader_sub_platform == "gles":
-        if shader_version_float("gles", _tp.shader_version) >= 300: 
+        if shader_version_float("gles", _tp.shader_version) >= 300:
             shader_source += "#version " + _tp.shader_version + " es\n"
             # extensions
             for ext in _info.extensions:
@@ -1894,7 +1897,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     # insert vflip uniform for correcting texture and viewport y coords
     if _info.v_flip:
         shader_source += "uniform float v_flip;\n"
-        
+
     # global structs for access to inputs or outputs from any function in vs or ps
     if _shader.shader_type != "cs":
         shader_source += generate_global_io_struct(inputs, "struct " + _shader.input_struct_name)
@@ -1916,7 +1919,7 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
     resource_decl = _shader.resource_decl
     if _info.shader_sub_platform == "gles":
         resource_decl = replace_token_pasting(resource_decl)
-    
+
     shader_source += _tp.struct_decls
     shader_source += uniform_buffers
     shader_source += resource_decl
@@ -2492,7 +2495,7 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
         "ps": "_ps.metal",
         "cs": "_cs.metal"
     }
-    
+
     intermdiate_extension = {
         "vs": "_vs.air",
         "ps": "_ps.air",
@@ -2554,7 +2557,7 @@ def compile_metal(_info, pmfx_name, _tp, _shader):
         temp_shader_source.close()
 
         intermediate_file_and_path = temp_file_and_path.replace(extension[_shader.shader_type], intermdiate_extension[_shader.shader_type])
-        
+
         # compile .air
         cmdline = "xcrun -sdk " + metal_sdk + " metal " + metal_min_os + " " + metal_version + " -c "
         cmdline += temp_file_and_path + " "
