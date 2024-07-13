@@ -331,26 +331,37 @@ textures: {
     /// specify texture format
     /// type: enum [gfx::Format]
     format: RGBA8n,
+    /// specify that the texture will be automatically sized in ratio of the designated window
+    /// if this is supplied, width / height will be overriden
+    /// type: optional object
+    ratio: {
+        /// window name (string)
+        window: "window_name"
+        /// scale ratio of the window
+        scale: 1.0
+    }
+    /// optional filepath will load texture from disk and override the sizes
+    filepath: "path.png"
     /// width of texture in pixels
     /// type: int
-    width: 1,
+    width: 1
     /// height of texture in pixels
     /// type: int
-    height: 1,
+    height: 1
     /// depth of texture in pixels / slices
     /// type: int
-    depth: 1,
+    depth: 1
     /// depth of texture in pixels / slices for texture arrays
     /// type: int
-    array_layers: 1,
+    array_layers: 1
     /// number of mip levels in the mip chain
     /// type: int
-    mip_levels: 1,
+    mip_levels: 1
     /// number of samples for msaa
     /// type: int
-    samples: 1,
+    samples: 1
     /// signify this texture is a cubemap
-    cubemap: False,
+    cubemap: False
     /// indicate how this texture will be used
     /// type: enum [RenderTarget, DepthStencil, DepthStencilReadOnly, UnorderedAccess, ShaderResource]
     usage: ShaderResource
