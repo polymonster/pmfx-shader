@@ -40,7 +40,7 @@ def squiggle_error(msg):
 # return a 32 bit hash from objects which can cast to str
 def pmfx_hash(src):
     return zlib.adler32(bytes(str(src).encode("utf8")))
-    
+
 
 # return names of supported shader stages
 def get_shader_stages():
@@ -66,7 +66,7 @@ def get_states():
     ]
 
 
-# return a lits of bindabled resource keywords 
+# return a lits of bindabled resource keywords
 def get_bindable_resource_keys():
     return [
         "cbuffer",
@@ -171,7 +171,7 @@ def get_type_size_info(type):
 # return number of 32 bit values for a member of a push constants cbuffer
 def get_num_32bit_values(type):
     lookup = {
-        "float": 1, 
+        "float": 1,
         "float2": 2,
         "float3": 3,
         "float4": 4,
@@ -366,7 +366,7 @@ def get_pipeline_with_defaults(output_pipeline, pipeline):
         output_pipeline["sample_mask"] = pipeline["sample_mask"]
     else:
         output_pipeline["sample_mask"] = int("0xffffffff", 16)
-        
+
     return output_pipeline
 
 
@@ -383,7 +383,7 @@ def get_vertex_semantics():
         "PSIZE",
         "TANGENT",
         "TEXCOORD"
-    ] 
+    ]
 
 
 # log formatted json
@@ -482,7 +482,7 @@ def generate_vertex_layout(vertex_elements, pmfx_vertex_layout):
         if element["name"] in pmfx_vertex_layout:
             element = merge_dicts(element, pmfx_vertex_layout[element["name"]])
         slot_key = str(element["input_slot"])
-        if slot_key not in slots.keys(): 
+        if slot_key not in slots.keys():
             slots[slot_key]= []
         slots[slot_key].append(element)
     # make 1 array with combined slots, and calculate offsets
@@ -533,7 +533,7 @@ def structure_get_num_32_bit_values(typename, structs):
     if typename in structs:
         total = 0
         for member in structs[typename]["members"]:
-            
+
             total += structure_get_num_32_bit_values(member["data_type"], structs)
         return total
     else:
@@ -567,7 +567,7 @@ def generate_pipeline_layout(pmfx, pmfx_pipeline, resources):
                 if num_values == 0:
                     if "template_type" in resource:
                         t = resource["template_type"]
-                        num_values = structure_get_num_32_bit_values(t, resources)                            
+                        num_values = structure_get_num_32_bit_values(t, resources)
                 push_constants = {
                     "shader_register": resource["shader_register"],
                     "register_space": resource["register_space"],
@@ -633,7 +633,7 @@ def generate_pipeline_layout(pmfx, pmfx_pipeline, resources):
                 temp = sorted_bindings[j]
                 sorted_bindings[j] = dict(sorted_bindings[i])
                 sorted_bindings[i] = dict(temp)
-                sorted = False      
+                sorted = False
 
     pipeline_layout["bindings"] = list(sorted_bindings)
 
@@ -673,6 +673,96 @@ def write_rs_crate(path, pmfx_name, resources):
     open(os.path.join(path, "{}.rs".format(pmfx_name)), "w+").write(src_h)
 
 
+# parse metal specific options from command lines, returning (metal_sdk, metal_min_os, metal_version)
+def metal_compile_options(info):
+    # default to metal 2.0, but allow cmdline override
+    metal_version = info.metal_version
+
+    # selection of sdk, macos, ios, tvos
+    metal_sdk = "macosx"
+    if info.metal_sdk != "":
+        metal_sdk = info.metal_sdk
+
+    # insert some defaults fo version min based on os
+    metal_min_os = ""
+    if metal_sdk == "macosx":
+        metal_min_os = "10.11"
+        if info.metal_min_os != "":
+            metal_min_os = info.metal_min_os
+        metal_min_os = "-mmacosx-version-min=" + metal_min_os
+    elif metal_sdk == "iphoneos":
+        metal_min_os = "9.0"
+        if info.metal_min_os != "":
+            metal_min_os = info.metal_min_os
+        metal_min_os = "-mios-version-min=" + metal_min_os
+    elif metal_sdk == "appletvos":
+        metal_min_os = "13.0"
+        if info.metal_min_os != "":
+            metal_min_os = info.metal_min_os
+        metal_min_os = "-mtvos-version-min=" + metal_min_os
+
+    # finally set metal -std.
+    if metal_sdk == "iphoneos" or metal_sdk == "appletvos":
+        metal_version = "-std=ios-metal" + metal_version
+    else:
+        metal_version = "-std=macos-metal" + metal_version
+
+    return metal_sdk, metal_min_os, metal_version
+
+
+# convert msl version (ie. 2.1) to spriv msl version 201000 <MMmmpp>
+def to_spirv_msl_version(metal_version):
+    # spirv msl versions
+    msl_version = metal_version.split(".")
+    if len(msl_version) < 3:
+        msl_version.append("00")
+    spirv_msl_version = ""
+    for v in msl_version:
+        if len(v) < 2:
+            v += "0"
+        spirv_msl_version += v
+    return spirv_msl_version
+
+
+# cross compile hlsl -> spirv -> metal
+def cross_compile_hlsl_metal(info, src, stage, entry_point, temp_filepath, output_filepath):
+    exe = os.path.join(info.tools_dir, "bin", "macos", "dxc")
+
+    metal_sdk, metal_min_os, metal_version = metal_compile_options(info)
+
+    error_code = 0
+    error_list = []
+    output_list = []
+
+    spirv_cross = os.path.join(info.tools_dir, "bin", "macos", "spirv-cross")
+    spirv_filepath = os.path.splitext(temp_filepath)[0] + ".spirv"
+    cmdline = "{} -T {}_{} -E {} -spirv -Fo {} {}".format(exe, stage, info.shader_version, entry_point, spirv_filepath, temp_filepath)
+    ec, el, ol = build_pmfx.call_wait_subprocess(cmdline)
+    error_list += el
+    output_list += ol
+
+    spirv_msl_version = to_spirv_msl_version(info.metal_version)
+    metal_filepath = os.path.splitext(temp_filepath)[0] + ".metal"
+    cmdline = "{} --msl --msl-version {} {} --output {}".format(spirv_cross, spirv_msl_version, spirv_filepath, metal_filepath)
+
+    ec, el, ol = build_pmfx.call_wait_subprocess(cmdline)
+    error_list += el
+    output_list += ol
+
+    air_filepath = os.path.splitext(temp_filepath)[0] + ".air"
+    cmdline = "xcrun -sdk {} metal {} {} -c -frecord-sources {} -o {}".format(metal_sdk, metal_min_os, metal_version, metal_filepath, air_filepath)
+    ec, el, ol = build_pmfx.call_wait_subprocess(cmdline)
+    error_list += el
+    output_list += ol
+
+    cmdline = "xcrun -sdk {} metal {} -o {}".format(metal_sdk, air_filepath, output_filepath)
+    ec, el, ol = build_pmfx.call_wait_subprocess(cmdline)
+    error_list += el
+    output_list += ol
+
+    return 0, error_list, output_list
+
+
 # compile a hlsl version 2
 def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_filepath):
     exe = os.path.join(info.tools_dir, "bin", "dxc", "dxc")
@@ -682,9 +772,13 @@ def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_fil
     error_list = []
     output_list = []
     if info.compiled:
-        cmdline = "{} -T {}_{} -E {} -Fo {} {}".format(exe, stage, info.shader_version, entry_point, output_filepath, temp_filepath)
-        cmdline += " " + build_pmfx.get_info().args
-        error_code, error_list, output_list = build_pmfx.call_wait_subprocess(cmdline)
+        if info.shader_platform == "metal":
+            error_code, error_list, output_list = cross_compile_hlsl_metal(info, src, stage, entry_point, temp_filepath, output_filepath)
+        elif info.shader_platform == "hlsl":
+            cmdline = "{} -T {}_{} -E {} -Fo {} {}".format(exe, stage, info.shader_version, entry_point, output_filepath, temp_filepath)
+            cmdline += " " + build_pmfx.get_info().args
+            error_code, error_list, output_list = build_pmfx.call_wait_subprocess(cmdline)
+
     output = ""
     if len(error_list) > 0:
         # build output string from error
@@ -823,7 +917,7 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
                     if resource["type"] == "cbuffer" or resource["type"] == "struct":
                         for member in resource["members"]:
                             add_struct_members_recursive(member["data_type"], stage, pmfx["resources"]["structs"], recursive_resources, 1)
-                            
+
                     # add the resource itself
                     resources[r] = add_used_shader_resource(resource, stage)
                     break
@@ -851,7 +945,7 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
         for resource in recursive_resources:
             if recursive_resources[resource]["depth"] > 0:
                 res += recursive_resources[resource]["declaration"] + ";\n"
-                    
+
         for resource in resources:
             res += resources[resource]["declaration"] + ";\n"
 
@@ -863,7 +957,7 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
     if len(forward_decls) > 0:
         res += "// function foward declarations\n"
         for fwd in forward_decls:
-            res += fwd + "\n" 
+            res += fwd + "\n"
 
     # join resource src and src
     src = cgu.format_source(res, 4) + "\n // source\n" + globals + "\n" + cgu.format_source(src, 4)
@@ -918,7 +1012,7 @@ def generate_shader_permutation(build_info, shader_info, stage, entry_point, pmf
 
 
 # auto generates a blend state from a render target blend state, with the default of a single render target blend
-# separate alpha is inferred from usage of src_blend_alpha etc and alpha_to_coverage_enabled is default to false 
+# separate alpha is inferred from usage of src_blend_alpha etc and alpha_to_coverage_enabled is default to false
 def generate_blend_state(output_pmfx, blend_state_name):
     if blend_state_name in output_pmfx["render_target_blend_states"]:
         rtb = output_pmfx["render_target_blend_states"][blend_state_name]
@@ -998,7 +1092,7 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
         else:
             build_pmfx.print_error("  [error] missing depth stencil state '{}'".format(dss))
             output_pipeline["error_code"] = 219
-        
+
     if "raster_state" in pipeline:
         rs = output_pipeline["raster_state"]
         if rs in output_pmfx["raster_states"]:
@@ -1096,7 +1190,7 @@ def load_pmfx_jsn(filepath, root):
 def generate_pmfx(file, root):
     input_pmfx_filepath = os.path.join(root, file)
 
-    # semi similar to v1-path, allows pmfx: {} and hls source code to be mixed in the ame file  
+    # semi similar to v1-path, allows pmfx: {} and hls source code to be mixed in the ame file
     shader_file_text_full, included_files = build_pmfx.create_shader_set(input_pmfx_filepath, root)
     pmfx_json, shader_source = build_pmfx.find_pmfx_json(shader_file_text_full, False)
 
@@ -1137,7 +1231,7 @@ def generate_pmfx(file, root):
             if mtime > last_built:
                 out_of_date = True
                 break
-        # get hashes from compiled 
+        # get hashes from compiled
         try:
             existing = json.loads(open(json_filepath, "r").read())
             if "compiled_shaders" in existing:
@@ -1154,7 +1248,7 @@ def generate_pmfx(file, root):
         except:
             out_of_date = True
 
-    
+
     # return if file not out of date
     if not build_info.force:
         if not out_of_date:
@@ -1164,7 +1258,7 @@ def generate_pmfx(file, root):
 
     # find pragmas
     pmfx["pragmas"] = cgu.find_pragma_statements(pmfx["source"])
-    
+
     # parse functions
     pmfx["functions"] = dict()
     functions, _ = cgu.find_functions(pmfx["source"])
@@ -1221,7 +1315,7 @@ def generate_pmfx(file, root):
 
     # gather permutations
     permutation_jobs = []
-    pipeline_jobs = [] 
+    pipeline_jobs = []
     if "pipelines" in pmfx["pmfx"]:
         pipelines = pmfx["pmfx"]["pipelines"]
         for pipeline_key in pipelines:
@@ -1234,7 +1328,7 @@ def generate_pmfx(file, root):
                     if stage in pipeline:
                         permutation_jobs.append(
                             pool.apply_async(generate_shader_info_permutation, (pmfx, pipeline[stage], stage, permute, define_list)))
-            
+
     # wait on shader permutations
     shaders = dict()
     for stage in get_shader_stages():
@@ -1256,13 +1350,13 @@ def generate_pmfx(file, root):
                 pool.apply_async(generate_shader_permutation, (build_info, info, stage, entry_point, pmfx, temp_path, output_path)))
         else:
             shaders[stage][entry_point][info["permutation_id"]]["lookup"] = added_hashes[hash]
-        
+
     # wait on shader compilation
     for job in compile_jobs:
         (stage, entry_point, info) = job.get()
         shaders[stage][entry_point][info["permutation_id"]] = info
         shader_name = info["filename"]
-        output_pmfx["shaders"][shader_name] = pmfx_hash(info["src_hash"]) 
+        output_pmfx["shaders"][shader_name] = pmfx_hash(info["src_hash"])
 
     # generate pipeline reflection info
     pipeline_compile_jobs = []
@@ -1275,7 +1369,7 @@ def generate_pmfx(file, root):
         (pipeline_name, permutation_id, pipeline_info, added_pmfx) = job.get()
         if pipeline_name not in output_pmfx["pipelines"]:
             output_pmfx["pipelines"][pipeline_name] = dict()
-        output_pmfx["pipelines"][pipeline_name][permutation_id] = pipeline_info        
+        output_pmfx["pipelines"][pipeline_name][permutation_id] = pipeline_info
         output_pmfx = merge_dicts(dict(output_pmfx), dict(added_pmfx))
 
     # write c-header
@@ -1285,7 +1379,7 @@ def generate_pmfx(file, root):
     # write rs-crate
     if build_info.crate_dir and len(build_info.crate_dir) > 0:
         write_rs_crate(build_info.crate_dir, pmfx["pmfx_name"], pmfx["resources"])
-    
+
     # timestamp / dependency info
     dependency_set = list()
     for file in included_files:

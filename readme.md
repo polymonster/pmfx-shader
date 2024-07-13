@@ -1,6 +1,6 @@
-# pmfx-shader  
+# pmfx-shader
 
-[![tests](https://github.com/polymonster/pmfx-shader/actions/workflows/tests.yaml/badge.svg)](https://github.com/polymonster/pmfx-shader/actions/workflows/tests.yaml)[![release](https://github.com/polymonster/pmfx-shader/actions/workflows/release.yaml/badge.svg)](https://github.com/polymonster/pmfx-shader/actions/workflows/release.yaml)  
+[![tests](https://github.com/polymonster/pmfx-shader/actions/workflows/tests.yaml/badge.svg)](https://github.com/polymonster/pmfx-shader/actions/workflows/tests.yaml)[![release](https://github.com/polymonster/pmfx-shader/actions/workflows/release.yaml/badge.svg)](https://github.com/polymonster/pmfx-shader/actions/workflows/release.yaml)
 
 A cross platform shader system with multi-threaded offline compilation or platform shader source code generation. Output json reflection info and `.h` or `.rs` code generation with your shader structs, fx-like techniques and compile time branch evaluation via (uber-shader) "permutations". Version 1.0 is now in maintenence mode and Version 2.0 is in progress which aims to offer wider support for more modern GPU features.
 
@@ -65,11 +65,11 @@ commandline arguments:
     -rs (optional) <output dir for rust crate with shader structs> [-v2]
     -root_dir (optional) <directory> sets working directory here
     -source (optional) (generates platform source into -o no compilation)
-    -stage_in <0, 1> (optional) [metal only] (default 1) 
+    -stage_in <0, 1> (optional) [metal only] (default 1)
         uses stage_in for metal vertex buffers, 0 uses raw buffers
-    -cbuffer_offset (optional) [metal only] (default 4) 
+    -cbuffer_offset (optional) [metal only] (default 4)
         specifies an offset applied to cbuffer locations to avoid collisions with vertex buffers
-    -texture_offset (optional) [vulkan only] (default 32) 
+    -texture_offset (optional) [vulkan only] (default 32)
         specifies an offset applied to texture locations to avoid collisions with buffers
     -v_flip (optional) [glsl only] (inserts glsl uniform to conditionally flip verts in the y axis)
     -args (optional) anything passed after this will be forward to the platform specific compiler
@@ -88,7 +88,7 @@ There are 2 code paths supported by pmfx, this is in an effort to keep up-to-dat
 
 Compile with the `-v1` flag to select version 1.
 
-A single file does all the shader parsing and code generation. Simple syntax changes are handled through macros and defines found in [platform](https://github.com/polymonster/pmfx-shader/tree/master/platform), so it is simple to add new features or change things to behave how you like. More complex differences between shader languages are handled through code-generation.  
+A single file does all the shader parsing and code generation. Simple syntax changes are handled through macros and defines found in [platform](https://github.com/polymonster/pmfx-shader/tree/master/platform), so it is simple to add new features or change things to behave how you like. More complex differences between shader languages are handled through code-generation.
 
 This is a small part of the larger [pmfx](https://github.com/polymonster/pmtech/wiki/Pmfx) system found in [pmtech](https://github.com/polymonster/pmtech), it has been moved into a separate repository to be used with other projects, if you are interested to see how pmfx shaders are integrated please take a look [here](https://github.com/polymonster/pmtech).
 
@@ -116,11 +116,11 @@ python3 pmfx.py -v1 -shader_platform glsl -shader_version 330 -i examples/v1 -o 
 python3 pmfx.py -v1 -shader_platform gles -shader_version 320 -i examples/v1 -o output/bin -h output/structs -t output/temp
 ```
 
-### Version 1 shader language  
+### Version 1 shader language
 
 Use mostly HLSL syntax for shaders, with some small differences:
 
-#### Always use structs for inputs and outputs  
+#### Always use structs for inputs and outputs
 
 ```hlsl
 struct vs_input
@@ -136,9 +136,9 @@ struct vs_output
 vs_output vs_main( vs_input input )
 {
     vs_output output;
-    
+
     output.position = input.position;
-    
+
     return output;
 }
 ```
@@ -189,9 +189,9 @@ texture_3d( sampler_name, layout_index );
 texture_2d_external( sampler_name, layout_index ); // gles specific extension
 
 // depth formats are required for sampler compare ops
-depth_2d( sampler_name, layout_index ); 
+depth_2d( sampler_name, layout_index );
 depth_2d_array( sampler_name, layout_index );
-depth_cube( sampler_name, layout_index ); 
+depth_cube( sampler_name, layout_index );
 depth_cube_array( sampler_name, layout_index );
 
 // compute shader texture types
@@ -248,7 +248,7 @@ struct val = structured_buffer[gid]; // read
 structured_buffer[gid] = val;        // write
 
 // read type!
-// glsl expects ivec (int) to be pass to imageLoad, hlsl and metal require uint... 
+// glsl expects ivec (int) to be pass to imageLoad, hlsl and metal require uint...
 // there is a `read` type you can use to be platform safe
 read3 read_coord = read3(x, y, z);
 read_texture( tex_rw, read_coord );
@@ -316,8 +316,6 @@ To enable glsl extensions you can pass a list of strings to the `-extensions` co
 
 cbuffers are emulated for older glsl versions, a cbuffer is packed into a single float4 array. The uniform float4 array (`glUniform4fv`) is named after the cbuffer, you can find the uniform location from this name using `glUniformLocation`. The count of the float4 array is the number of members the cbuffer where float4 and float4x4 are supported and float4x4 count for 4 array elements. You can use the generated c++ structs from pmfx to create a coherent copy of the uniform data on the cpu. GLES 2.0 / GLSL 2.0 cbuffers
 
-cbuffers are emulated for older glsl versions, a cbuffer is packed into a single float4 array. The uniform float4 array (`glUniform4fv`) is named after the cbuffer, you can find the uniform location from this name using `glUniformLocation`. The count of the float4 array is the number of members the cbuffer where float4 and float4x4 are supported and float4x4 count for 4 array elements. You can use the generated c++ structs from pmfx to create a coherent copy of the uniform data on the cpu.
-
 ### cbuffer_offset / texture_offset
 
 HLSL has different registers for textures, vertex buffers, cbuffers and un-ordered access views. Metal and Vulkan have some differences where the register indices are shared across different resource types. To avoid collisions in different API backends you can supply offsets using the following command line options.
@@ -330,7 +328,7 @@ Vulkan: -texture_offset (textures start binding at this point allowing uniform b
 
 OpenGL has different viewport co-ordinates to texture coordinate so when rendering to the backbuffer vs rendering into a render target you can get output results that are flipped in the y-axis, this can propagate it's way far into a code base with conditional "v_flips" happening during different render passes.
 
-To solve this issue in a cross platform way, pmfx will expose a uniform bool called "v_flip" in all gl vertex shaders, this allows you to conditionally flip the y-coordinate when rendering to the backbuffer or not.  
+To solve this issue in a cross platform way, pmfx will expose a uniform bool called "v_flip" in all gl vertex shaders, this allows you to conditionally flip the y-coordinate when rendering to the backbuffer or not.
 
 To make this work make sure you also change the winding glFrontFace(GL_CCW) to glFrontFace(GL_CW).
 
@@ -346,12 +344,12 @@ Simply specify `vs`, `ps` or `cs` to select which function in the source to use 
 
 ```jsonnet
 pmfx:
-{    
+{
     gbuffer: {
         vs: vs_main
         ps: ps_gbuffer
     }
-        
+
     zonly: {
         vs: vs_main_zonly
         ps: ps_null
@@ -364,13 +362,13 @@ You can also use json to specify technique constants with range and ui type.. so
 ```jsonnet
 constants:
 {
-    albedo: { 
+    albedo: {
         type: float4, widget: colour, default: [1.0, 1.0, 1.0, 1.0]
     }
-    roughness: { 
+    roughness: {
         type: float, widget: slider, min: 0, max: 1, default: 0.5
     }
-    reflectivity: { 
+    reflectivity: {
         type: float, widget: slider, min: 0, max: 1, default: 0.3
     }
 }
@@ -422,7 +420,7 @@ Adding permutations can cause the number of generated shaders to grow exponentia
 
 ### C++ Header
 
-After compilation a header is output for each .pmfx file containing c struct declarations for the cbuffers, technique constant buffers and vertex inputs. You can use these sturcts to fill buffers in your c++ code and use sizeof for buffer update calls in your graphics api.  
+After compilation a header is output for each .pmfx file containing c struct declarations for the cbuffers, technique constant buffers and vertex inputs. You can use these sturcts to fill buffers in your c++ code and use sizeof for buffer update calls in your graphics api.
 
 It also contains defines for the shader permutation id / flags that you can check and test against to select the correct shader permutations for a draw call (ie. skinned, instanced, etc).
 
@@ -464,7 +462,7 @@ Each .pmfx file comes along with a json file containing reflection info. This in
         "type": "texture_2d",
         "unit": 0
     }]
-   
+
 "vs_inputs": [
     {
         "name": "position",
@@ -481,7 +479,7 @@ You can take a look at a full example output file included with this repositiory
 
 ## Version 2
 
-Version 2 is currently work in progress, currently only HLSL is the only supported platform, others will become available via SPIRV-cross and DXC. Newer GPU features such as mesh shaders and ray tracing will become available in future too.
+Version 2 is currently work in progress, HLSL is used as the authorting shader language and SPIRV-cross is used to cross compile to other platforms.
 
 Use `.hlsl` files and hlsl source code, create a `.pmfx` which can create pipelines from small amount of meta data:
 
@@ -600,7 +598,7 @@ render_graphs: {
 }
 ```
 
-`pmfx` supplies a framework and a schema to configure render state, it will still be down to you to implement that data in a graphics API or engine. If you want to take a look at an example project of how to use these features my graphics engine [hotline](https://github.com/polymonster/hotline) implemenents the feature set and utilises [serde](https://github.com/serde-rs/serde) to deserialise the output `json` directly into rust structures.  
+`pmfx` supplies a framework and a schema to configure render state, it will still be down to you to implement that data in a graphics API or engine. If you want to take a look at an example project of how to use these features my graphics engine [hotline](https://github.com/polymonster/hotline) implemenents the feature set and utilises [serde](https://github.com/serde-rs/serde) to deserialise the output `json` directly into rust structures.
 
 Full [documentation](https://github.com/polymonster/pmfx-shader/blob/master/docs/v2.pmfx_doc) for pipeline specification is provided.
 
@@ -610,7 +608,7 @@ Compilation is simple with command line args as so:
 
 ```text
 py -3 pmfx.py -shader_platform hlsl -shader_version 6_0 -i examples/v2/ -o build/data/shaders -t build/temp/shaders
-```  
+```
 
 ### Examples
 
@@ -620,7 +618,7 @@ Take a look at the example [code](https://github.com/polymonster/pmfx-shader/tre
 
 Compiled shaders and reflection information will be emitted to your chosen `-o` outout directory, Each `.pmfx` file will create a directory which it will compile shader binaries into. Shader compilation is minimised and reduced within single `.pmfx` files by sharing and re-using binaries which are identical across different shader permitations or stages.
 
-Pipeline layout, descriptor bindings and vertex layout can be automatically generated based on resource usage inside shaders, the whole pipeline is exported as `.json` along with the built shaders. Hashes for the various pieces of the render pipline states are stored so you can quickly check for pipelines that may need rebuilding as part of a hot reloading process.  
+Pipeline layout, descriptor bindings and vertex layout can be automatically generated based on resource usage inside shaders, the whole pipeline is exported as `.json` along with the built shaders. Hashes for the various pieces of the render pipline states are stored so you can quickly check for pipelines that may need rebuilding as part of a hot reloading process.
 
 ```json
 "imdraw_2d": {
