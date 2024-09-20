@@ -41,6 +41,7 @@ class BuildInfo:
     metal_sdk = ""                                                      # macosx, iphoneos, appletvos
     metal_min_os = ""                                                   # iOS (9.0 - 13.0), macOS (10.11 - 10.15)
     metal_version = "2.0"                                               # MSL version
+    discrete_binding = None                                             # stage to pass to --msl-discrete-descriptor-set (spirv-cross)
     debug = False                                                       # generate shader with debug info
     inputs = []                                                         # array of input files or directories
     extensions = []                                                     # array of shader extension currently for glsl/gles
@@ -167,6 +168,8 @@ def parse_args():
             _info.cbuffer_offset = sys.argv[i + 1]
         elif sys.argv[i] == "-stage_in":
             _info.stage_in = sys.argv[i + 1]
+        elif sys.argv[i] == "-discrete_binding":
+            _info.discrete_binding = sys.argv[i + 1]
         elif sys.argv[i] == "-v_flip":
             _info.v_flip = True
         elif sys.argv[i] == "-d":
@@ -247,6 +250,8 @@ def display_help():
     print("    -source (optional) (generates platform source into -o no compilation)")
     print("    -stage_in <0, 1> (optional) [metal only] (default 1) ")
     print("        uses stage_in for metal vertex buffers, 0 uses raw buffers")
+    print("    -discrete_binding <int> (optional) [metal only] (default None) ")
+    print("        any resources bound on this space will be discretely bound. eg. static samplers, push constants")
     print("    -cbuffer_offset (optional) [metal only] (default 4) ")
     print("        specifies an offset applied to cbuffer locations to avoid collisions with vertex buffers")
     print("    -texture_offset (optional) [vulkan only] (default 32) ")
