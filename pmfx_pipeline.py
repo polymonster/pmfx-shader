@@ -47,7 +47,13 @@ def get_shader_stages():
     return [
         "vs",
         "ps",
-        "cs"
+        "cs",
+        "rg",
+        "ch",
+        "ah",
+        "mi",
+        "is",
+        "ca"
     ]
 
 
@@ -92,7 +98,8 @@ def get_bindable_resource_keys():
         "RWTexture2DArray",
         "RWTexture3D",
         "SamplerState",
-        "SamplerComparisonState"
+        "SamplerComparisonState",
+        "RaytracingAccelerationStructure"
     ]
 
 
@@ -124,6 +131,7 @@ def get_resource_mappings():
         {"category": "textures", "identifier": "RWTexture2D"},
         {"category": "textures", "identifier": "RWTexture2DArray"},
         {"category": "textures", "identifier": "RWTexture3D"},
+        {"category": "acceleration_structures", "identifier": "RaytracingAccelerationStructure"},
     ]
 
 
@@ -134,7 +142,8 @@ def get_resource_categories():
         "cbuffers",
         "structured_buffers",
         "textures",
-        "samplers"
+        "samplers",
+        "acceleration_structures"
     ]
 
 
@@ -225,9 +234,10 @@ def get_shader_visibility(vis):
         stages = {
             "vs": "Vertex",
             "ps": "Fragment",
-            "cs": "Compute"
+            "cs": "Compute",
         }
-        return stages[vis[0]]
+        if vis[0] in stages:
+            return stages[vis[0]]
     return "All"
 
 
@@ -763,6 +773,13 @@ def cross_compile_hlsl_metal(info, src, stage, entry_point, temp_filepath, outpu
     return 0, error_list, output_list
 
 
+# convert satage to correct hlsl profile
+def hlsl_stage(stage):
+    if stage in ["rg", "ch", "ah", "mi"]:
+        return "lib"
+    return stage
+
+
 # compile a hlsl version 2
 def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_filepath):
     exe = os.path.join(info.tools_dir, "bin", "dxc", "dxc")
@@ -775,7 +792,7 @@ def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_fil
         if info.shader_platform == "metal":
             error_code, error_list, output_list = cross_compile_hlsl_metal(info, src, stage, entry_point, temp_filepath, output_filepath)
         elif info.shader_platform == "hlsl":
-            cmdline = "{} -T {}_{} -E {} -Fo {} {}".format(exe, stage, info.shader_version, entry_point, output_filepath, temp_filepath)
+            cmdline = "{} -T {}_{} -E {} -Fo {} {}".format(exe, hlsl_stage(stage), info.shader_version, entry_point, output_filepath, temp_filepath)
             cmdline += " " + build_pmfx.get_info().args
             error_code, error_list, output_list = build_pmfx.call_wait_subprocess(cmdline)
 
@@ -940,18 +957,32 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
             res += "{}\n".format(pragma)
 
     # resources input structs, textures, buffers etc
+    added_resources = []
     if len(resources) > 0:
         res += "// resource declarations\n"
         for resource in recursive_resources:
+            if resource in added_resources:
+                continue
             if recursive_resources[resource]["depth"] > 0:
                 res += recursive_resources[resource]["declaration"] + ";\n"
+                added_resources.append(resource)
 
         for resource in resources:
+            if resource in added_resources:
+                continue
             res += resources[resource]["declaration"] + ";\n"
+            added_resources.append(resource)
 
     # extract vs_input (input layout)
     if stage == "vs":
         vertex_elements = get_vertex_elements(pmfx, entry_point)
+
+    # typedefs
+    typedef_decls = cgu.find_typedef_decls(pmfx["source"])
+    if len(typedef_decls) > 0:
+        res += "// typedefs\n"
+        for typedef_decl in typedef_decls:
+            res += typedef_decl + ";\n"
 
     # add fwd function decls
     if len(forward_decls) > 0:
