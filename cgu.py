@@ -464,6 +464,22 @@ def find_typedefs(fully_qualified_name, source):
     return typedefs, typedef_names
 
 
+# return list of any typedefs for a particular type
+def find_typedef_decls(source):
+    pos = 0
+    typedef_decls = []
+    while True:
+        start_pos = find_token("typedef", source[pos:])
+        if start_pos != -1:
+            start_pos += pos
+            end_pos = start_pos + source[start_pos:].find(";")
+            typedef_decls.append(source[start_pos:end_pos])
+            pos = end_pos
+        else:
+            break
+    return typedef_decls
+
+
 def find_type_attributes(source, type_pos):
     delimiters = [";", "}"]
     attr = source[:type_pos].rfind("[[")
@@ -723,7 +739,7 @@ def find_functions(source):
     pos = 0
     attributes = []
     while True:
-        statement_end, statement_token = find_first(source, [";", "{"], pos)
+        statement_end, statement_token = find_first(source, [";", "{", "}"], pos)
         if statement_end == -1:
             break
         statement = source[pos:statement_end].strip()
@@ -793,6 +809,28 @@ def get_funtion_prototype(func):
     if num_args == 0:
         args = "void"
     return "(" + args + ")"
+
+
+# find the line, column position within source
+def position_to_line_column(source, position):
+    if position < 0 or position > len(source):
+        raise ValueError("position out of bounds")
+
+    # split the string into lines
+    lines = source.splitlines(keepends=True)
+
+    # find the line and column
+    current_pos = 0
+    for line_number, line in enumerate(lines, start=1):
+        line_length = len(line)
+        if current_pos + line_length > position:
+            # Found the line
+            column = position - current_pos + 1  # Convert to 1-based
+            return line_number, column
+        current_pos += line_length
+
+    # If we exit the loop, something went wrong
+    raise ValueError("position not found in string")
 
 
 # main function for scope
