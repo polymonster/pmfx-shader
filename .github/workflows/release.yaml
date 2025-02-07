@@ -49,7 +49,13 @@ jobs:
       - name: checkout
         uses: actions/checkout@v2
       - name: pyinstaller
-        run: "pip3 install PyInstaller"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      - run: |
+          pip3 install PyInstaller
+      - name: build
       - name: build
         run: python3 -c "import pmfx; pmfx.build_executable()"
       - name: upload
