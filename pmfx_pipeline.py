@@ -735,6 +735,27 @@ def to_spirv_msl_version(metal_version):
     return spirv_msl_version
 
 
+# cross compile hlsl -> spirv
+def cross_compile_hlsl_spirv(info, src, stage, entry_point, temp_filepath, output_filepath):
+    exe = os.path.join(info.tools_dir, "bin", "dxc", "dxc")
+
+    error_code = 0
+    error_list = []
+    output_list = []
+
+    spirv_filepath = os.path.splitext(temp_filepath)[0] + ".spirv"
+
+    cmdline = "{} -T {}_{} -E {} -spirv -Fo {} {}".format(exe, stage, "6_3", entry_point, spirv_filepath, temp_filepath)
+
+    print(f"{cmdline}")
+
+    ec, el, ol = build_pmfx.call_wait_subprocess(cmdline)
+    error_list += el
+    output_list += ol
+
+    return ec, error_list, output_list
+
+
 # cross compile hlsl -> spirv -> metal
 def cross_compile_hlsl_metal(info, src, stage, entry_point, temp_filepath, output_filepath):
     exe = os.path.join(info.tools_dir, "bin", "macos", "dxc")
@@ -785,6 +806,8 @@ def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_fil
     if info.compiled:
         if info.shader_platform == "metal":
             error_code, error_list, output_list = cross_compile_hlsl_metal(info, src, stage, entry_point, temp_filepath, output_filepath)
+        elif info.shader_platform == "glsl":
+            error_code, error_list, output_list = cross_compile_hlsl_spirv(info, src, stage, entry_point, temp_filepath, output_filepath)
         elif info.shader_platform == "hlsl":
             cmdline = "{} -T {}_{} -E {} -Fo {} {}".format(exe, stage, info.shader_version, entry_point, output_filepath, temp_filepath)
             cmdline += " " + build_pmfx.get_info().args
