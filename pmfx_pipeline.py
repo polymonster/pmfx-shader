@@ -751,7 +751,7 @@ def cross_compile_hlsl_spirv(info, src, stage, entry_point, temp_filepath, outpu
 
     spirv_filepath = os.path.splitext(temp_filepath)[0] + ".spirv"
 
-    cmdline = "{} -T {}_{} -E {} -spirv -Od -Fo {} {}".format(exe, stage, "6_3", entry_point, spirv_filepath, temp_filepath)
+    cmdline = "{} -T {}_{} -E {} -spirv -fvk-use-scalar-layout -Od -Fo {} {}".format(exe, stage, "6_3", entry_point, spirv_filepath, temp_filepath)
 
     print(f"{cmdline}")
 
