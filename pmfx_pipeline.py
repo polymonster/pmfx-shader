@@ -230,15 +230,20 @@ def vertex_format_from_type(type):
 
 
 # shader visibility can be on a single stage or all
-def get_shader_visibility(vis):
-    if len(vis) == 1:
-        stages = {
-            "vs": "Vertex",
-            "ps": "Fragment",
-            "cs": "Compute",
-        }
-        if vis[0] in stages:
-            return stages[vis[0]]
+def get_shader_visibility(vis, pipeline):
+    stages = {
+        "vs": "Vertex",
+        "ps": "Fragment",
+        "cs": "Compute",
+    }
+    used_stages = list()
+    for s in stages:
+        if s in pipeline:
+            if pipeline[s] in vis:
+                used_stages.append(vis[pipeline[s]])
+    if len(used_stages) == 1:
+        if used_stages[0] in stages:
+            return stages[used_stages[0]]
     return "All"
 
 
@@ -583,7 +588,7 @@ def generate_pipeline_layout(pmfx, pmfx_pipeline, resources):
                     "shader_register": resource["shader_register"],
                     "register_space": resource["register_space"],
                     "binding_type": get_binding_type(resource["register_type"]),
-                    "visibility": get_shader_visibility(resource["visibility"]),
+                    "visibility": get_shader_visibility(resource["visibility"], pmfx_pipeline),
                     "num_values": num_values,
                     "name": resource["name"]
                 }
@@ -595,7 +600,7 @@ def generate_pipeline_layout(pmfx, pmfx_pipeline, resources):
                 static_sampler = {
                     "shader_register": resource["shader_register"],
                     "register_space": resource["register_space"],
-                    "visibility": get_shader_visibility(resource["visibility"]),
+                    "visibility": get_shader_visibility(resource["visibility"], pmfx_pipeline),
                     "sampler_info": pmfx["sampler_states"][lookup],
                     "name": resource["name"]
                 }
@@ -607,7 +612,8 @@ def generate_pipeline_layout(pmfx, pmfx_pipeline, resources):
                 "shader_register": resource["shader_register"],
                 "register_space": resource["register_space"],
                 "binding_type": get_binding_type(resource["register_type"]),
-                "visibility": get_shader_visibility(resource["visibility"]),
+                "resource_type": resource_type,
+                "visibility": get_shader_visibility(resource["visibility"], pmfx_pipeline),
                 "num_descriptors": get_descriptor_array_size(resource),
                 "name": resource["name"]
             }
@@ -749,7 +755,7 @@ def cross_compile_hlsl_spirv(info, src, stage, entry_point, temp_filepath, outpu
 
     spirv_filepath = os.path.splitext(temp_filepath)[0] + ".spirv"
 
-    cmdline = "{} -T {}_{} -E {} -spirv -Fo {} {}".format(exe, stage, "6_3", entry_point, spirv_filepath, temp_filepath)
+    cmdline = "{} -T {}_{} -E {} -spirv -fvk-use-scalar-layout -Od -Fo {} {}".format(exe, stage, "6_3", entry_point, spirv_filepath, temp_filepath)
 
     print(f"{cmdline}")
 
@@ -857,11 +863,11 @@ def compile_shader_hlsl(info, src, stage, entry_point, temp_filepath, output_fil
 
 
 # add shader resource for the shader stage
-def add_used_shader_resource(resource, stage):
+def add_used_shader_resource(resource, stage, entry_point):
     output = dict(resource)
     if "visibility" not in output:
-        output["visibility"] = list()
-    output["visibility"].append(stage)
+        output["visibility"] = dict()
+    output["visibility"][entry_point] = stage
     return output
 
 
@@ -878,12 +884,12 @@ def add_built_in_defines(src):
 
 
 # adds structs to respurces recursively
-def add_struct_members_recursive(typename, stage, structs, resources, depth):
+def add_struct_members_recursive(typename, stage, entry_point, structs, resources, depth):
     if typename in structs and typename not in resources:
-        resources[typename] = add_used_shader_resource(structs[typename], stage)
+        resources[typename] = add_used_shader_resource(structs[typename], stage, entry_point)
         resources[typename]["depth"] = depth
         for member in structs[typename]["members"]:
-            add_struct_members_recursive(member["data_type"], stage, structs, resources, depth + 1)
+            add_struct_members_recursive(member["data_type"], stage, entry_point, structs, resources, depth + 1)
 
 
 # given an entry point generate src code and resource meta data for the shader
@@ -924,6 +930,9 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
                     complete = False
                     break
 
+    # create copy of resources for this pipeline
+    pipeline_resources = dict(pmfx["resources"]["structs"])
+
     # now add used resource src decls
     for category in resource_categories:
         for r in pmfx["resources"][category]:
@@ -937,10 +946,10 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
             if cgu.find_token(resource["name"], src) != -1:
                 if resource["template_type"] and resource["type"] != "struct":
                     template_typeame = resource["template_type"]
-                    if template_typeame in pmfx["resources"]["structs"]:
-                        struct_resource = pmfx["resources"]["structs"][template_typeame]
-                        resources[template_typeame] = add_used_shader_resource(struct_resource, stage)
-                        add_struct_members_recursive(template_typeame, stage, pmfx["resources"]["structs"], recursive_resources, 0)
+                    if template_typeame in pipeline_resources:
+                        struct_resource = pipeline_resources[template_typeame]
+                        resources[template_typeame] = add_used_shader_resource(struct_resource, stage, entry_point)
+                        add_struct_members_recursive(template_typeame, stage, entry_point, pipeline_resources, recursive_resources, 0)
 
             # add resource and append resource src code
             for token in tokens:
@@ -954,10 +963,10 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
                     # add nested members
                     if resource["type"] == "cbuffer" or resource["type"] == "struct":
                         for member in resource["members"]:
-                            add_struct_members_recursive(member["data_type"], stage, pmfx["resources"]["structs"], recursive_resources, 1)
+                            add_struct_members_recursive(member["data_type"], stage, entry_point, pipeline_resources, recursive_resources, 1)
 
                     # add the resource itself
-                    resources[r] = add_used_shader_resource(resource, stage)
+                    resources[r] = add_used_shader_resource(resource, stage, entry_point)
                     break
 
     # add any globals..
@@ -1124,6 +1133,7 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
 
         shader = shader_info
         resources = merge_dicts(resources, dict(shader["resources"]), ["visibility"])
+
         # generate vertex layout
         if stage == "vs":
             pmfx_vertex_layout = dict()

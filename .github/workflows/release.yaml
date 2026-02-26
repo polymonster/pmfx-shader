@@ -32,7 +32,7 @@ jobs:
       - name: build
         run: py -3 -c "import pmfx; pmfx.build_executable()"
       - name: upload
-        id: upload-release-asset 
+        id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -49,11 +49,15 @@ jobs:
       - name: checkout
         uses: actions/checkout@v2
       - name: pyinstaller
-        run: "pip3 install PyInstaller"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - run: |
+          pip3 install PyInstaller
       - name: build
         run: python3 -c "import pmfx; pmfx.build_executable()"
       - name: upload
-        id: upload-release-asset 
+        id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -74,7 +78,7 @@ jobs:
       - name: build
         run: python3 -c "import pmfx; pmfx.build_executable()"
       - name: upload
-        id: upload-release-asset 
+        id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
