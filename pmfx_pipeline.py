@@ -737,7 +737,11 @@ def to_spirv_msl_version(metal_version):
 
 # cross compile hlsl -> spirv
 def cross_compile_hlsl_spirv(info, src, stage, entry_point, temp_filepath, output_filepath):
-    exe = os.path.join(info.tools_dir, "bin", "dxc", "dxc")
+    bindir = "macos"
+    if build_pmfx.get_platform_name() == "win64":
+        bindir = "dxc"
+
+    exe = os.path.join(info.tools_dir, "bin", bindir, "dxc")
 
     error_code = 0
     error_list = []
@@ -1083,7 +1087,7 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
     print("  pipeline: {} {}".format(pipeline_name, permutation_name))
     resources = dict()
     output_pipeline = dict(pipeline)
-    
+
     # gather entry points
     entry_points = list()
     for stage in get_shader_stages():
@@ -1098,7 +1102,7 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
     if "lib" in output_pipeline:
         output_pipeline["lib_hash"] = 0
         output_pipeline["lib"].clear()
-    
+
     # lookup info from compiled shaders and combine resources
     for (stage, entry_point, lib) in entry_points:
         # check entry exists
@@ -1110,7 +1114,7 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
         if "lookup" in shader_info:
             lookup = shader_info["lookup"]
             shader_info = dict(shaders[stage][lookup[0]][lookup[1]])
-        
+
         if lib:
             output_pipeline[stage].append(shader_info["filename"])
             output_pipeline["lib_hash"] = pmfx_hash_combine(output_pipeline["lib_hash"], pmfx_hash(shader_info["src_hash"]))
