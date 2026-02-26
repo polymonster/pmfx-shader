@@ -1390,6 +1390,8 @@ def generate_pmfx(file, root):
         pipelines = pmfx["pmfx"]["pipelines"]
         for pipeline_key in pipelines:
             pipeline = pipelines[pipeline_key]
+            if pipeline_key in build_info.ignores:
+                continue
             for stage in get_shader_stages():
                 if stage in pipeline:
                     if type(pipeline[stage]) is list:
@@ -1407,6 +1409,8 @@ def generate_pmfx(file, root):
         pipelines = pmfx["pmfx"]["pipelines"]
         for pipeline_key in pipelines:
             pipeline = pipelines[pipeline_key]
+            if pipeline_key in build_info.ignores:
+                continue
             pipeline_permutations, permutation_options, mask, define_list, c_defines = build_pmfx.generate_permutations(pipeline_key, pipeline)
             for permute in pipeline_permutations:
                 id = build_pmfx.generate_permutation_id(define_list, permute)

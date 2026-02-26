@@ -64,6 +64,7 @@ class BuildInfo:
     v_flip = False                                                      # glsl only (flip-y coord in vertex shader for consistency with other platforms)
     args = ""                                                           # anything passed after -args is concatonated into a string and forwarded to other executables (fxc, glsl validator etc)
     force = False                                                       # force compilation even if dependecies are up-to-date
+    ignores = []                                                        # list of pipeline names to skip
 
 
 # info and contents of a .pmfx file
@@ -191,6 +192,12 @@ def parse_args():
             j = i + 1
             while j < len(sys.argv) and sys.argv[j][0] != '-':
                 _info.nvn_extensions.append(sys.argv[j])
+                j = j + 1
+            i = j
+        elif sys.argv[i] == "-ignores":
+            j = i + 1
+            while j < len(sys.argv) and sys.argv[j][0] != '-':
+                _info.ignores.append(sys.argv[j])
                 j = j + 1
             i = j
         elif sys.argv[i] == "-args":
