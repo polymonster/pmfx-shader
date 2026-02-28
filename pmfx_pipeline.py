@@ -199,6 +199,14 @@ def get_num_32bit_values(type):
         "float3x4": 12,
         "float4x3": 12,
         "float4x4": 16,
+        "row_major float2x2": 8,
+        "row_major float3x4": 12,
+        "row_major float4x3": 12,
+        "row_major float4x4": 16,
+        "column_major float2x2": 8,
+        "column_major float3x4": 12,
+        "column_major float4x3": 12,
+        "column_major float4x4": 16,
         "int": 1,
         "int2": 2,
         "int3": 3,
@@ -559,7 +567,6 @@ def structure_get_num_32_bit_values(typename, structs):
     if typename in structs:
         total = 0
         for member in structs[typename]["members"]:
-
             total += structure_get_num_32_bit_values(member["data_type"], structs)
         return total
     else:
