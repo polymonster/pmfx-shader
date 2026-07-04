@@ -155,6 +155,14 @@ def get_global_types():
     ]
 
 
+# extract the declared identifier from a global decl line
+# ie. "groupshared uint4 group_accumulated[5];" -> "group_accumulated"
+def get_global_name(decl):
+    decl = decl.split("=")[0].strip().rstrip(";").split("[")[0].strip()
+    tokens = decl.split()
+    return tokens[-1] if len(tokens) >= 2 else None
+
+
 # returns info for types, (num_elements, element_size, total_size)
 def get_type_size_info(type):
     lookup = {
@@ -933,10 +941,14 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
                     resources[r] = add_used_shader_resource(resource, stage)
                     break
 
-    # add any globals..
+    # add any globals.. only when this shader actually references them, mirroring the token
+    # check used for resources above. otherwise a decl (e.g. a groupshared array) leaks into
+    # unrelated entry points; metal in particular rejects threadgroup vars in vs/ps stages.
     globals = ""
     for g in pmfx["globals"]:
-        globals += g + "\n"
+        name = get_global_name(g)
+        if name is None or cgu.find_token(name, src) != -1:
+            globals += g + "\n"
 
     # create resource src code
     res = ""
