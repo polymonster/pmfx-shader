@@ -180,6 +180,8 @@ def get_type_size_info(type):
 
 # return number of 32 bit values for a member of a push constants cbuffer
 def get_num_32bit_values(type):
+    # strip matrix majorness qualifiers, they don't affect the size
+    type = type.replace("row_major ", "").replace("column_major ", "").strip()
     lookup = {
         "float": 1,
         "float2": 2,
