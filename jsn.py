@@ -730,7 +730,7 @@ def loads(jsn, import_dirs=None, vars=True, keep_vars=False):
     # validate
     try:
         j = json.loads(jsn)
-    except:
+    except Exception:
         jsn_lines = jsn.split("\n")
         for l in range(0, len(jsn_lines)):
             print(str(l+1) + " " + jsn_lines[l])
