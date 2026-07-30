@@ -54,6 +54,8 @@ def get_shader_stages():
         "vs",
         "ps",
         "cs",
+        "ms",
+        "as",
         "lib"
     ]
 

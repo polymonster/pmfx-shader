@@ -720,14 +720,14 @@ def parse_return_type(statement):
     return rt, template, inline
 
 
-# prepends attributes to soiurce coe of functions, structs etc
+# prepends attributes to source code of functions, structs etc
 def combine_src_attributes(attribs, src):
     if len(attribs) == 0:
         return src
-    out = "["
+    out = ""
     for attrib in attribs:
-        out += attrib
-    out += "]\n" + src
+        out += f"[{attrib}]\n"
+    out += src
     return out
 
 
