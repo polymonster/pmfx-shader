@@ -330,8 +330,9 @@ def call_wait_subprocess(cmdline):
         "compilation object save succeeded;"
     ]
     p = subprocess.Popen(cmdline, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    error_code = p.wait()
+    # communicate drains the pipes while waiting, wait() first deadlocks once the output fills the pipe buffer
     output, err = p.communicate()
+    error_code = p.returncode
     err_str = err.decode('utf-8')
     err_str = err_str.strip(" ")
     err_list = err_str.split("\n")
