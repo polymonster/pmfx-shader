@@ -255,6 +255,8 @@ def get_shader_visibility(vis, pipeline):
         "vs": "Vertex",
         "ps": "Fragment",
         "cs": "Compute",
+        "ms": "Mesh",
+        "as": "Amplification",
     }
     used_stages = list()
     for s in stages:
