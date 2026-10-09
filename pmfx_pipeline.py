@@ -774,7 +774,15 @@ def cross_compile_hlsl_spirv(info, src, stage, entry_point, temp_filepath, outpu
 
     spirv_filepath = os.path.splitext(temp_filepath)[0] + ".spirv"
 
-    cmdline = "{} -T {}_{} -E {} -spirv -fvk-use-scalar-layout -Od -Fo {} {}".format(exe, stage, "6_3", entry_point, spirv_filepath, temp_filepath)
+    # mesh and amplification shaders require sm 6_5, and vulkan1.3 to emit SPV_EXT_mesh_shader rather than
+    # SPV_NV_mesh_shader (which spirv-cross cannot cross compile to msl)
+    shader_model = "6_3"
+    target_env = ""
+    if stage in ["ms", "as"]:
+        shader_model = "6_5"
+        target_env = " -fspv-target-env=vulkan1.3"
+
+    cmdline = "{} -T {}_{} -E {} -spirv -fvk-use-scalar-layout{} -Od -Fo {} {}".format(exe, stage, shader_model, entry_point, target_env, spirv_filepath, temp_filepath)
 
     print(f"{cmdline}")
 
@@ -1163,16 +1171,18 @@ def generate_pipeline_permutation(pipeline_name, pipeline, output_pmfx, shaders,
             if "vertex_layout" in pipeline:
                 pmfx_vertex_layout = pipeline["vertex_layout"]
             output_pipeline["vertex_layout"] = generate_vertex_layout(shader["vertex_elements"], pmfx_vertex_layout)
-        # extract numthreads
-        if stage == "cs":
+        # extract numthreads per stage, ms and as can both exist in the same pipeline
+        if stage in ["cs", "ms", "as"]:
             for attrib in shader["attributes"]:
                 if attrib.find("numthreads") != -1:
-                    start, end = cgu.enclose_start_end("(", ")", attrib, 0)
+                    start, end = cgu.enclose_start_end("(", ")", attrib, attrib.find("numthreads"))
                     xyz = attrib[start:end].split(",")
                     numthreads = []
                     for a in xyz:
                         numthreads.append(int(a.strip()))
-                    output_pipeline["numthreads"] = numthreads
+                    if "numthreads" not in output_pipeline:
+                        output_pipeline["numthreads"] = dict()
+                    output_pipeline["numthreads"][stage] = numthreads
 
         # set non zero error codes to track failures
         if shader_info["error_code"] != 0:
