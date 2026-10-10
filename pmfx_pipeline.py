@@ -783,6 +783,10 @@ def cross_compile_hlsl_spirv(info, src, stage, entry_point, temp_filepath, outpu
     if stage in ["ms", "as"]:
         shader_model = "6_5"
         target_env = " -fspv-target-env=vulkan1.3"
+    # inline raytracing requires sm 6_5 and vulkan1.2 for SPV_KHR_ray_query
+    elif src.find("RayQuery") != -1:
+        shader_model = "6_5"
+        target_env = " -fspv-target-env=vulkan1.2"
 
     cmdline = "{} -T {}_{} -E {} -spirv -fvk-use-scalar-layout{} -Od -Fo {} {}".format(exe, stage, shader_model, entry_point, target_env, spirv_filepath, temp_filepath)
 
