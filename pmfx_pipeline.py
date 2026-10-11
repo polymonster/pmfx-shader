@@ -153,7 +153,8 @@ def get_resource_categories():
 # return global types we want to check for within source
 def get_global_types():
     return [
-        "groupshared"
+        "groupshared",
+        "static const"
     ]
 
 
@@ -163,6 +164,91 @@ def get_global_name(decl):
     decl = decl.split("=")[0].strip().rstrip(";").split("[")[0].strip()
     tokens = decl.split()
     return tokens[-1] if len(tokens) >= 2 else None
+
+
+# returns a preprocessor directive and any backslash continuation lines following it, and the index after them
+def take_directive(lines, i):
+    directive = [lines[i]]
+    while directive[-1].rstrip().endswith("\\") and i + 1 < len(lines):
+        i += 1
+        directive.append(lines[i])
+    return directive, i + 1
+
+
+# returns the names a define block declares ie. "#define SQR(x) (x*x)" -> "SQR"
+def get_define_names(block):
+    names = []
+    for line in block:
+        tokens = line.replace("(", " ").split()
+        if len(tokens) >= 2 and tokens[0] in ["#define", "#undef"]:
+            names.append(tokens[1])
+    return names
+
+
+# splits top level #define / #undef out of the source, so function-like macros are not parsed as function decls
+# and the defines aren't dropped from the generated shaders. a top level #if block is split out whole only when it
+# holds nothing but directives, #if blocks around code stay in place for permutations. directives inside function
+# bodies are part of the function source and are left alone. format_source has already put top level lines at
+# column 0, so a directive is top level when it starts the line
+def extract_top_level_defines(source):
+    lines = source.splitlines()
+    remaining = []
+    defines = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if line.startswith("#define") or line.startswith("#undef"):
+            block, i = take_directive(lines, i)
+            defines.append({"source": "\n".join(block), "names": get_define_names(block)})
+        elif line.startswith("#if"):
+            # find the matching #endif, noting whether everything in between is a directive
+            j = i
+            depth = 0
+            pure = True
+            block = []
+            while j < len(lines):
+                l = lines[j]
+                if not l.startswith("#"):
+                    pure = False
+                    block.append(l)
+                    j += 1
+                    continue
+                if l.startswith("#if"):
+                    depth += 1
+                elif l.startswith("#endif"):
+                    depth -= 1
+                directive, j = take_directive(lines, j)
+                block.extend(directive)
+                if depth == 0:
+                    break
+            if pure and depth == 0:
+                defines.append({"source": "\n".join(block), "names": get_define_names(block)})
+            else:
+                remaining.extend(block)
+            i = j
+        else:
+            remaining.append(line)
+            i += 1
+    return "\n".join(remaining), defines
+
+
+# returns the source of the defines referenced from src, including defines referenced by other used defines
+def get_used_defines_source(defines, src):
+    used = []
+    search = src
+    added = True
+    while added:
+        added = False
+        for define in defines:
+            if define in used:
+                continue
+            for name in define["names"]:
+                if cgu.find_token(name, search) != -1:
+                    used.append(define)
+                    search += "\n" + define["source"]
+                    added = True
+                    break
+    return "\n".join([define["source"] for define in used])
 
 
 # returns info for types, (num_elements, element_size, total_size)
@@ -599,7 +685,15 @@ def generate_pipeline_layout(pmfx, pmfx_pipeline, resources):
                 # work out how many 32 bit values
                 num_values = 0
                 for member in resource["members"]:
-                    num_values += get_num_32bit_values(member["data_type"])
+                    member_values = get_num_32bit_values(member["data_type"])
+                    # array members ie. "float4 rows[4]", cbuffer packing starts each element on a 16 byte boundary
+                    _, array_size = cgu.type_name_array(member["name"])
+                    if array_size and array_size > 1:
+                        if member_values % 4 == 0:
+                            member_values *= array_size
+                        else:
+                            member_values += (array_size - 1) * 4
+                    num_values += member_values
                 # we need to lookup a templated data type
                 if num_values == 0:
                     if "template_type" in resource:
@@ -954,7 +1048,7 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
         complete = True
         for func in pmfx["functions"]:
             if func not in added_functions:
-                if cgu.find_token(func, src) != -1:
+                if cgu.find_token(func, src + "\n" + get_used_defines_source(pmfx["defines"], src)) != -1:
                     fwd = pmfx["functions"][func]["source"].replace(pmfx["functions"][func]["body"], ";")
                     forward_decls.append(fwd)
                     added_functions.append(func)
@@ -962,6 +1056,9 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
                     src = pmfx["functions"][func]["source"] + "\n" + src
                     complete = False
                     break
+
+    # macros can reference resources and globals too, so search the used defines along with the source
+    search_src = src + "\n" + get_used_defines_source(pmfx["defines"], src)
 
     # create copy of resources for this pipeline
     pipeline_resources = dict(pmfx["resources"]["structs"])
@@ -976,7 +1073,7 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
                 for member in resource["members"]:
                     tokens.append(member["name"])
             # types with templates need to include structs
-            if cgu.find_token(resource["name"], src) != -1:
+            if cgu.find_token(resource["name"], search_src) != -1:
                 if resource["template_type"] and resource["type"] != "struct":
                     template_typeame = resource["template_type"]
                     if template_typeame in pipeline_resources:
@@ -986,11 +1083,11 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
 
             # add resource and append resource src code
             for token in tokens:
-                p = cgu.find_token(token, src)
+                p = cgu.find_token(token, search_src)
                 if p != -1:
                     # ignore struct member refernces with names which collide with cbuffer members
                     if resource["type"] == "cbuffer":
-                        if cgu.find_prev_non_whitespace(src, p) == ".":
+                        if cgu.find_prev_non_whitespace(search_src, p) == ".":
                             continue
 
                     # add nested members
@@ -1005,10 +1102,25 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
     # add any globals.. only when this shader actually references them, mirroring the token
     # check used for resources above. otherwise a decl (e.g. a groupshared array) leaks into
     # unrelated entry points; metal in particular rejects threadgroup vars in vs/ps stages.
+    # constants can be initialised from other constants, so keep going until no more are referenced
+    used_globals = []
+    global_search_src = search_src
+    added = True
+    while added:
+        added = False
+        for g in pmfx["globals"]:
+            if g in used_globals:
+                continue
+            name = get_global_name(g)
+            if name is None or cgu.find_token(name, global_search_src) != -1:
+                used_globals.append(g)
+                global_search_src += "\n" + g
+                added = True
+
+    # emit in source order, a constant must be declared before one initialised from it
     globals = ""
     for g in pmfx["globals"]:
-        name = get_global_name(g)
-        if name is None or cgu.find_token(name, src) != -1:
+        if g in used_globals:
             globals += g + "\n"
 
     # create resource src code
@@ -1022,6 +1134,12 @@ def generate_shader_info(pmfx, entry_point, stage, permute=None):
         res += "// pragmas\n"
         for pragma in pmfx["pragmas"]:
             res += "{}\n".format(pragma)
+
+    # top level defines, all of them are emitted (they're only text) ahead of anything that might use them
+    if len(pmfx["defines"]) > 0:
+        res += "// defines\n"
+        for define in pmfx["defines"]:
+            res += define["source"] + "\n"
 
     # resources input structs, textures, buffers etc
     added_resources = []
@@ -1322,7 +1440,7 @@ def generate_pmfx(file, root):
     # src (input) pmfx dictionary
     pmfx = dict()
     pmfx["pmfx"] = pmfx_json
-    pmfx["source"] = cgu.format_source(shader_source, 4)
+    pmfx["source"], pmfx["defines"] = extract_top_level_defines(cgu.format_source(shader_source, 4))
     pmfx["pmfx_name"] = os.path.splitext(file)[0]
 
     # create build folders
@@ -1400,13 +1518,23 @@ def generate_pmfx(file, root):
                 continue
             pmfx["resources"][map["category"]][decl["name"]] = decl
 
-    # parse globals
-    pmfx["globals"] = set()
+    # parse globals, in source order because constants can be initialised from each other. a decl continues over
+    # lines until its ';', ie. a static const array with an initialiser list
+    pmfx["globals"] = []
     src_lines = pmfx["source"].splitlines()
-    for global_type in get_global_types():
-        for line in src_lines:
-            if line.startswith(global_type):
-                pmfx["globals"].add(line)
+    i = 0
+    while i < len(src_lines):
+        line = src_lines[i]
+        i += 1
+        if not any(line.startswith(global_type) for global_type in get_global_types()):
+            continue
+        decl = [line]
+        while not decl[-1].rstrip().endswith(";") and i < len(src_lines):
+            decl.append(src_lines[i])
+            i += 1
+        decl = "\n".join(decl)
+        if decl not in pmfx["globals"]:
+            pmfx["globals"].append(decl)
 
     # fill state default parameters
     for state_type in get_states():
