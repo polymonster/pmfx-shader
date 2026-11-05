@@ -14,20 +14,12 @@ A cross platform shader system with multi-threaded offline compilation or platfo
 - GLES (WebGL 1.0) (compatibility)
 - SPIR-V. (Vulkan, OpenGL)
 - Metal 1.0+ (macOS, iOS, tvOS)
-- PSSL
-- NVN (Nintendo Switch)
 
 (compatibility) platforms for older hardware might not support all pmfx features and may have missing legacy features.
 
 ## Dependencies
 
 Windows users need [vcredist 2013](https://www.microsoft.com/en-us/download/confirmation.aspx?id=40784) for the glsl/spirv validator.
-
-## Console Platforms
-
-Compilation for Orbis is supported but you will need the SDK's installed and the environment variables set.
-
-For NVN there is an [executable](https://github.com/polymonster/pmfx-shader/tree/master/bin/nvn) included to compile to `nvn_glsc` but it will require the `NvnGlslc32.dll` to be installed along with the SDK.
 
 ## Usage
 
@@ -43,19 +35,16 @@ pmfx shader (v2.0) -------------------------------------------------------------
 commandline arguments:
     -v1 compile using pmfx version 1 (legacy) will use v2 otherwise
     -num_threads 4 (default) <supply threadpool size>
-    -shader_platform <hlsl, glsl, gles, spirv, metal, pssl, nvn>
+    -shader_platform <hlsl, glsl, gles, spirv, metal>
     -shader_version (optional) <shader version unless overridden in technique>
         hlsl: 3_0, 4_0 (default), 5_0, 6_0 [-v2]
         glsl: 200, 330 (default), 420, 450
         gles: 100, 300, 310, 350
         spirv: 420 (default), 450
         metal: 2.0 (default)
-        nvn: (glsl)
     -metal_sdk [metal only] <iphoneos, macosx, appletvos>
     -metal_min_os (optional) [metal only] <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>
-    -nvn_exe [nvn only] <path to execulatble that can compile glsl to nvn glslc>
     -extensions (optional) [glsl/gles only] <list of glsl extension strings separated by spaces>
-    -nvn_extensions (optional) [nvn only] <list of nvn glsl extension strings separated by spaces>
     -i <list of input files or directories separated by spaces>
     -o <output dir for shaders>
     -t <output dir for temp files>
