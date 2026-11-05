@@ -35,7 +35,7 @@ def print_ok(msg):
 
 # paths and info for current build environment
 class BuildInfo:
-    shader_platform = ""                                                # hlsl, glsl, metal, spir-v, pssl
+    shader_platform = ""                                                # hlsl, glsl, metal, spir-v
     shader_sub_platform = ""                                            # gles
     shader_version = "0"                                                # 4_0, 5_0 (hlsl), 330, 420 (glsl), 1.1, 2.0 (metal)
     metal_sdk = ""                                                      # macosx, iphoneos, appletvos
@@ -44,7 +44,6 @@ class BuildInfo:
     debug = False                                                       # generate shader with debug info
     inputs = []                                                         # array of input files or directories
     extensions = []                                                     # array of shader extension currently for glsl/gles
-    nvn_extensions = []                                                 # array of shader extensions for nvn/glsl
     root_dir = ""                                                       # cwd dir to run from
     build_config = ""                                                   # json contents of build_config.json
     pmfx_dir = ""                                                       # location of pmfx
@@ -58,7 +57,6 @@ class BuildInfo:
     platform_macros_file = ""                                           # glsl.h, hlsl.h, metal.h
     macros_source = ""                                                  # source code inside _shader_macros.h
     error_code = 0                                                      # non-zero if any shaders failed to build
-    nvn_exe = ""                                                        # optional executable path for nvn
     cmdline_string = ""                                                 # stores the full cmdline passed
     num_threads = 4                                                     # number of threadsto distribute work over
     v_flip = False                                                      # glsl only (flip-y coord in vertex shader for consistency with other platforms)
@@ -178,20 +176,12 @@ def parse_args():
             _info.metal_version = sys.argv[i+1]
         elif sys.argv[i] == "-metal_sdk":
             _info.metal_sdk = sys.argv[i+1]
-        elif sys.argv[i] == "-nvn_exe":
-            _info.nvn_exe = sys.argv[i+1]
         elif sys.argv[i] == "-num_threads":
             _info.num_threads = int(sys.argv[i+1])
         elif sys.argv[i] == "-extensions":
             j = i + 1
             while j < len(sys.argv) and sys.argv[j][0] != '-':
                 _info.extensions.append(sys.argv[j])
-                j = j + 1
-            i = j
-        elif sys.argv[i] == "-nvn_extensions":
-            j = i + 1
-            while j < len(sys.argv) and sys.argv[j][0] != '-':
-                _info.nvn_extensions.append(sys.argv[j])
                 j = j + 1
             i = j
         elif sys.argv[i] == "-ignores":
@@ -213,8 +203,6 @@ def parse_args():
         "-o",
         "-t"
     ]
-    if _info.shader_platform == "nvn":
-        required.append("-nvn_exe")
     missing = False
     for r in required:
         if r not in sys.argv:
@@ -230,19 +218,16 @@ def display_help():
     print("commandline arguments:")
     print("    -v1 compile using pmfx version 1 (legacy) will use v2 otherwise")
     print("    -num_threads 4 (default) <supply threadpool size>")
-    print("    -shader_platform <hlsl, glsl, gles, spirv, metal, pssl, nvn>")
+    print("    -shader_platform <hlsl, glsl, gles, spirv, metal>")
     print("    -shader_version (optional) <shader version unless overridden in technique>")
     print("        hlsl: 3_0, 4_0 (default), 5_0, 6_0 [-v2]")
     print("        glsl: 200, 330 (default), 420, 450")
     print("        gles: 100, 300, 310, 350")
     print("        spirv: 420 (default), 450")
     print("        metal: 2.0 (default)")
-    print("        nvn: (glsl)")
     print("    -metal_sdk [metal only] <iphoneos, macosx, appletvos>")
     print("    -metal_min_os (optional) [metal only] <9.0 - 13.0 (ios), 10.11 - 10.15 (macos)>")
-    print("    -nvn_exe [nvn only] <path to execulatble that can compile glsl to nvn glslc>")
     print("    -extensions (optional) [glsl/gles only] <list of glsl extension strings separated by spaces>")
-    print("    -nvn_extensions (optional) [nvn only] <list of nvn glsl extension strings separated by spaces>")
     print("    -i <list of input files or directories separated by spaces>")
     print("    -o <output dir for shaders>")
     print("    -t <output dir for temp files>")
@@ -1356,7 +1341,7 @@ def shader_hash(_shader):
     return hashlib.md5(hash_source.encode('utf-8')).hexdigest()
 
 
-# hlsl source.. pssl is similar
+# hlsl source
 def _hlsl_source(_info, pmfx_name, _tp, _shader):
     shader_source = _info.macros_source
     shader_source += _tp.struct_decls
@@ -1377,74 +1362,6 @@ def _hlsl_source(_info, pmfx_name, _tp, _shader):
     shader_source += _shader.main_func_source
     shader_source = format_source(shader_source, 4)
     return shader_source
-
-
-# compile pssl
-def compile_pssl(_info, pmfx_name, _tp, _shader):
-    orbis_sdk = os.getenv("SCE_ORBIS_SDK_DIR")
-    if not orbis_sdk:
-        print_error("error: you must have orbis sdk installed, "
-              "'SCE_ORBIS_SDK_DIR' environment variable is set and is added to your PATH.")
-        sys.exit(1)
-
-    shader_source = _hlsl_source(_info, pmfx_name, _tp, _shader)
-
-    # apply syntax changes
-    token_swaps = {
-        "cbuffer": "ConstantBuffer",
-        "SV_POSITION": "S_POSITION",
-        "SV_POSITION0": "S_POSITION",
-        "SV_Target": "S_TARGET_OUTPUT",
-        "SV_Target0": "S_TARGET_OUTPUT0",
-        "SV_Target1": "S_TARGET_OUTPUT1",
-        "SV_Target2": "S_TARGET_OUTPUT2",
-        "SV_Target3": "S_TARGET_OUTPUT3",
-        "SV_Target4": "S_TARGET_OUTPUT4",
-        "SV_Target5": "S_TARGET_OUTPUT5",
-        "SV_Target6": "S_TARGET_OUTPUT6",
-        "SV_Target7": "S_TARGET_OUTPUT7",
-        "SV_Depth": "S_DEPTH_OUTPUT",
-        "SV_InstanceID": "S_INSTANCE_ID",
-        "SV_VertexID": "S_VERTEX_ID"
-    }
-
-    for token in token_swaps:
-        shader_source = replace_token(token, token_swaps[token], shader_source)
-
-    extension = {
-        "vs": ".vs",
-        "ps": ".ps",
-        "cs": ".cs"
-    }
-
-    profile = {
-        "vs": "sce_vs_vs_orbis",
-        "ps": "sce_ps_orbis",
-        "cs": "sce_cs_orbis"
-    }
-
-    temp_path = os.path.join(_info.temp_dir, pmfx_name)
-    output_path = os.path.join(_info.output_dir, pmfx_name)
-    os.makedirs(temp_path, exist_ok=True)
-    os.makedirs(output_path, exist_ok=True)
-
-    temp_file_and_path = sanitize_file_path(os.path.join(temp_path, _tp.name + extension[_shader.shader_type]))
-    output_file_and_path = os.path.join(output_path, _tp.name + extension[_shader.shader_type] + "c")
-
-    temp_shader_source = open(temp_file_and_path, "w")
-    temp_shader_source.write(shader_source)
-    temp_shader_source.close()
-
-    cmdline = "orbis-wave-psslc" + " -profile " + profile[_shader.shader_type] + \
-              " -entry " + _shader.main_func_name + " " + temp_file_and_path + " -o " + output_file_and_path + " "
-    cmdline += _info.args
-
-    error_code, error_list, output_list = call_wait_subprocess(cmdline)
-
-    if error_code != 0:
-        _tp.error_code = error_code
-        _tp.error_list = error_list
-        _tp.output_list = output_list
 
 
 # compile hlsl shader model 4
@@ -1588,7 +1505,7 @@ def generate_texture_decl(texture_list):
 
 # insert glsl location if we need it
 def insert_layout_location(loc):
-    if _info.shader_sub_platform == "spirv" or _info.shader_sub_platform == "nvn":
+    if _info.shader_sub_platform == "spirv":
        return "layout(location = " + str(loc) + ") "
     return ""
 
@@ -1837,9 +1754,6 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
         for ext in _info.extensions:
             shader_source += "#extension " + ext + " : require\n"
             shader_source += "#define PMFX_" + ext + " 1\n"
-        for ext in _info.nvn_extensions:
-            shader_source += "#extension " + ext + " : enable\n"
-            shader_source += "#define PMFX_" + ext + " 1\n"
         shader_source += "#define GLSL\n"
         if binding_points:
             shader_source += "#define PMFX_BINDING_POINTS\n"
@@ -2021,47 +1935,22 @@ def compile_glsl(_info, pmfx_name, _tp, _shader):
 
     output_file_and_path = os.path.join(output_path, _tp.name + extension[_shader.shader_type])
 
-    if _info.shader_sub_platform == "nvn":
-        nvn_sdk = os.getenv("NINTENDO_SDK_ROOT")
-        if not nvn_sdk:
-            print_error("error: you must have nintendo switch sdk installed, "
-                "'NINTENDO_SDK_ROOT' environment variable is set and is added to your PATH.")
-            sys.exit(1)
+    exe = os.path.join(_info.tools_dir, "bin", "glsl", get_platform_name(), "validator" + get_platform_exe())
 
-        exe = os.path.normpath(_info.nvn_exe)
+    if _info.shader_sub_platform == "spirv":
+        exe += " -V "
+        exe += " -o " + output_file_and_path
 
-        nvn_type = {
-            "vs": "-stage vertex",
-            "ps": "-stage fragment",
-            "cs": "-stage compute"
-        }
-        cmd = "-input " + sanitize_file_path(temp_file_and_path) + " "
-        cmd += nvn_type[_shader.shader_type] + " " + sanitize_file_path(temp_file_and_path) + " "
-        cmd += "-output " + sanitize_file_path(output_file_and_path) + " "
-        cmd += _info.args
+    error_code, error_list, output_list = call_wait_subprocess(exe + " " + temp_file_and_path)
+    _tp.error_code = error_code
+    _tp.error_list = error_list
+    _tp.output_list = output_list
 
-        error_code, error_list, output_list = call_wait_subprocess(exe + " " + cmd)
-        _tp.error_code = error_code
-        _tp.error_list = error_list
-        _tp.output_list = output_list
-
-    else:
-        exe = os.path.join(_info.tools_dir, "bin", "glsl", get_platform_name(), "validator" + get_platform_exe())
-
-        if _info.shader_sub_platform == "spirv":
-            exe += " -V "
-            exe += " -o " + output_file_and_path
-
-        error_code, error_list, output_list = call_wait_subprocess(exe + " " + temp_file_and_path)
-        _tp.error_code = error_code
-        _tp.error_list = error_list
-        _tp.output_list = output_list
-
-        if _info.shader_sub_platform != "spirv":
-            # copy glsl shader to data
-            shader_file = open(output_file_and_path, "w")
-            shader_file.write(shader_source)
-            shader_file.close()
+    if _info.shader_sub_platform != "spirv":
+        # copy glsl shader to data
+        shader_file = open(output_file_and_path, "w")
+        shader_file.write(shader_source)
+        shader_file.close()
 
     return error_code
 
@@ -2767,8 +2656,6 @@ def compile_single_shader(_tp):
             continue
         if _info.shader_platform == "hlsl":
             compile_hlsl(_info, _tp.pmfx_name, _tp, s)
-        elif _info.shader_platform == "pssl":
-            compile_pssl(_info, _tp.pmfx_name, _tp, s)
         elif _info.shader_platform == "glsl":
             compile_glsl(_info, _tp.pmfx_name, _tp, s)
         elif _info.shader_platform == "metal":
@@ -3015,9 +2902,6 @@ def configure_sub_platforms():
     elif _info.shader_platform == "gles":
         _info.shader_platform = "glsl"
         _info.shader_sub_platform = "gles"
-    elif _info.shader_platform == "nvn":
-        _info.shader_platform = "glsl"
-        _info.shader_sub_platform = "nvn"
 
 
 # get global info which contains the parsed args and other info
